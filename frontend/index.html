@@ -354,8 +354,10 @@ function syncBest(it) {
   }
 }
 const bestSeller = it => [...it.sellers].sort((a, b) => (a.price + a.ship) - (b.price + b.ship))[0];
-const bestStore = it => [...it.stores].sort((a, b) => a.price - b.price)[0];
-const officialStore = it => it.stores.find(s => s.type === 'official') || null;
+// En trackers reales una tienda puede estar agotada o haber fallado en la última comprobación: no cuenta.
+const okStore = s => s.price > 0 && !s.error && !s.out;
+const bestStore = it => [...it.stores].filter(okStore).sort((a, b) => a.price - b.price)[0] || it.stores[0] || { name: '—', price: it.current };
+const officialStore = it => it.stores.find(s => s.type === 'official' && s.price > 0) || null;
 // Fase 1: sin scraper no hay URL exacta de cada ficha, así que se abre la búsqueda en la tienda
 // salvo que el tracker o el vendedor tengan URL propia. En Fase 2 el scraper guarda la URL real.
 const bestOf = it => it.cat === 'product' ? bestSeller(it) : bestStore(it);
@@ -367,7 +369,7 @@ function buyUrl(it) {
 const isSearch = it => it.cat !== 'flight' && !bestOf(it).url && !(it.userUrl && bestOf(it).name === it.fetchedFrom);
 const buyStore = it => it.cat === 'flight' ? 'Skyscanner' : it.cat === 'product' ? bestSeller(it).name : bestStore(it).name;
 const refPrice = it => it.cat === 'product' ? it.pvp : it.cat === 'game' ? it.msrp : it.routeAvg;
-// Puntos anteriores al precio actual (+ el mínimo histórico de CheapShark en trackers reales).
+// Puntos anteriores al precio actual (+ el mínimo histórico guardado por la versión anterior, si lo hay).
 const pastPts = it => { const p = it.history.slice(0, -1); if (it.atlEver) p.push(it.atlEver); return p; };
 const prevMin = it => { const p = pastPts(it); return p.length ? Math.min(...p.map(h => h.p)) : it.current; };
 const isATL = it => pastPts(it).length > 0 && it.current <= prevMin(it);
@@ -375,7 +377,7 @@ const rating = it => it.reviews && it.reviews.rating != null ? it.reviews.rating
 const firstPro = (it, k = 'pros') => ((it.reviews || {})[k] || [])[0];
 function subtitle(it) {
   if (it.cat === 'flight') return `${it.origin} → ${it.dest} · ${fmtDate(it.depart)}${it.ret ? ' – ' + fmtDate(it.ret) : ' · solo ida'} · ${it.stops ? it.stops + ' escala' + (it.stops > 1 ? 's' : '') : 'directo'} · ${it.airline}`;
-  if (it.cat === 'game') return `${it.platform} · ${it.format} · mejor en ${bestStore(it).name}`;
+  if (it.cat === 'game') return `${it.platform}${it.live ? '' : ' · ' + it.format} · mejor en ${bestStore(it).name}`;
   return `${it.category} · mejor en ${bestSeller(it).name}`;
 }
 const approx = s => s && s.approx ? '≈ ' : '';
@@ -553,10 +555,9 @@ const API = {
   ],
   async fetchMeta(raw, onStep) {
     if (this.mode === 'live') {
-      const steps = ['Consultando CheapShark y Steam España'];
+      const steps = [[raw.keys ? 'Buscando en Instant Gaming y Eneba' : null, raw.links.length ? `leyendo ${raw.links.length} enlace${raw.links.length > 1 ? 's' : ''}` : null, raw.platform === 'PC' ? 'Steam' : null].filter(Boolean).join(', ') + ' (puede tardar un poco)'];
       onStep && onStep(0, steps);
-      const isUrl = /^(https?:\/\/|www\.)|\.[a-z]{2,}\//i.test(raw.trim());
-      return api('POST', '/api/fetch-meta', typeof raw === 'object' ? raw : isUrl ? { url: raw.trim() } : { q: raw.trim() });
+      return api('POST', '/api/fetch-meta', raw);
     }
     let u;
     try { u = new URL(/^https?:\/\//i.test(raw) ? raw : 'https://' + raw); } catch { throw new Error('Esa dirección no es una URL válida. Pega el enlace completo de la tienda.'); }
@@ -974,13 +975,13 @@ function viewGrid(catKey) {
   if (catKey === 'flight') extra = flightTable();
   if (catKey === 'game') extra = gameTable();
   if (catKey === 'product') extra = couponList();
-  if (LIVE.on && (catKey === 'flight' || catKey === 'product')) extra = `<section class="rounded-2xl border border-ai/25 bg-ai/[.05] p-4 flex gap-3 text-[13px]"><i data-lucide="construction" class="w-5 h-5 text-ai shrink-0"></i><div><div class="font-medium text-fg">${catKey === 'flight' ? 'Vuelos' : 'Productos'}: próximamente con precios reales</div><p class="text-mute mt-1">La primera fuente real son los videojuegos de PC (CheapShark + Steam España). ${catKey === 'flight' ? 'Los vuelos necesitan un conector propio (Skyscanner, Google Flights o Kayak).' : 'Amazon necesita Keepa (de pago) y PcComponentes, AliExpress y El Corte Inglés un scraper con navegador.'} Puedes ver cómo quedará abriendo <span class="font-mono">frontend/index.html</span> directamente, en modo demo.</p></div></section>`;
+  if (LIVE.on && (catKey === 'flight' || catKey === 'product')) extra = `<section class="rounded-2xl border border-ai/25 bg-ai/[.05] p-4 flex gap-3 text-[13px]"><i data-lucide="construction" class="w-5 h-5 text-ai shrink-0"></i><div><div class="font-medium text-fg">${catKey === 'flight' ? 'Vuelos' : 'Productos'}: próximamente con precios reales</div><p class="text-mute mt-1">La primera fuente real son los videojuegos (Instant Gaming, Eneba y los enlaces de tienda que pegues). ${catKey === 'flight' ? 'Los vuelos necesitan un conector propio (Skyscanner, Google Flights o Kayak).' : 'Amazon necesita Keepa (de pago) y PcComponentes, AliExpress y El Corte Inglés un scraper con navegador.'} Puedes ver cómo quedará abriendo <span class="font-mono">frontend/index.html</span> directamente, en modo demo.</p></div></section>`;
   const now = new Date();
   return `<div class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
     <div class="flex flex-col gap-5 min-w-0">
       <div class="flex flex-wrap items-end gap-3 justify-between">
         <div><p class="label">${isDash ? now.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' }) : 'Vertical'}</p><h1 class="font-display font-extrabold text-[30px] sm:text-[34px] leading-tight tracking-tight mt-1">${isDash ? 'Tus chollos, vigilados 24/7' : n.label}</h1></div>
-        ${LIVE.on ? '<span class="inline-flex items-center gap-1.5 text-[12px] text-good border border-good/30 rounded-lg px-2.5 py-1"><i data-lucide="radio" class="w-3.5 h-3.5"></i>Precios reales · CheapShark + Steam España</span>' : '<span class="inline-flex items-center gap-1.5 text-[12px] text-mute border border-ink-600 rounded-lg px-2.5 py-1"><i data-lucide="flask-conical" class="w-3.5 h-3.5"></i>Datos simulados · demo</span>'}
+        ${LIVE.on ? '<span class="inline-flex items-center gap-1.5 text-[12px] text-good border border-good/30 rounded-lg px-2.5 py-1"><i data-lucide="radio" class="w-3.5 h-3.5"></i>Precios reales · Instant Gaming, Eneba y tus tiendas</span>' : '<span class="inline-flex items-center gap-1.5 text-[12px] text-mute border border-ink-600 rounded-lg px-2.5 py-1"><i data-lucide="flask-conical" class="w-3.5 h-3.5"></i>Datos simulados · demo</span>'}
       </div>
       ${isDash ? kpis() + featured() : ''}
       ${extra}
@@ -1213,7 +1214,7 @@ function drawerBody(it, a) {
         <button data-action="ask" data-id="${it.id}" class="inline-flex items-center gap-1.5 rounded-xl border border-ai/40 text-ai px-3 py-2.5 text-[13px] hover:bg-ai/10"><i data-lucide="bot" class="w-4 h-4"></i>Preguntar</button>
         <button data-action="compare" data-id="${it.id}" class="inline-flex items-center gap-1.5 rounded-xl border border-ink-500 px-3 py-2.5 text-[13px] hover:border-ai/60"><i data-lucide="scale" class="w-4 h-4"></i>Comparar</button>
       </div>
-      <p class="text-[12px] text-dim -mt-1">${it.live ? (bestOf(it).url && bestOf(it).url.includes('cheapshark.com') ? 'Abre la oferta en la tienda. Los enlaces de CheapShark pasan por su redirección antes de llegar a la tienda.' : 'Abre la ficha del juego en la tienda.') : isSearch(it) ? 'Datos simulados: abre la búsqueda del producto en la tienda. Con un scraper real este botón irá directo a la ficha exacta.' : 'Abre la oferta directamente en la tienda, sin intermediarios ni enlaces de afiliado.'}</p>
+      <p class="text-[12px] text-dim -mt-1">${it.live ? `Abre la ficha del juego en ${esc(bestOf(it).name)}.` : isSearch(it) ? 'Datos simulados: abre la búsqueda del producto en la tienda. Con un scraper real este botón irá directo a la ficha exacta.' : 'Abre la oferta directamente en la tienda, sin intermediarios ni enlaces de afiliado.'}</p>
     </header>
 
     <section class="rounded-2xl bg-ink-800/70 border border-ink-600/80 p-4">
@@ -1294,14 +1295,34 @@ function flightBlock(it) {
   </section>`;
 }
 function gameBlock(it) {
+  if (it.live) return gameBlockLive(it);
   const o = officialStore(it), sorted = [...it.stores].sort((a, b) => a.price - b.price), best = sorted[0];
-  const T = it.live ? { key: 'Revendedor autorizado', official: 'Tienda oficial' } : { key: 'Tienda de keys', official: 'Tienda oficial', retail: 'Tienda física' };
+  const T = { key: 'Tienda de keys', official: 'Tienda oficial', retail: 'Tienda física' };
   return `<section class="rounded-2xl bg-ink-800/70 border border-ink-600/80 overflow-hidden">
     <div class="px-4 pt-4 pb-2 flex flex-wrap items-center gap-2"><i data-lucide="key-round" class="w-4 h-4 text-mute"></i><h3 class="font-display font-bold text-[15px]">Keys frente a tienda oficial</h3>
       <span class="ml-auto flex flex-wrap gap-1.5 text-[12px]"><span class="rounded-md border border-ink-500 px-2 py-0.5">${esc(it.platform)}</span><span class="rounded-md border border-ink-500 px-2 py-0.5">${esc(it.format)}</span>${it.deck && it.deck !== 'No compatible' ? `<span class="rounded-md border border-good/30 text-good px-2 py-0.5 inline-flex items-center gap-1"><i data-lucide="circle-check" class="w-3.5 h-3.5"></i>Steam Deck: ${esc(it.deck)}</span>` : ''}</span></div>
     <div class="overflow-x-auto"><table class="w-full text-[13px] tnum min-w-[460px]"><thead><tr class="text-left text-mute border-b border-ink-600"><th class="font-medium px-4 py-2">Tienda</th><th class="font-medium px-4 py-2">Tipo</th><th class="font-medium px-4 py-2 text-right">Precio</th><th class="font-medium px-4 py-2 text-right">vs oficial</th><th class="px-4 py-2"></th></tr></thead>
     <tbody>${sorted.map(s => `<tr class="border-b border-ink-700 last:border-0 ${s === best ? 'bg-good/[.06]' : ''}"><td class="px-4 py-2.5 font-medium">${esc(s.name)} ${s === best ? '<span class="ml-1 text-[11px] text-good">mejor precio</span>' : ''}</td><td class="px-4 py-2.5 text-mute">${T[s.type]}</td><td class="px-4 py-2.5 text-right font-medium">${approx(s)}${eur(s.price)}</td><td class="px-4 py-2.5 text-right ${o && s.price < o.price ? 'text-good' : 'text-mute'}">${!o || s === o ? '—' : pct(s.price / o.price - 1)}</td><td class="px-4 py-2.5 text-right"><a href="${esc(offerUrl(it, s))}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-[12px] text-mute hover:text-fg">Abrir<i data-lucide="external-link" class="w-3.5 h-3.5"></i></a></td></tr>`).join('')}</tbody></table></div>
-    <p class="px-4 py-3 text-[12px] text-dim">${it.live ? `Fuentes: Steam España (precio exacto en euros) y CheapShark (tiendas de PC; sus precios vienen en dólares y se convierten con el cambio del BCE, por eso llevan ≈).${it.atlEver ? ` Mínimo histórico en CheapShark: ≈ ${eur(it.atlEver.p)} (${fmtDate(it.atlEver.t)}).` : ''} Última comprobación: ${it.lastCheck ? ago(it.lastCheck) : '—'}.${it.lastError ? ` <span class="text-bad">Último error: ${esc(it.lastError)}</span>` : ''}` : 'Fuentes: IsThereAnyDeal (tiendas oficiales) y CheapShark (keys). Las keys de terceros pueden tener restricción de región.'}</p>
+    <p class="px-4 py-3 text-[12px] text-dim">Fuentes: IsThereAnyDeal (tiendas oficiales) y CheapShark (keys). Las keys de terceros pueden tener restricción de región.</p>
+  </section>`;
+}
+// Ficha real: todas las tiendas vigiladas (con su estado) y el editor de enlaces.
+function gameBlockLive(it) {
+  const o = officialStore(it), best = bestStore(it);
+  const sorted = [...it.stores].sort((a, b) => (okStore(a) ? 0 : 1) - (okStore(b) ? 0 : 1) || (a.price || 1e9) - (b.price || 1e9));
+  const cell = s => s.error ? `<span class="text-bad" title="${esc(s.error)}">${s.stale ? `${eur(s.price)} <span class="text-[11px]">(antiguo)</span>` : 'sin precio'}</span>` : s.out ? '<span class="text-dim">sin stock</span>' : eur(s.price);
+  return `<section class="rounded-2xl bg-ink-800/70 border border-ink-600/80 overflow-hidden">
+    <div class="px-4 pt-4 pb-2 flex flex-wrap items-center gap-2"><i data-lucide="store" class="w-4 h-4 text-mute"></i><h3 class="font-display font-bold text-[15px]">Precio en cada tienda</h3>
+      <span class="ml-auto flex flex-wrap gap-1.5 text-[12px]"><span class="rounded-md border border-ink-500 px-2 py-0.5">${esc(it.platform)}</span>${it.deck && it.deck !== 'No compatible' ? `<span class="rounded-md border border-good/30 text-good px-2 py-0.5 inline-flex items-center gap-1"><i data-lucide="circle-check" class="w-3.5 h-3.5"></i>Steam Deck: ${esc(it.deck)}</span>` : ''}</span></div>
+    <div class="overflow-x-auto"><table class="w-full text-[13px] tnum min-w-[460px]"><thead><tr class="text-left text-mute border-b border-ink-600"><th class="font-medium px-4 py-2">Tienda</th><th class="font-medium px-4 py-2">Tipo</th><th class="font-medium px-4 py-2 text-right">Precio</th><th class="font-medium px-4 py-2 text-right">vs oficial</th><th class="px-4 py-2"></th></tr></thead>
+    <tbody>${sorted.map(s => `<tr class="border-b border-ink-700 last:border-0 ${s === best ? 'bg-good/[.06]' : ''}"><td class="px-4 py-2.5 font-medium">${esc(s.name)} ${s === best ? '<span class="ml-1 text-[11px] text-good">mejor precio</span>' : ''}${s.match && s.match.toLowerCase() !== it.title.toLowerCase() ? `<div class="text-[11px] text-dim font-normal truncate max-w-[220px]" title="${esc(s.match)}">${esc(s.match)}</div>` : ''}</td><td class="px-4 py-2.5 text-mute">${STORE_KIND[s.type] || 'Tienda'}</td><td class="px-4 py-2.5 text-right font-medium">${cell(s)}</td><td class="px-4 py-2.5 text-right ${o && okStore(s) && s.price < o.price ? 'text-good' : 'text-mute'}">${!o || s === o || !okStore(s) ? '—' : pct(s.price / o.price - 1)}</td><td class="px-4 py-2.5 text-right">${s.url ? `<a href="${esc(s.url)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-[12px] text-mute hover:text-fg">Abrir<i data-lucide="external-link" class="w-3.5 h-3.5"></i></a>` : ''}</td></tr>`).join('')}</tbody></table></div>
+    <p class="px-4 py-3 text-[12px] text-dim">Última comprobación: ${it.lastCheck ? ago(it.lastCheck) : '—'}.${it.lastError ? ` <span class="text-bad">Tiendas con problemas: ${esc(it.lastError)}</span>` : ''}</p>
+    <details class="border-t border-ink-600"><summary class="px-4 py-3 text-[13px] cursor-pointer select-none text-mute hover:text-fg">Cambiar las tiendas que vigilo</summary>
+      <form data-form="sources" data-id="${it.id}" class="px-4 pb-4 flex flex-col gap-2">
+        <label class="inline-flex items-center gap-2 text-[13px]"><input id="d-keys" type="checkbox" ${it.keys !== false ? 'checked' : ''}>Buscar en Instant Gaming y Eneba</label>
+        <label class="flex flex-col gap-1 text-[12px] text-mute">Enlaces de producto (uno por línea)<textarea id="d-links" rows="3" class="bg-ink-850 border border-ink-600 rounded-lg px-3 py-2 text-[12px] text-fg font-mono focus:outline-none focus:border-gold/70" placeholder="https://www.amazon.es/dp/…">${esc((it.links || []).join('\n'))}</textarea></label>
+        <div class="flex justify-end"><button class="rounded-xl border border-ink-500 px-3 py-1.5 text-[13px] hover:border-gold/60">Guardar y comprobar</button></div>
+      </form></details>
   </section>`;
 }
 function productBlock(it) {
@@ -1375,21 +1396,34 @@ function openNew(cat = nt.cat) {
 function newHtml() {
   const tabs = [['product', 'Producto', 'package'], ['game', 'Videojuego', 'gamepad-2'], ['flight', 'Vuelo', 'plane']];
   return `<div class="p-5 sm:p-6 flex flex-col gap-5">
-    <div class="flex items-start gap-3"><div><h2 class="font-display font-extrabold text-[24px] leading-tight">Nuevo tracker</h2><p class="text-[13px] text-mute mt-1">${LIVE.on && nt.cat === 'game' ? 'Escribe el nombre de un juego de PC o pega su enlace de Steam. Buscamos su precio real en ~30 tiendas.' : nt.cat === 'flight' ? 'Define la ruta y te avisamos cuando baje de tu precio.' : 'Pega un enlace y extraemos portada, título, precio y envío.'}</p></div><button data-action="close-modal" class="ml-auto w-9 h-9 grid place-items-center rounded-xl hover:bg-ink-700" aria-label="Cerrar"><i data-lucide="x" class="w-4 h-4"></i></button></div>
+    <div class="flex items-start gap-3"><div><h2 class="font-display font-extrabold text-[24px] leading-tight">Nuevo tracker</h2><p class="text-[13px] text-mute mt-1">${LIVE.on && nt.cat === 'game' ? 'Escribe el juego y su plataforma: lo buscamos en Instant Gaming y Eneba. Si quieres, pega también los enlaces de Amazon, MediaMarkt, GAME… y vigilamos esas fichas.' : nt.cat === 'flight' ? 'Define la ruta y te avisamos cuando baje de tu precio.' : 'Pega un enlace y extraemos portada, título, precio y envío.'}</p></div><button data-action="close-modal" class="ml-auto w-9 h-9 grid place-items-center rounded-xl hover:bg-ink-700" aria-label="Cerrar"><i data-lucide="x" class="w-4 h-4"></i></button></div>
     <div class="inline-flex self-start p-1 rounded-xl bg-ink-800 border border-ink-600" role="tablist">${tabs.map(([k, l, i]) => `<button role="tab" aria-selected="${nt.cat === k}" data-action="nt-cat" data-cat="${k}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] ${nt.cat === k ? 'bg-ink-600 text-fg' : 'text-mute hover:text-fg'}"><i data-lucide="${i}" class="w-4 h-4"></i>${l}</button>`).join('')}</div>
     <div id="nt-body">${LIVE.on && nt.cat !== 'game' ? soonHtml() : nt.cat === 'flight' ? flightForm() : urlForm()}</div>
   </div>`;
 }
 function soonHtml() {
-  return `<div class="rounded-2xl border border-ai/25 bg-ai/[.05] p-4 text-[13px] flex gap-3"><i data-lucide="construction" class="w-5 h-5 text-ai shrink-0"></i><div><div class="font-medium text-fg">${nt.cat === 'flight' ? 'Vuelos' : 'Productos'}: todavía sin fuente real</div><p class="text-mute mt-1">Por ahora el servidor rastrea precios reales de videojuegos de PC. ${nt.cat === 'flight' ? 'Los vuelos' : 'Amazon, PcComponentes, AliExpress y El Corte Inglés'} llegarán con su propio conector en una próxima fase.</p><button data-action="nt-cat" data-cat="game" class="mt-3 inline-flex items-center gap-1.5 rounded-xl border border-ink-500 px-3 py-1.5 text-[12px] text-fg hover:border-gold/60"><i data-lucide="gamepad-2" class="w-4 h-4"></i>Seguir un videojuego</button></div></div>`;
+  return `<div class="rounded-2xl border border-ai/25 bg-ai/[.05] p-4 text-[13px] flex gap-3"><i data-lucide="construction" class="w-5 h-5 text-ai shrink-0"></i><div><div class="font-medium text-fg">${nt.cat === 'flight' ? 'Vuelos' : 'Productos'}: todavía sin fuente real</div><p class="text-mute mt-1">Por ahora el servidor rastrea precios reales de videojuegos. ${nt.cat === 'flight' ? 'Los vuelos' : 'Amazon, PcComponentes, AliExpress y El Corte Inglés'} llegarán con su propio conector en una próxima fase.</p><button data-action="nt-cat" data-cat="game" class="mt-3 inline-flex items-center gap-1.5 rounded-xl border border-ink-500 px-3 py-1.5 text-[12px] text-fg hover:border-gold/60"><i data-lucide="gamepad-2" class="w-4 h-4"></i>Seguir un videojuego</button></div></div>`;
 }
-const LIVE_EXAMPLES = ['Hades II', "Baldur's Gate 3", 'Cyberpunk 2077', 'https://store.steampowered.com/app/1145350/Hades_II/'];
+const LIVE_EXAMPLES = ['Hades II', "Baldur's Gate 3", 'EA Sports FC 26'];
+const LIVE_PLATFORMS = ['PC', 'PS5', 'PS4', 'Switch', 'Xbox'];
+const liveSpec = () => ({ title: $('#nt-url').value.trim(), platform: $('#nt-plat').value, keys: $('#nt-keys').checked, links: $('#nt-links').value.split(/\s+/).filter(Boolean) });
+const STORE_KIND = { key: 'Tienda de keys', official: 'Tienda oficial', retail: 'Tienda' };
+// Una línea por tienda en la vista previa y en la ficha: precio, agotado o el motivo del fallo.
+function storeLine(x, best) {
+  const st = x.error ? `<span class="text-bad" title="${esc(x.error)}">${x.stale ? `${eur(x.price)} · antiguo` : 'sin precio'}</span>` : x.out ? '<span class="text-dim">sin stock</span>' : `<span class="${x === best ? 'text-good font-medium' : ''}">${eur(x.price)}</span>`;
+  return `<li class="flex justify-between gap-3"><span class="text-mute truncate">${esc(x.name)} <span class="text-dim">· ${STORE_KIND[x.type] || 'Tienda'}</span></span>${st}</li>${x.error ? `<li class="text-[11px] text-bad/80 -mt-0.5 mb-0.5 truncate" title="${esc(x.error)}">${esc(x.error)}</li>` : ''}`;
+}
 function urlForm() {
   if (LIVE.on) return `<form id="nt-fetch" class="flex flex-col gap-3">
-    <label for="nt-url" class="text-[13px] text-mute">Nombre del juego o enlace de Steam</label>
-    <div class="flex gap-2"><div class="relative flex-1 min-w-0"><i data-lucide="search" class="w-4 h-4 text-mute absolute left-3 top-1/2 -translate-y-1/2"></i><input id="nt-url" type="text" autocomplete="off" placeholder="Hades II  ·  https://store.steampowered.com/app/…" class="w-full bg-ink-800 border border-ink-600 rounded-xl pl-9 pr-3 py-2.5 text-[14px] placeholder:text-dim focus:outline-none focus:border-gold/70"></div>
-    <button class="shrink-0 inline-flex items-center gap-1.5 rounded-xl bg-gold text-ink-950 font-semibold px-4 text-[13px]" ${nt.busy ? 'disabled' : ''}><i data-lucide="search" class="w-4 h-4"></i>Buscar</button></div>
-    <div class="flex flex-wrap gap-1.5 items-center"><span class="text-[12px] text-dim">Prueba con:</span>${LIVE_EXAMPLES.map(u => `<button type="button" data-action="nt-example" data-url="${esc(u)}" class="text-[12px] rounded-md border border-ink-600 px-2 py-0.5 text-mute hover:text-fg max-w-[220px] truncate">${esc(u.startsWith('http') ? 'enlace de Steam' : u)}</button>`).join('')}</div>
+    <div class="grid grid-cols-[minmax(0,1fr)_110px] gap-2">
+      <label class="flex flex-col gap-1 text-[13px] text-mute">Nombre del juego<div class="relative"><i data-lucide="search" class="w-4 h-4 text-mute absolute left-3 top-1/2 -translate-y-1/2"></i><input id="nt-url" type="text" autocomplete="off" required placeholder="Hades II" class="w-full bg-ink-800 border border-ink-600 rounded-xl pl-9 pr-3 py-2.5 text-[14px] text-fg placeholder:text-dim focus:outline-none focus:border-gold/70"></div></label>
+      <label class="flex flex-col gap-1 text-[13px] text-mute">Plataforma<select id="nt-plat" class="bg-ink-800 border border-ink-600 rounded-xl px-3 py-2.5 text-[14px] text-fg">${LIVE_PLATFORMS.map(p => `<option>${p}</option>`).join('')}</select></label>
+    </div>
+    <label class="inline-flex items-center gap-2 text-[13px]"><input id="nt-keys" type="checkbox" checked>Buscar también en Instant Gaming y Eneba (keys)</label>
+    <label class="flex flex-col gap-1 text-[13px] text-mute">Enlaces de otras tiendas <span class="text-[12px] text-dim">(opcional, uno por línea: Amazon, MediaMarkt, Fnac, El Corte Inglés, GAME, Impact o cualquier tienda)</span>
+      <textarea id="nt-links" rows="3" placeholder="https://www.amazon.es/dp/…&#10;https://www.game.es/…" class="bg-ink-800 border border-ink-600 rounded-xl px-3 py-2 text-[13px] text-fg font-mono placeholder:text-dim focus:outline-none focus:border-gold/70"></textarea></label>
+    <div class="flex flex-wrap gap-2 items-center"><button class="inline-flex items-center gap-1.5 rounded-xl bg-gold text-ink-950 font-semibold px-4 py-2 text-[13px]" ${nt.busy ? 'disabled' : ''}><i data-lucide="search" class="w-4 h-4"></i>Buscar precios</button>
+    <span class="text-[12px] text-dim">Prueba con:</span>${LIVE_EXAMPLES.map(u => `<button type="button" data-action="nt-example" data-url="${esc(u)}" class="text-[12px] rounded-md border border-ink-600 px-2 py-0.5 text-mute hover:text-fg max-w-[220px] truncate">${esc(u)}</button>`).join('')}</div>
   </form>
   <div id="nt-progress" class="mt-4"></div>
   <div id="nt-preview" class="mt-4"></div>`;
@@ -1434,21 +1468,19 @@ function previewHtml(m) {
 }
 function previewLive(m) {
   const tgt = Math.max(0.01, round(m.price * .85));
-  const others = (m.candidates || []).filter(c => c.gameID !== m.gameID);
+  const best = m.stores.find(x => !x.error && !x.out && x.price === m.price && x.name === m.store);
   return `<form id="nt-create" class="rounded-2xl border border-ink-600 bg-ink-800/70 overflow-hidden fade-in">
     <div class="flex flex-col">
       ${m.image ? `<img src="${esc(m.image)}" alt="" referrerpolicy="no-referrer" class="w-full aspect-[460/215] max-h-52 object-cover bg-ink-850" onerror="this.remove()">` : ''}
       <div class="p-4 flex flex-col gap-3 min-w-0">
-        <div><div class="font-display font-bold text-[18px] leading-snug">${esc(m.title)}</div><div class="text-[13px] text-mute mt-0.5">PC · mejor precio ahora: <b class="text-fg tnum">${m.approx ? '≈ ' : ''}${eur(m.price)}</b> en ${esc(m.store)}${m.msrp ? ` · oficial ${eur(m.msrp)}` : ''}</div></div>
-        <ul class="text-[12px] flex flex-col gap-0.5 tnum">${m.stores.slice(0, 5).map(x => `<li class="flex justify-between gap-3"><span class="text-mute">${esc(x.name)}</span><span>${x.approx ? '≈ ' : ''}${eur(x.price)}</span></li>`).join('')}${m.stores.length > 5 ? `<li class="text-dim">y ${m.stores.length - 5} tiendas más</li>` : ''}</ul>
-        ${m.atlEver ? `<div class="text-[12px] text-mute">Mínimo histórico en CheapShark: <span class="text-gold">≈ ${eur(m.atlEver.p)}</span> (${fmtDate(m.atlEver.t)})</div>` : ''}
+        <div><div class="font-display font-bold text-[18px] leading-snug">${esc(m.title)}</div><div class="text-[13px] text-mute mt-0.5">${esc(m.platform)} · mejor precio ahora: <b class="text-fg tnum">${eur(m.price)}</b> en ${esc(m.store)}${m.msrp ? ` · PVP ${eur(m.msrp)}` : ''}</div></div>
+        <ul class="text-[12px] flex flex-col gap-0.5 tnum">${m.stores.map(x => storeLine(x, best)).join('')}</ul>
         <label class="flex flex-col gap-1 text-[12px] text-mute">Avísame cuando baje de (€)<input id="nt-target" type="number" step="0.01" min="0.01" required value="${tgt}" class="bg-ink-850 border border-gold/50 rounded-lg px-3 py-2 text-[14px] text-fg tnum"></label>
         <label class="inline-flex items-center gap-2 text-[13px]"><input id="nt-alert" type="checkbox" checked>Enviar alerta por mis canales al llegar al objetivo</label>
         <div class="flex justify-end gap-2 pt-1"><button type="button" data-action="close-modal" class="rounded-xl border border-ink-500 px-3 py-2 text-[13px]">Cancelar</button><button id="nt-submit" class="inline-flex items-center gap-1.5 rounded-xl bg-gold text-ink-950 font-semibold px-4 py-2 text-[13px]"><i data-lucide="radar" class="w-4 h-4"></i>Crear tracker</button></div>
       </div>
     </div>
-    ${others.length ? `<div class="px-4 py-2.5 border-t border-ink-600 flex flex-wrap gap-1.5 items-center"><span class="text-[12px] text-dim">¿No es este?</span>${others.map(c => `<button type="button" data-action="nt-pick" data-game="${esc(c.gameID)}" data-app="${esc(c.steamAppID || '')}" class="text-[12px] rounded-md border border-ink-600 px-2 py-0.5 text-mute hover:text-fg max-w-[240px] truncate">${esc(c.title)}</button>`).join('')}</div>` : ''}
-    <p class="px-4 py-2.5 border-t border-ink-600 text-[11px] text-dim">Datos reales de ${esc(m.src)}. CheapShark da los precios en dólares; se convierten a euros con el cambio del BCE y se marcan con ≈.</p>
+    <p class="px-4 py-2.5 border-t border-ink-600 text-[11px] text-dim">Comprueba que cada tienda ha encontrado el juego correcto (pasa el ratón por encima para ver el motivo de los fallos). Las keys de Instant Gaming y Eneba son de la región España/Europa o global.</p>
   </form>`;
 }
 async function createLive() {
@@ -1456,7 +1488,7 @@ async function createLive() {
   if (!(target > 0)) { toast({ tone: 'bad', icon: 'circle-alert', title: 'Falta el objetivo', body: 'Indica a qué precio quieres que te avise.' }); return; }
   btn.disabled = true;
   try {
-    const t = await api('POST', '/api/trackers', { cat: 'game', gameID: m.gameID, steamAppID: m.steamAppID, target, alert: $('#nt-alert').checked, url: /steampowered\.com/.test(m.url || '') ? m.url : undefined });
+    const t = await api('POST', '/api/trackers', { cat: 'game', ...nt.spec, previewId: m.previewId, target, alert: $('#nt-alert').checked });
     if (!state.trackers.some(x => x.id === t.id)) state.trackers.unshift(t);
     closeModal();
     toast({ tone: 'good', icon: 'radar', title: 'Tracker creado', body: `${esc(t.title)} · ${t.current <= t.target ? 'ya está por debajo de tu objetivo: te aviso ahora.' : 'el motor lo revisará en cada ciclo.'}`, actionLabel: 'Ver', action: () => openDrawer(t.id) });
@@ -1487,12 +1519,11 @@ function flightForm() {
 async function doFetch(url) {
   if (nt.busy) return; nt.busy = true;
   const prog = $('#nt-progress'), prev = $('#nt-preview'); prev.innerHTML = '';
-  const prevCands = typeof url === 'object' && nt.meta ? nt.meta.candidates : null;
+  if (LIVE.on) nt.spec = url;
   try {
     const m = await API.fetchMeta(url, (i, steps) => { prog.innerHTML = progressHtml(i, steps); icons(); });
     prog.innerHTML = progressHtml(99, ['Datos extraídos']); icons();
     if (m.cat !== nt.cat) { nt.cat = m.cat; $$('[data-action="nt-cat"]').forEach(b => { const on = b.dataset.cat === m.cat; b.setAttribute('aria-selected', on); b.className = `inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] ${on ? 'bg-ink-600 text-fg' : 'text-mute hover:text-fg'}`; }); }
-    if (prevCands) m.candidates = prevCands;
     nt.meta = m; prev.innerHTML = m.live ? previewLive(m) : previewHtml(m); icons();
     if (!m.live) log('info', 'fetch-meta', `${new URL(m.url).hostname} → «${m.title}» ${eur(m.price)} (+${eur(m.ship)} envío)`);
   } catch (e) {
@@ -1681,8 +1712,7 @@ document.addEventListener('click', async e => {
       break;
     }
     case 'nt-cat': nt.cat = el.dataset.cat; nt.meta = null; $('#modal .relative').innerHTML = newHtml(); icons(); break;
-    case 'nt-example': $('#nt-url').value = el.dataset.url; doFetch(el.dataset.url); break;
-    case 'nt-pick': doFetch({ gameID: el.dataset.game, steamAppID: el.dataset.app || null, candidates: [] }); break;
+    case 'nt-example': $('#nt-url').value = el.dataset.url; doFetch(LIVE.on ? liveSpec() : el.dataset.url); break;
     case 'nt-manual': nt.meta = { cat: nt.cat, manual: true, title: '', price: '', ship: 0, store: nt.cat === 'game' ? 'Steam' : 'Amazon', platform: 'PC · Steam' }; $('#nt-progress').innerHTML = ''; $('#nt-preview').innerHTML = previewHtml(nt.meta); icons(); break;
     case 'cmp-preset': cmp = { a: el.dataset.a, b: el.dataset.b }; if (state.trackers.find(t => t.id === cmp.a) && state.trackers.find(t => t.id === cmp.b)) refreshCompare(); break;
     case 'test-alert': {
@@ -1719,10 +1749,14 @@ document.addEventListener('input', e => {
 document.addEventListener('submit', e => {
   e.preventDefault();
   const f = e.target;
-  if (f.id === 'nt-fetch') doFetch($('#nt-url').value.trim());
+  if (f.id === 'nt-fetch') doFetch(LIVE.on ? liveSpec() : $('#nt-url').value.trim());
   if (f.id === 'nt-create') LIVE.on ? createLive() : createFromForm();
   if (f.id === 'nt-flight') createFlight();
   if (f.id === 'cp-form') { const i = $('#cp-input'); ask(i.value); i.value = ''; }
+  if (f.dataset.form === 'sources') {
+    const links = $('#d-links').value.split(/\s+/).filter(Boolean);
+    api('PATCH', `/api/trackers/${f.dataset.id}`, { links, keys: $('#d-keys').checked }).then(t => { LIVE.upsert(t); rerenderDrawer(); toast({ tone: 'good', icon: 'store', title: 'Tiendas guardadas', body: `${esc(t.title)} · comprobando precios…`, ms: 3000 }); }).catch(err => toast({ tone: 'bad', icon: 'circle-alert', title: 'No se pudo guardar', body: esc(err.message) }));
+  }
   if (f.dataset.form === 'target') {
     const it = state.trackers.find(t => t.id === f.dataset.id), v = +$('#d-target').value;
     if (LIVE.on && v > 0) { api('PATCH', `/api/trackers/${it.id}`, { target: v }).then(t => { LIVE.upsert(t); rerenderDrawer(); toast({ tone: 'good', icon: 'target', title: 'Objetivo actualizado', body: `${esc(t.title)} · ${money(t, t.target)}`, ms: 3000 }); }).catch(err => toast({ tone: 'bad', icon: 'circle-alert', title: 'No se pudo guardar', body: esc(err.message) })); }
@@ -1795,7 +1829,7 @@ window.addEventListener('hashchange', route);
 if (await LIVE.detect()) {
   LIVE.connect();
   $('#banner').remove();
-  $('#side-note').innerHTML = 'Precios reales de videojuegos de PC (CheapShark + Steam España). Productos y vuelos: próximas fases. IA con Gemini: Fase 3.';
+  $('#side-note').innerHTML = 'Precios reales de videojuegos en Instant Gaming, Eneba y las tiendas que enlaces (Amazon, MediaMarkt, GAME…). Productos y vuelos: próximas fases. IA con Gemini: Fase 3.';
   nt.cat = 'game';
   renderSoundBtn();
   setInterval(tickLive, 1000);

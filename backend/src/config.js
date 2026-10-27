@@ -32,9 +32,7 @@ export const config = {
   intervalMin: num(env.CHECK_INTERVAL_MIN, 60),
   openBrowser: env.OPEN_BROWSER === '1',
   // URLs base de las APIs externas (se pueden cambiar en los tests).
-  cheapsharkBase: env.CHEAPSHARK_BASE || 'https://www.cheapshark.com/api/1.0',
   steamStoreBase: env.STEAM_STORE_BASE || 'https://store.steampowered.com',
-  fxUrl: env.FX_URL || 'https://api.frankfurter.app/latest?from=USD&to=EUR',
   telegramBase: env.TELEGRAM_API_BASE || 'https://api.telegram.org',
   // Valores iniciales de los canales. Lo que guardes desde el dashboard tiene prioridad.
   telegram: { token: env.TELEGRAM_BOT_TOKEN || '', chatId: env.TELEGRAM_CHAT_ID || '' },

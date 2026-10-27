@@ -10,7 +10,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 const REFRESHERS = { game: games.refresh };
 
 export const engine = {
-  timer: null, nextAt: 0, busy: false,
+  timer: null, nextAt: 0, busy: false, pending: new Set(),
 
   status() {
     const db = get();
@@ -41,7 +41,12 @@ export const engine = {
   },
 
   async cycle(onlyId = null) {
-    if (this.busy) { log('warn', 'cron', 'ya hay un ciclo en marcha; se espera a que termine'); return; }
+    if (this.busy) {
+      // Una comprobación pedida desde el panel se hace en cuanto acabe el ciclo en marcha.
+      if (onlyId) this.pending.add(onlyId);
+      else log('warn', 'cron', 'ya hay un ciclo en marcha; se espera a que termine');
+      return;
+    }
     const db = get();
     const list = db.trackers.filter(t => (!onlyId || t.id === onlyId) && REFRESHERS[t.cat] && t.live);
     if (!list.length) { if (!onlyId) log('info', 'cron', 'no hay trackers con fuente real todavía'); return; }
@@ -60,6 +65,8 @@ export const engine = {
       this.busy = false;
       save();
       this.emitStatus();
+      const next = [...this.pending][0];
+      if (next) { this.pending.delete(next); setTimeout(() => this.cycle(next).catch(() => {}), 0); }
     }
   },
 

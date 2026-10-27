@@ -1,5 +1,5 @@
 // Tienda de Steam en España: precio real en euros, portada, valoraciones y compatibilidad con Steam Deck.
-// Son endpoints públicos de la web de Steam (sin clave); si alguno falla, el tracker sigue con CheapShark.
+// Son endpoints públicos de la web de Steam (sin clave); si alguno falla, el tracker sigue con las demás tiendas.
 import { config } from '../config.js';
 import { getJson } from '../http.js';
 
@@ -53,4 +53,10 @@ export async function deck(appId) {
     const r = await getJson(`${base()}/saleaction/ajaxgetdeckappcompatibilityreport?nAppID=${appId}`, { retries: 0 });
     return DECK[r?.results?.resolved_category] || null;
   } catch { return null; }
+}
+
+// Buscador de la tienda de Steam España (para juegos de PC escritos por nombre).
+export async function search(term) {
+  const r = await getJson(`${base()}/api/storesearch/?term=${encodeURIComponent(term)}&l=spanish&cc=ES`, { retries: 1 });
+  return (r?.items || []).filter(i => i.type === 'app').map(i => ({ id: String(i.id), name: i.name, image: i.tiny_image || null }));
 }

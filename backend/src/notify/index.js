@@ -18,21 +18,21 @@ function pastMin(it) {
 export const isAtl = it => { const m = pastMin(it); return m !== null && it.current <= m; };
 
 export function compose(it) {
-  const best = (it.stores || [])[0] || {};
+  // La tienda más barata con precio válido (sin error ni agotada).
+  const best = (it.stores || []).filter(s => s.price && !s.error && !s.out && !s.stale).sort((a, b) => a.price - b.price)[0] || {};
   const ref = refPrice(it);
   const disc = ref ? Math.round((1 - it.current / ref) * 100) : null;
   const atl = isAtl(it);
-  const approx = best.approx ? '≈ ' : '';
   return {
     title: it.title,
-    price: `${approx}${eur(it.current)}`,
+    price: eur(it.current),
     store: best.name || '—',
     discount: disc !== null && disc > 0 ? `−${disc} % vs precio oficial (${eur(ref)})` : null,
     target: eur(it.target),
     atl,
     url: best.url || it.url,
     image: it.image || null,
-    note: best.approx ? 'Precio convertido de USD con el cambio del día; en la tienda puede variar unos céntimos.' : null
+    note: best.type === 'key' ? 'Es una key digital de revendedor: comprueba la región y la plataforma antes de comprar.' : null
   };
 }
 
@@ -119,4 +119,4 @@ export async function dispatch(it, { reason = 'target' } = {}) {
 
 // Ejemplo para las pruebas cuando aún no hay trackers.
 export const SAMPLE = { id: 'sample', cat: 'game', title: 'Hades II (ejemplo)', current: 23.79, target: 25, msrp: 29.5, history: [{ t: 0, p: 29.5 }, { t: 1, p: 23.79 }],
-  image: 'https://cdn.cloudflare.steamstatic.com/steam/apps/1145350/header.jpg', url: 'https://store.steampowered.com/app/1145350/', stores: [{ name: 'Steam', price: 23.79, url: 'https://store.steampowered.com/app/1145350/', approx: false }] };
+  image: 'https://cdn.cloudflare.steamstatic.com/steam/apps/1145350/header.jpg', url: 'https://store.steampowered.com/app/1145350/', stores: [{ name: 'Steam', price: 23.79, url: 'https://store.steampowered.com/app/1145350/', type: 'official' }] };

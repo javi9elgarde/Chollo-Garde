@@ -7,12 +7,16 @@ Rastreador de precios de vuelos, videojuegos y productos con análisis de IA y a
 | Fase | Qué incluye | Estado |
 |---|---|---|
 | 1 · Frontend | Dashboard SPA (Tailwind, Lucide, Chart.js) | Hecha |
-| 2 · Backend | Servidor en tu PC, precios reales de videojuegos de PC, tiempo real y alertas por Telegram, Discord y correo | Hecha (juegos de PC) |
+| 2 · Backend | Servidor en tu PC, precios reales de videojuegos, tiempo real y alertas por Telegram, Discord y correo | Hecha (videojuegos) |
 | 3 · IA | Gemini para Deal Index, predicción de compra, reseñas, comparador y copiloto | Pendiente |
 
 **Qué es real y qué no, ahora mismo:**
 
-- **Videojuegos de PC: precios reales.** El precio de Steam es el de la tienda española, en euros. El resto de tiendas (GOG, Humble, Fanatical, Green Man Gaming, Epic… unas 30) vienen de CheapShark en dólares y se convierten a euros con el cambio del BCE; el panel las marca con «≈».
+- **Videojuegos (PC, PS5, PS4, Switch, Xbox): precios reales en euros.**
+  - **Instant Gaming y Eneba** (keys): escribes el nombre y la plataforma y el servidor busca la ficha correcta, descartando DLC, bandas sonoras y keys de otras regiones.
+  - **Cualquier otra tienda** (Amazon, MediaMarkt, Fnac, El Corte Inglés, GAME, Impact…): pegas el enlace del producto y se vigila esa ficha. Se leen los datos que las tiendas publican para Google (schema.org) y, en Amazon, su propia página.
+  - **Steam España** (solo PC): precio oficial de referencia, reseñas y compatibilidad con Steam Deck.
+  - Las tiendas con protección anti-bots (Amazon, MediaMarkt, Fnac, El Corte Inglés, Eneba) se abren con el **Edge** que ya tienes en Windows, en segundo plano. No hay que instalar nada más.
 - **Productos y vuelos:** todavía sin fuente real. En el panel aparecen como «próximamente».
 - **IA:** el Deal Index y la recomendación usan una heurística local sobre el histórico real. Gemini llega en la Fase 3.
 - **Demo:** si abres `frontend/index.html` directamente (sin servidor) ves la demo con 15 trackers de ejemplo y precios simulados.
@@ -74,8 +78,13 @@ frontend/index.html   Dashboard. Si lo sirve el backend, usa datos reales; si no
 backend/src/
   server.js           API REST + /api/stream (tiempo real) + sirve el dashboard
   engine.js           Motor: revisa los trackers cada X minutos y dispara las alertas
-  games.js            Vertical de videojuegos: CheapShark + Steam España
-  sources/            Conectores (cheapshark.js, steam.js, fx.js)
+  games.js            Vertical de videojuegos: junta todas las tiendas y elige el mejor precio
+  sources/
+    keyshops.js       Búsqueda en Instant Gaming y Eneba
+    web.js            Lector de fichas de producto de cualquier tienda
+    browser.js        Edge/Chrome en segundo plano para las tiendas protegidas
+    shops.js          Nombres y tipos de las tiendas conocidas
+    steam.js          Steam España
   notify/             Telegram, Discord y correo (SMTP)
   store.js            Base de datos en data/db.json
 windows/              Instalación y arranque automático
@@ -89,9 +98,9 @@ La alerta salta cuando `Precio_Actual <= Precio_Objetivo` y la alerta del tracke
 |---|---|---|
 | GET | `/api/state` | Trackers, alertas, ajustes (sin secretos), estado del motor, logs y fuentes |
 | GET | `/api/stream` | Server-Sent Events: `log`, `tracker`, `tracker-removed`, `alert`, `engine`, `settings` |
-| POST | `/api/fetch-meta` | `{ q }` o `{ url }` (enlace de Steam) → vista previa con precios reales |
-| POST | `/api/trackers` | `{ gameID, steamAppID, target, alert }` → crea el tracker |
-| PATCH | `/api/trackers/:id` | `{ target }` y/o `{ alert }` |
+| POST | `/api/fetch-meta` | `{ title, platform, keys, links }` → vista previa con el precio de cada tienda |
+| POST | `/api/trackers` | `{ previewId, target, alert }` (o los mismos campos de la vista previa) → crea el tracker |
+| PATCH | `/api/trackers/:id` | `{ target }`, `{ alert }`, `{ links }` y/o `{ keys }`. Cambiar tiendas lanza una comprobación |
 | DELETE | `/api/trackers/:id` | Borra el tracker |
 | POST | `/api/trackers/:id/scan` | Rastrea ese tracker ahora |
 | POST | `/api/engine` | `{ action: "start" \| "stop" \| "run" }` |
@@ -105,18 +114,19 @@ La alerta salta cuando `Precio_Actual <= Precio_Objetivo` y la alerta del tracke
 cd backend
 npm install
 npm start      # http://localhost:8787
-npm test       # pruebas de extremo a extremo con las APIs externas simuladas
+npm test       # pruebas de extremo a extremo con las tiendas y APIs simuladas
 ```
 
 ## Limitaciones conocidas
 
-- CheapShark solo cubre tiendas oficiales y revendedores autorizados de PC. **No** incluye Eneba, Instant Gaming ni CDKeys, ni consolas (PS Store, eShop, Xbox).
-- Los precios convertidos de dólares pueden diferir unos céntimos del precio que ves en la tienda en euros. El de Steam sí es exacto.
-- El histórico empieza el día que creas el tracker. Hasta entonces, el «mínimo histórico» que se usa es el de CheapShark (convertido a euros).
+- Las tiendas no tienen API: se leen sus páginas. Si una tienda cambia su web o pide un captcha, esa tienda sale como «sin precio» con el motivo, se conserva su último precio marcado como antiguo y el resto sigue funcionando. Se reintenta en el siguiente ciclo.
+- Si una tienda protegida falla a menudo, pon `BROWSER_VISIBLE=1` en `backend/.env`, reinicia y resuelve el captcha una vez en la ventana de Edge: las cookies se guardan en `data/navegador`.
+- Las keys de Instant Gaming y Eneba son de revendedores: revisa región y plataforma antes de comprar.
+- El histórico empieza el día que creas el tracker.
 
 ## Siguientes pasos
 
-- **IsThereAnyDeal** (clave gratuita): precios en euros de más tiendas, incluidas algunas de keys y consolas.
+- **PS Store, eShop y Xbox** como referencia oficial en consola.
 - **Productos:** Keepa para Amazon (de pago) y un scraper con navegador para PcComponentes, AliExpress y El Corte Inglés.
 - **Vuelos:** conector para Skyscanner, Google Flights o Kayak.
 - **Fase 3:** Gemini detrás de `/api/ai/:task`.

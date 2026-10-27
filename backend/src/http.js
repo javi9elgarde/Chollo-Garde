@@ -9,7 +9,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 // Estadísticas por host para la tabla «Fuentes» del dashboard.
 const hosts = new Map();
-function track(url, ok, ms) {
+export function track(url, ok, ms) {
   const h = new URL(url).hostname;
   const s = hosts.get(h) || { host: h, runs: 0, fails: 0, lat: 0, last: 0, status: 'ok' };
   s.runs++; if (!ok) s.fails++;
