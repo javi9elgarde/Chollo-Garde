@@ -96,7 +96,7 @@
         <div class="flex items-center gap-2 text-[13px] font-medium"><span id="side-dot" class="w-2 h-2 rounded-full bg-good live-dot"></span><span id="side-engine">Motor 24/7 activo</span></div>
         <div class="text-[12px] text-mute mt-1.5 tnum" id="side-next">Próximo ciclo en —</div>
       </div>
-      <p class="text-[11px] text-dim mt-3 leading-snug">Fase 1 · datos simulados. Scrapers (Fase 2) y Gemini (Fase 3) se conectan en <span class="font-mono">CG.api</span> y <span class="font-mono">CG.ai</span>.</p>
+      <p id="side-note" class="text-[11px] text-dim mt-3 leading-snug">Demo · datos simulados. Scrapers (Fase 2) y Gemini (Fase 3) se conectan en <span class="font-mono">CG.api</span> y <span class="font-mono">CG.ai</span>.</p>
     </div>
   </aside>
 
@@ -122,7 +122,7 @@
       </div>
       <nav id="mobile-nav" class="lg:hidden gutter pb-2.5 flex gap-1.5 overflow-x-auto no-scrollbar" aria-label="Secciones"></nav>
     </header>
-    <div class="gutter py-2 bg-warn/10 border-b border-warn/30 text-[12px] sm:text-[13px] text-warn flex items-center gap-2"><i data-lucide="flask-conical" class="w-4 h-4 shrink-0"></i><span><b>Precios de ejemplo, no reales.</b> Esta es la Fase 1 (solo interfaz): ningún precio se lee todavía de las tiendas. Los precios reales llegan con los scrapers de la Fase 2.</span></div>
+    <div id="banner" class="gutter py-2 bg-warn/10 border-b border-warn/30 text-[12px] sm:text-[13px] text-warn flex items-center gap-2"><i data-lucide="flask-conical" class="w-4 h-4 shrink-0"></i><span><b>Precios de ejemplo, no reales.</b> Has abierto el archivo directamente, así que ves la demo. Para precios reales arranca el servidor (<span class="font-mono">backend</span> → <span class="font-mono">npm start</span>) y abre <span class="font-mono">http://localhost:8787</span>.</span></div>
     <main id="main" class="gutter pt-6 pb-28"></main>
   </div>
 </div>
@@ -355,7 +355,7 @@ function syncBest(it) {
 }
 const bestSeller = it => [...it.sellers].sort((a, b) => (a.price + a.ship) - (b.price + b.ship))[0];
 const bestStore = it => [...it.stores].sort((a, b) => a.price - b.price)[0];
-const officialStore = it => it.stores.find(s => s.type === 'official');
+const officialStore = it => it.stores.find(s => s.type === 'official') || null;
 // Fase 1: sin scraper no hay URL exacta de cada ficha, así que se abre la búsqueda en la tienda
 // salvo que el tracker o el vendedor tengan URL propia. En Fase 2 el scraper guarda la URL real.
 const bestOf = it => it.cat === 'product' ? bestSeller(it) : bestStore(it);
@@ -367,13 +367,18 @@ function buyUrl(it) {
 const isSearch = it => it.cat !== 'flight' && !bestOf(it).url && !(it.userUrl && bestOf(it).name === it.fetchedFrom);
 const buyStore = it => it.cat === 'flight' ? 'Skyscanner' : it.cat === 'product' ? bestSeller(it).name : bestStore(it).name;
 const refPrice = it => it.cat === 'product' ? it.pvp : it.cat === 'game' ? it.msrp : it.routeAvg;
-const prevMin = it => Math.min(...it.history.slice(0, -1).map(h => h.p));
-const isATL = it => it.current <= prevMin(it);
+// Puntos anteriores al precio actual (+ el mínimo histórico de CheapShark en trackers reales).
+const pastPts = it => { const p = it.history.slice(0, -1); if (it.atlEver) p.push(it.atlEver); return p; };
+const prevMin = it => { const p = pastPts(it); return p.length ? Math.min(...p.map(h => h.p)) : it.current; };
+const isATL = it => pastPts(it).length > 0 && it.current <= prevMin(it);
+const rating = it => it.reviews && it.reviews.rating != null ? it.reviews.rating : null;
+const firstPro = (it, k = 'pros') => ((it.reviews || {})[k] || [])[0];
 function subtitle(it) {
   if (it.cat === 'flight') return `${it.origin} → ${it.dest} · ${fmtDate(it.depart)}${it.ret ? ' – ' + fmtDate(it.ret) : ' · solo ida'} · ${it.stops ? it.stops + ' escala' + (it.stops > 1 ? 's' : '') : 'directo'} · ${it.airline}`;
   if (it.cat === 'game') return `${it.platform} · ${it.format} · mejor en ${bestStore(it).name}`;
   return `${it.category} · mejor en ${bestSeller(it).name}`;
 }
+const approx = s => s && s.approx ? '≈ ' : '';
 const durTxt = m => `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, '0')} min`;
 
 /* =====================================================================
@@ -401,22 +406,24 @@ const AI = {
 
   analyze(it) {
     const ps = it.history.map(h => h.p), cur = it.current;
-    const atl = prevMin(it), atlPoint = it.history.slice(0, -1).reduce((a, h) => h.p < a.p ? h : a);
+    const past = pastPts(it), atl = prevMin(it), atlPoint = past.length ? past.reduce((a, h) => h.p < a.p ? h : a) : it.history.at(-1);
     const baseline = median(ps.slice(0, Math.max(10, ps.length - 30)));
     const recent = ps.slice(-21, -1);
     const spike = Math.max(...recent) / baseline;
     const ref = refPrice(it);
     const discount = 1 - cur / ref;
     const vsMedian = cur / baseline - 1;
-    const atlNow = cur <= atl;
+    const atlNow = past.length > 0 && cur <= atl;
     const inflated = spike > 1.15 && vsMedian > -.05;
     let score = 45 + Math.min(discount, .5) * 90 - Math.max(0, vsMedian) * 120 + (atlNow ? 18 : 0) - (inflated ? 25 : 0) + (cur <= it.target ? 6 : 0);
     score = Math.round(clamp(score, 1, 99));
     const verdict = inflated ? 'INFLADO' : (atlNow || score >= 72 || cur <= atl * 1.03) ? 'COMPRAR' : 'ESPERAR';
     const conf = clamp(.62 + Math.abs(score - 55) / 120 + (atlNow ? .08 : 0), .55, .95);
     const reasons = [];
-    if (atlNow) reasons.push(`Iguala o mejora el mínimo histórico registrado (${money(it, atl)} el ${fmtDate(atlPoint.t)}).`);
-    else reasons.push(`Está a ${money(it, cur - atl)} (${pct(cur / atl - 1)}) del mínimo de 90 días: ${money(it, atl)} el ${fmtDate(atlPoint.t)}.`);
+    const atlSrc = atlPoint.src ? ` (${atlPoint.src}, convertido a euros)` : '';
+    if (!past.length) reasons.push('Recién añadido: todavía no hay histórico propio. Se irá llenando con cada ciclo del motor.');
+    else if (atlNow) reasons.push(`Iguala o mejora el mínimo histórico registrado (${money(it, atl)} el ${fmtDate(atlPoint.t)}${atlSrc}).`);
+    else reasons.push(`Está a ${money(it, cur - atl)} (${pct(cur / atl - 1)}) del mínimo ${it.live ? 'registrado' : 'de 90 días'}: ${money(it, atl)} el ${fmtDate(atlPoint.t)}${atlSrc}.`);
     if (it.cat === 'product') reasons.push(`Descuento real sobre el PVP recomendado (${money(it, ref)}): ${pct(-discount)}.`);
     if (it.cat === 'game') reasons.push(`Frente al precio oficial de lanzamiento (${money(it, ref)}): ${pct(-discount)}.`);
     if (it.cat === 'flight') reasons.push(`Frente al promedio de la ruta (${money(it, ref)}): ${pct(-discount)}.`);
@@ -469,10 +476,11 @@ const AI = {
       row('Plataforma', a.platform, b.platform, '');
       row('Formato', a.format, b.format, '');
       row('Steam Deck', a.deck || '—', b.deck || '—', '');
-      row('Valoración', a.reviews.rating + ' / 5', b.reviews.rating + ' / 5', a.reviews.rating > b.reviews.rating ? 'a' : 'b');
+      row('Valoración', rating(a) != null ? rating(a) + ' / 5' : '—', rating(b) != null ? rating(b) + ' / 5' : '—', rating(a) == null || rating(b) == null || rating(a) === rating(b) ? '' : rating(a) > rating(b) ? 'a' : 'b');
       row('Duración', (a.specs || {}).Duración || '—', (b.specs || {}).Duración || '—', '');
       const best = A.score >= B.score ? a : b;
-      verdict = `${best.title} es mejor chollo ahora mismo (Deal Index ${Math.max(A.score, B.score)}). Precio por hora de juego estimado: ${a.title} ~${eur(a.current / (parseInt((a.specs || {}).Duración) || 30))}/h, ${b.title} ~${eur(b.current / (parseInt((b.specs || {}).Duración) || 30))}/h.`;
+      const ha = parseInt((a.specs || {}).Duración), hb = parseInt((b.specs || {}).Duración);
+      verdict = `${best.title} es mejor chollo ahora mismo (Deal Index ${Math.max(A.score, B.score)}).${ha && hb ? ` Precio por hora de juego estimado: ${a.title} ~${eur(a.current / ha)}/h, ${b.title} ~${eur(b.current / hb)}/h.` : ''}`;
     } else {
       verdict = 'Son de categorías distintas: solo se comparan precio, Deal Index y recomendación. Para un 1v1 completo elige dos del mismo tipo.';
     }
@@ -482,6 +490,7 @@ const AI = {
   chat(q, ctx) {
     const s = q.toLowerCase();
     const items = state.trackers;
+    if (!items.length) return 'Aún no sigues ningún tracker. Crea uno con «Nuevo tracker» y te contesto con sus datos.';
     const STOP = new Set(['steam', 'edition', 'ultimate', 'nvme', 'ryzen', 'extreme', 'cancelación', 'ruido']);
     const words = x => (x.kw || []).concat(x.title.toLowerCase().split(/[^a-z0-9áéíóúñ']+/).filter(w => w.length >= 4 && !STOP.has(w)));
     const hit = w => new RegExp(`(^|[^a-z0-9])${w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}([^a-z0-9]|$)`).test(s);
@@ -505,7 +514,7 @@ const AI = {
     }
     if (/vale la pena|merece|compensa|pagar|más caro|diferencia/.test(s)) {
       const alt = items.filter(x => x.cat === it.cat && x.id !== it.id && (it.cat !== 'product' || x.category === it.category))[0];
-      if (!alt) return `Para **${it.title}** no tengo una alternativa en tus trackers con la que comparar. Por calidad-precio: Deal Index ${a.score}/100 y valoración ${it.reviews.rating}/5. ${a.verdict === 'COMPRAR' ? 'A este precio sí compensa.' : 'A este precio aún no compensa; espera a tu objetivo de ' + money(it, it.target) + '.'}`;
+      if (!alt) return `Para **${it.title}** no tengo una alternativa en tus trackers con la que comparar. Por calidad-precio: Deal Index ${a.score}/100${rating(it) != null ? ` y valoración ${rating(it)}/5` : ''}. ${a.verdict === 'COMPRAR' ? 'A este precio sí compensa.' : 'A este precio aún no compensa; espera a tu objetivo de ' + money(it, it.target) + '.'}`;
       return `${this.compare(it, alt).verdict}`;
     }
     if (/inflad|real|fiable|trampa|falso|truco/.test(s)) {
@@ -514,7 +523,7 @@ const AI = {
     if (it.cat === 'flight' && /escala|equipaje|maleta|directo|aerol/.test(s)) {
       return `${it.title} con ${it.airline}: ${it.stops ? `${it.stops} escala en ${it.via}` : 'vuelo directo'}, ${durTxt(it.durMin)}. Maleta facturada ${it.baggage.hold ? 'incluida' : `no incluida (+${eur(it.baggage.holdFee, 0)})`}. Precio total con maleta: ${eur(it.current + (it.baggage.hold ? 0 : it.baggage.holdFee), 0)}.`;
     }
-    return `**${it.title}** · ${money(it)} en ${buyStore(it)}. Deal Index ${a.score}/100 → **${VERD[a.verdict].label}**.\n${a.reasons.slice(0, 2).join(' ')}\nLo mejor según los usuarios: ${it.reviews.pros[0].toLowerCase()}. Lo peor: ${it.reviews.cons[0].toLowerCase()}.`;
+    return `**${it.title}** · ${money(it)} en ${buyStore(it)}. Deal Index ${a.score}/100 → **${VERD[a.verdict].label}**.\n${a.reasons.slice(0, 2).join(' ')}${firstPro(it) ? `\nLo mejor según los usuarios: ${firstPro(it).toLowerCase()}. Lo peor: ${firstPro(it, 'cons').toLowerCase()}.` : rating(it) != null ? `\nValoración en ${it.reviews.src}: ${rating(it)}/5.` : ''}`;
   }
 };
 const VERD = {
@@ -543,7 +552,12 @@ const API = {
     { re: /cdkeys\./, cat: 'game', store: 'CDKeys', platform: 'PC · Steam', src: 'CheapShark API' }
   ],
   async fetchMeta(raw, onStep) {
-    if (this.mode === 'live') return (await fetch('/api/fetch-meta', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url: raw }) })).json();
+    if (this.mode === 'live') {
+      const steps = ['Consultando CheapShark y Steam España'];
+      onStep && onStep(0, steps);
+      const isUrl = /^(https?:\/\/|www\.)|\.[a-z]{2,}\//i.test(raw.trim());
+      return api('POST', '/api/fetch-meta', typeof raw === 'object' ? raw : isUrl ? { url: raw.trim() } : { q: raw.trim() });
+    }
     let u;
     try { u = new URL(/^https?:\/\//i.test(raw) ? raw : 'https://' + raw); } catch { throw new Error('Esa dirección no es una URL válida. Pega el enlace completo de la tienda.'); }
     const d = this.DOMAINS.find(x => x.re.test(u.hostname));
@@ -583,7 +597,7 @@ const Sound = {
 const Notify = {
   telegramPayload(it) {
     const a = AI.analyze(it);
-    return { method: 'sendPhoto', chat_id: state.settings.telegram.chatId || '<chat_id>', photo: `https://cdn.chollogarde.app/covers/${it.id}.jpg`, parse_mode: 'HTML',
+    return { method: 'sendPhoto', chat_id: state.settings.telegram.chatId || '<chat_id>', photo: it.image || `https://cdn.chollogarde.app/covers/${it.id}.jpg`, parse_mode: 'HTML',
       caption: `🔥 <b>${it.title}</b>\n${money(it)} en ${buyStore(it)} (${pct(-a.discount)} vs ${it.cat === 'flight' ? 'media de la ruta' : 'PVP'})\nObjetivo: ${money(it, it.target)} · Deal Index ${a.score}/100${a.atlNow ? '\n🏆 Mínimo histórico' : ''}`,
       reply_markup: { inline_keyboard: [[{ text: '🛒 Comprar ahora', url: buyUrl(it) }]] } };
   },
@@ -627,7 +641,7 @@ function load() {
   return d;
 }
 let saveT;
-function save() { clearTimeout(saveT); saveT = setTimeout(() => { try { localStorage.setItem(STORE_KEY, JSON.stringify({ trackers: state.trackers, alerts: state.alerts, settings: state.settings })); } catch {} }, 400); }
+function save() { if (LIVE.on) return; clearTimeout(saveT); saveT = setTimeout(() => { try { localStorage.setItem(STORE_KEY, JSON.stringify({ trackers: state.trackers, alerts: state.alerts, settings: state.settings })); } catch {} }, 400); }
 const ui = { view: 'dashboard', cat: 'all', sort: 'deal', onlyAtl: false, q: '', openId: null, logFilter: 'all', cpCtx: null, chart: null };
 const logs = [];
 function log(level, src, msg, t = Date.now()) {
@@ -703,6 +717,81 @@ const engine = { timer: null, cycles: 0, requests: 0, nextAt: 0,
   }
 };
 
+/* =====================================================================
+   Modo real (Fase 2). Si la página la sirve el backend (npm start →
+   http://localhost:8787), los trackers, el motor, los logs y las alertas
+   vienen del servidor y se actualizan en tiempo real por /api/stream.
+   Abriendo el .html directamente sigue funcionando la demo simulada.
+   ===================================================================== */
+async function api(method, path, body) {
+  const r = await fetch(path, { method, headers: body ? { 'Content-Type': 'application/json' } : {}, body: body ? JSON.stringify(body) : undefined });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || `El servidor respondió ${r.status}`);
+  return j;
+}
+const LIVE = { on: false, es: null, connected: false,
+  async detect() {
+    if (!/^https?:$/.test(location.protocol)) return false;
+    try { const r = await fetch('/api/state', { cache: 'no-store' }); if (!r.ok) return false; this.apply(await r.json()); return true; } catch { return false; }
+  },
+  apply(s) {
+    if (!this.on) Object.assign(engine, liveEngine);
+    this.on = true; API.mode = 'live';
+    state = { trackers: s.trackers, alerts: s.alerts, settings: s.settings };
+    logs.length = 0; s.logs.forEach(l => logs.push(l));
+    this.sources(s.sources);
+    engine.apply(s.engine);
+  },
+  sources(list) { SOURCES.splice(0, SOURCES.length, ...list); },
+  connect() {
+    if (this.es) this.es.close();
+    const es = this.es = new EventSource('/api/stream');
+    const on = (type, fn) => es.addEventListener(type, e => { try { fn(JSON.parse(e.data)); } catch (err) { console.error(err); } });
+    es.onopen = async () => {
+      const was = this.connected; this.connected = true; renderEngineStatus();
+      if (was === 'lost') { try { this.apply(await api('GET', '/api/state')); render(); log('ok', 'stream', 'reconectado con el servidor'); } catch {} }
+    };
+    es.onerror = () => { if (this.connected === true) { this.connected = 'lost'; renderEngineStatus(); } };
+    on('log', l => log(l.level, l.src, l.msg, l.t));
+    on('engine', st => { engine.apply(st); if (ui.view === 'motor') { const b = $('#src-body'); if (b) api('GET', '/api/sources').then(x => { this.sources(x); b.innerHTML = srcRows(); }).catch(() => {}); } });
+    on('tracker', t => this.upsert(t));
+    on('tracker-removed', ({ id }) => { const had = state.trackers.some(t => t.id === id); state.trackers = state.trackers.filter(t => t.id !== id); if (ui.openId === id) closeDrawer(); if (had) render(); });
+    on('alert', al => this.alert(al));
+    on('settings', st => { state.settings = st; renderSoundBtn(); });
+  },
+  upsert(t) {
+    const i = state.trackers.findIndex(x => x.id === t.id);
+    if (i < 0) { state.trackers.unshift(t); render(); return; }
+    const old = state.trackers[i], wasAtl = isATL(old);
+    if (t.current !== old.current) t.flash = { t: Date.now(), dir: t.current < old.current ? -1 : 1 };
+    state.trackers[i] = t;
+    if (ui.cpCtx && ui.cpCtx.id === t.id) ui.cpCtx = t;
+    if (!wasAtl && isATL(t) && t.current < old.current && !(t.alert && t.current <= t.target)) { toast({ tone: 'gold', icon: 'trophy', title: 'Nuevo mínimo histórico', body: `${esc(t.title)} · <b class="text-fg">${money(t)}</b>`, actionLabel: 'Ver', action: () => openDrawer(t.id) }); if (state.settings.sound) Sound.coin(); }
+    refresh();
+    if (ui.openId === t.id && !$('#drawer :focus')) rerenderDrawer();
+  },
+  alert(al) {
+    state.alerts.unshift(al); state.alerts = state.alerts.slice(0, 200);
+    const it = state.trackers.find(t => t.id === al.itemId);
+    if (state.settings.sound) { Sound.radar(); setTimeout(() => Sound.coin(), 780); }
+    const failed = ['telegram', 'discord', 'email'].filter(ch => String(al.channels[ch] || '').startsWith('error'));
+    toast({ tone: 'gold', icon: al.atl ? 'trophy' : 'bell-ring', title: al.reason === 'test' ? 'Alerta de prueba enviada' : al.atl ? '¡Mínimo histórico!' : 'Precio objetivo alcanzado',
+      body: `${esc(al.title)} · <b class="text-fg">${eur(al.price)}</b> (objetivo ${eur(al.target)})${failed.length ? `<br><span class="text-bad">Falló: ${failed.map(ch => CH_LABEL[ch]).join(', ')}. Revisa Notificaciones.</span>` : ''}`,
+      actionLabel: it ? 'Ver' : null, action: () => it && openDrawer(it.id) });
+    renderBadge(); if (ui.view === 'alertas') render(); else if (['dashboard', 'vuelos', 'juegos', 'productos'].includes(ui.view)) render();
+  }
+};
+const CH_LABEL = { web: 'Web', telegram: 'Telegram', discord: 'Discord', email: 'Correo' };
+// En modo real el motor vive en el servidor: estos métodos sustituyen a la simulación.
+const liveEngine = {
+  apply(st) { this.timer = st.running ? 'server' : null; this.busy = st.busy; this.cycles = st.cycles; this.requests = st.requests; this.nextAt = st.nextAt || 0; this.intervalMin = st.intervalMin;
+    renderEngineStatus(); $$('[data-live="cycles"]').forEach(e => e.textContent = this.cycles); $$('[data-live="reqs"]').forEach(e => e.textContent = this.requests); tickLive(); },
+  start() { api('POST', '/api/engine', { action: 'start' }).then(st => this.apply(st)).catch(e => toast({ tone: 'bad', icon: 'circle-alert', title: 'No se pudo reanudar', body: esc(e.message) })); },
+  stop() { api('POST', '/api/engine', { action: 'stop' }).then(st => this.apply(st)).catch(e => toast({ tone: 'bad', icon: 'circle-alert', title: 'No se pudo pausar', body: esc(e.message) })); },
+  tick(id) { (id ? api('POST', `/api/trackers/${id}/scan`) : api('POST', '/api/engine', { action: 'run' })).catch(e => toast({ tone: 'bad', icon: 'circle-alert', title: 'No se pudo rastrear', body: esc(e.message) })); },
+  setPrice() {}
+};
+
 // ---------- piezas visuales ----------
 function art(it, cls = 'h-28', big = false) {
   const [h0, h1] = CAT[it.cat].hue; const h = h0 + hash(it.id) % (h1 - h0);
@@ -711,10 +800,12 @@ function art(it, cls = 'h-28', big = false) {
   if (it.cat === 'flight') inner = `<div class="font-mono ${big ? 'text-4xl' : 'text-2xl'} font-medium tracking-wider text-white/95 flex items-center gap-3">${esc(it.origin)}<i data-lucide="plane" class="${big ? 'w-7 h-7' : 'w-5 h-5'} opacity-80"></i>${esc(it.dest)}</div>`;
   else if (it.cat === 'game') { const ini = it.title.replace(/[^A-Za-zÀ-ÿ0-9 ]/g, '').split(/\s+/).filter(w => w.length > 1 && !/^(the|of|de|la|el)$/i.test(w)).slice(0, 2).map(w => w[0]).join('').toUpperCase(); inner = `<div class="font-display ${big ? 'text-6xl' : 'text-4xl'} font-extrabold text-white/90 tracking-tight">${esc(ini)}</div>`; }
   else inner = `<div class="flex items-center gap-3 text-white/90"><i data-lucide="${esc(it.icon || 'package')}" class="${big ? 'w-12 h-12' : 'w-9 h-9'}"></i><span class="font-display ${big ? 'text-3xl' : 'text-xl'} font-bold tracking-tight">${esc(it.brand || it.title.split(' ')[0])}</span></div>`;
+  if (it.image) inner = `<img src="${esc(it.image)}" alt="" loading="lazy" referrerpolicy="no-referrer" class="absolute inset-0 w-full h-full object-cover" onerror="this.remove()">`;
   return `<div class="art relative ${cls} overflow-hidden grid place-items-center" style="${bg}">${inner}</div>`;
 }
 function spark(it, w = 116, h = 38) {
   const pts = it.history.slice(-30).map(x => x.p);
+  if (pts.length < 2) pts.unshift(pts[0]); // tracker recién creado: línea plana
   const mn = Math.min(...pts), mx = Math.max(...pts), rg = mx - mn || 1;
   const xy = pts.map((p, i) => [round(i / (pts.length - 1) * (w - 6) + 3, 1), round(h - 4 - (p - mn) / rg * (h - 8), 1)]);
   const d = xy.map((p, i) => (i ? 'L' : 'M') + p.join(' ')).join(' ');
@@ -763,7 +854,7 @@ function card(it) {
         </div>
         ${spark(it)}
       </div>
-      <div class="flex flex-wrap items-center gap-1.5">${dealChip(a)}${verdPill(a)}${coupons ? `<span class="inline-flex items-center gap-1 rounded-md border border-ink-500 px-2 py-0.5 text-[12px] text-fg"><i data-lucide="ticket" class="w-3.5 h-3.5 text-gold"></i>${coupons} cupón${coupons > 1 ? 'es' : ''}</span>` : ''}${it.cat === 'game' && it.deck ? `<span class="inline-flex items-center gap-1 rounded-md border border-ink-500 px-2 py-0.5 text-[12px] text-mute"><i data-lucide="circle-check" class="w-3.5 h-3.5 text-good"></i>Deck</span>` : ''}${it.cat === 'flight' ? `<span class="inline-flex items-center gap-1 rounded-md border border-ink-500 px-2 py-0.5 text-[12px] text-mute"><i data-lucide="luggage" class="w-3.5 h-3.5"></i>${it.baggage.hold ? 'Maleta incl.' : 'Solo mano'}</span>` : ''}</div>
+      <div class="flex flex-wrap items-center gap-1.5">${dealChip(a)}${verdPill(a)}${coupons ? `<span class="inline-flex items-center gap-1 rounded-md border border-ink-500 px-2 py-0.5 text-[12px] text-fg"><i data-lucide="ticket" class="w-3.5 h-3.5 text-gold"></i>${coupons} cupón${coupons > 1 ? 'es' : ''}</span>` : ''}${it.cat === 'game' && it.deck && it.deck !== 'No compatible' ? `<span class="inline-flex items-center gap-1 rounded-md border border-ink-500 px-2 py-0.5 text-[12px] text-mute"><i data-lucide="circle-check" class="w-3.5 h-3.5 text-good"></i>Deck</span>` : ''}${it.cat === 'flight' ? `<span class="inline-flex items-center gap-1 rounded-md border border-ink-500 px-2 py-0.5 text-[12px] text-mute"><i data-lucide="luggage" class="w-3.5 h-3.5"></i>${it.baggage.hold ? 'Maleta incl.' : 'Solo mano'}</span>` : ''}</div>
       <div class="mt-auto">
         <div class="flex justify-between text-[12px] tnum"><span class="${reached ? 'text-good font-medium' : 'text-mute'}">${reached ? 'Objetivo alcanzado' : `Faltan ${money(it, gap)}`}</span><span class="text-dim">objetivo ${money(it, it.target)}</span></div>
         <div class="h-1.5 rounded-full bg-ink-700 mt-1.5 overflow-hidden"><div class="h-full rounded-full ${reached ? 'bg-good' : 'bg-gold'}" style="width:${prog}%"></div></div>
@@ -796,9 +887,9 @@ function renderBadge() {
   b.hidden = !n; b.textContent = n;
 }
 function renderEngineStatus() {
-  const on = !!engine.timer;
-  $('#side-dot').className = `w-2 h-2 rounded-full ${on ? 'bg-good live-dot' : 'bg-dim'}`;
-  $('#side-engine').textContent = on ? 'Motor 24/7 activo' : 'Motor en pausa';
+  const on = !!engine.timer, lost = LIVE.on && LIVE.connected === 'lost';
+  $('#side-dot').className = `w-2 h-2 rounded-full ${lost ? 'bg-bad' : on ? 'bg-good live-dot' : 'bg-dim'}`;
+  $('#side-engine').textContent = lost ? 'Sin conexión con el servidor' : engine.busy ? 'Rastreando ahora…' : on ? (LIVE.on ? 'Motor activo en tu PC' : 'Motor 24/7 activo') : 'Motor en pausa';
 }
 
 function filtered(catOverride) {
@@ -821,6 +912,7 @@ function toolbar(showCats) {
   </div>`;
 }
 function grid(list) {
+  if (!state.trackers.length) return `<div class="rounded-2xl border border-dashed border-ink-500 p-10 text-center text-mute"><i data-lucide="radar" class="w-8 h-8 mx-auto mb-3 text-gold"></i><p class="text-fg font-medium">Aún no sigues ningún precio.</p><p class="text-[13px] mt-1 max-w-md mx-auto">Pulsa «Nuevo tracker», escribe el nombre de un juego de PC o pega su enlace de Steam, y pon tu precio objetivo. El motor lo revisará solo y te avisará por Telegram, Discord o correo.</p><button data-action="new" class="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-gold text-ink-950 font-semibold px-4 py-2 text-[13px]"><i data-lucide="plus" class="w-4 h-4"></i>Nuevo tracker</button></div>`;
   if (!list.length) return `<div class="rounded-2xl border border-dashed border-ink-500 p-10 text-center text-mute"><i data-lucide="search-x" class="w-8 h-8 mx-auto mb-3 text-dim"></i><p class="text-fg font-medium">No hay trackers con estos filtros.</p><p class="text-[13px] mt-1">Cambia la búsqueda o crea uno nuevo con «Nuevo tracker».</p></div>`;
   return `<div id="grid" class="grid gap-4 grid-cols-1 sm:grid-cols-2 2xl:grid-cols-3">${list.map(card).join('')}</div>`;
 }
@@ -828,7 +920,7 @@ function kpis() {
   const T = state.trackers, an = T.map(t => [t, AI.analyze(t)]);
   const today = state.alerts.filter(a => Date.now() - a.t < DAY).length;
   const saving = T.reduce((s, t) => s + Math.max(0, refPrice(t) - t.current), 0);
-  const avg = Math.round(mean(an.map(x => x[1].score)));
+  const avg = an.length ? Math.round(mean(an.map(x => x[1].score))) : '—';
   const atl = an.filter(x => x[1].atlNow).length;
   const k = (label, value, note, icon, tone = 'text-fg') => `<div class="rounded-2xl bg-ink-800/70 border border-ink-600/80 p-4 min-w-0"><div class="flex items-center justify-between"><span class="label">${label}</span><i data-lucide="${icon}" class="w-4 h-4 text-dim"></i></div><div class="font-display font-extrabold text-[28px] mt-2 leading-none tnum ${tone}">${value}</div><div class="text-[12px] text-mute mt-2">${note}</div></div>`;
   return `<div id="kpis" class="grid gap-3 grid-cols-2 xl:grid-cols-4">
@@ -840,8 +932,9 @@ function kpis() {
 }
 function featured() {
   const top = state.trackers.map(t => [t, AI.analyze(t)]).sort((a, b) => b[1].score - a[1].score).slice(0, 3);
+  if (!top.length) return '';
   return `<section class="rounded-2xl border border-ai/25 bg-gradient-to-br from-ai/[.07] to-transparent p-4 sm:p-5">
-    <div class="flex items-center gap-2 mb-3"><i data-lucide="sparkles" class="w-4 h-4 text-ai"></i><h2 class="font-display font-bold text-[16px]">La IA compraría hoy</h2><span class="text-[11px] text-mute ml-auto">Ordenado por AI Deal Index · simulado</span></div>
+    <div class="flex items-center gap-2 mb-3"><i data-lucide="sparkles" class="w-4 h-4 text-ai"></i><h2 class="font-display font-bold text-[16px]">La IA compraría hoy</h2><span class="text-[11px] text-mute ml-auto">Ordenado por AI Deal Index · ${LIVE.on ? 'heurística local (Gemini en Fase 3)' : 'simulado'}</span></div>
     <div class="grid gap-3 md:grid-cols-3">${top.map(([t, a]) => `<button data-action="open" data-id="${t.id}" class="text-left flex gap-3 items-center rounded-xl bg-ink-850/80 border border-ink-600 hover:border-ai/50 p-3 min-w-0">${ring(a.score, 54)}<div class="min-w-0"><div class="font-medium text-[14px] leading-snug truncate">${esc(t.title)}</div><div class="text-[12px] text-mute tnum mt-0.5">${money(t)} · ${esc(buyStore(t))}</div><div class="mt-1.5">${verdPill(a)}</div></div></button>`).join('')}</div>
   </section>`;
 }
@@ -881,12 +974,13 @@ function viewGrid(catKey) {
   if (catKey === 'flight') extra = flightTable();
   if (catKey === 'game') extra = gameTable();
   if (catKey === 'product') extra = couponList();
+  if (LIVE.on && (catKey === 'flight' || catKey === 'product')) extra = `<section class="rounded-2xl border border-ai/25 bg-ai/[.05] p-4 flex gap-3 text-[13px]"><i data-lucide="construction" class="w-5 h-5 text-ai shrink-0"></i><div><div class="font-medium text-fg">${catKey === 'flight' ? 'Vuelos' : 'Productos'}: próximamente con precios reales</div><p class="text-mute mt-1">La primera fuente real son los videojuegos de PC (CheapShark + Steam España). ${catKey === 'flight' ? 'Los vuelos necesitan un conector propio (Skyscanner, Google Flights o Kayak).' : 'Amazon necesita Keepa (de pago) y PcComponentes, AliExpress y El Corte Inglés un scraper con navegador.'} Puedes ver cómo quedará abriendo <span class="font-mono">frontend/index.html</span> directamente, en modo demo.</p></div></section>`;
   const now = new Date();
   return `<div class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
     <div class="flex flex-col gap-5 min-w-0">
       <div class="flex flex-wrap items-end gap-3 justify-between">
         <div><p class="label">${isDash ? now.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' }) : 'Vertical'}</p><h1 class="font-display font-extrabold text-[30px] sm:text-[34px] leading-tight tracking-tight mt-1">${isDash ? 'Tus chollos, vigilados 24/7' : n.label}</h1></div>
-        <span class="inline-flex items-center gap-1.5 text-[12px] text-mute border border-ink-600 rounded-lg px-2.5 py-1"><i data-lucide="flask-conical" class="w-3.5 h-3.5"></i>Datos simulados · Fase 1</span>
+        ${LIVE.on ? '<span class="inline-flex items-center gap-1.5 text-[12px] text-good border border-good/30 rounded-lg px-2.5 py-1"><i data-lucide="radio" class="w-3.5 h-3.5"></i>Precios reales · CheapShark + Steam España</span>' : '<span class="inline-flex items-center gap-1.5 text-[12px] text-mute border border-ink-600 rounded-lg px-2.5 py-1"><i data-lucide="flask-conical" class="w-3.5 h-3.5"></i>Datos simulados · demo</span>'}
       </div>
       ${isDash ? kpis() + featured() : ''}
       ${extra}
@@ -906,7 +1000,7 @@ function gameTable() {
   const G = state.trackers.filter(t => t.cat === 'game');
   return `<section class="rounded-2xl bg-ink-800/70 border border-ink-600/80 overflow-hidden"><div class="px-4 pt-4 pb-2 flex items-center gap-2"><i data-lucide="key-round" class="w-4 h-4 text-ai"></i><h2 class="font-display font-bold text-[15px]">Tiendas de keys frente a tienda oficial</h2></div>
   <div class="overflow-x-auto"><table class="w-full text-[13px] tnum min-w-[620px]"><thead><tr class="text-left text-mute border-b border-ink-600"><th class="font-medium px-4 py-2">Juego</th><th class="font-medium px-4 py-2">Plataforma</th><th class="font-medium px-4 py-2 text-right">Oficial</th><th class="font-medium px-4 py-2 text-right">Mejor key / tienda</th><th class="font-medium px-4 py-2 text-right">Ahorro</th></tr></thead>
-  <tbody>${G.map(t => { const o = officialStore(t), b = bestStore(t); return `<tr class="border-b border-ink-700 last:border-0 hover:bg-ink-700/40 cursor-pointer" data-action="open" data-id="${t.id}"><td class="px-4 py-2.5 font-medium">${esc(t.title)}</td><td class="px-4 py-2.5 text-mute">${esc(t.platform)}</td><td class="px-4 py-2.5 text-right">${eur(o.price)} <span class="text-dim">${esc(o.name)}</span></td><td class="px-4 py-2.5 text-right">${eur(b.price)} <span class="text-dim">${esc(b.name)}</span></td><td class="px-4 py-2.5 text-right ${b.price < o.price ? 'text-good' : 'text-mute'}">${b === o ? 'Oficial es lo mejor' : pct(b.price / o.price - 1)}</td></tr>`; }).join('')}</tbody></table></div></section>`;
+  <tbody>${G.map(t => { const o = officialStore(t), b = bestStore(t); return `<tr class="border-b border-ink-700 last:border-0 hover:bg-ink-700/40 cursor-pointer" data-action="open" data-id="${t.id}"><td class="px-4 py-2.5 font-medium">${esc(t.title)}</td><td class="px-4 py-2.5 text-mute">${esc(t.platform)}</td><td class="px-4 py-2.5 text-right">${o ? `${approx(o)}${eur(o.price)} <span class="text-dim">${esc(o.name)}</span>` : '—'}</td><td class="px-4 py-2.5 text-right">${approx(b)}${eur(b.price)} <span class="text-dim">${esc(b.name)}</span></td><td class="px-4 py-2.5 text-right ${o && b.price < o.price ? 'text-good' : 'text-mute'}">${!o ? '—' : b === o ? 'Oficial es lo mejor' : pct(b.price / o.price - 1)}</td></tr>`; }).join('')}</tbody></table></div></section>`;
 }
 function couponList() {
   const C = state.trackers.filter(t => t.cat === 'product').flatMap(t => (t.coupons || []).map(c => ({ ...c, t })));
@@ -916,27 +1010,28 @@ function couponList() {
 const couponRow = (c, it) => `<div class="flex items-center gap-3 rounded-xl border border-dashed border-gold/40 bg-gold/[.04] p-3 min-w-0"><div class="min-w-0 flex-1"><div class="font-mono text-[14px] text-gold tracking-wide">${esc(c.code)}</div><div class="text-[12px] text-mute leading-snug mt-0.5">${esc(c.desc)} · ${esc(c.store)}${it ? ` · <span class="text-fg/80">${esc(it.title)}</span>` : ''}</div></div><button data-action="copy" data-text="${esc(c.code)}" class="shrink-0 inline-flex items-center gap-1 rounded-lg border border-ink-500 px-2.5 py-1.5 text-[12px] hover:border-gold/60"><i data-lucide="copy" class="w-3.5 h-3.5"></i>Copiar</button></div>`;
 
 function viewAlerts() {
+  if (LIVE.on && state.alerts.some(a => !a.read)) api('POST', '/api/alerts/read').catch(() => {});
   state.alerts.forEach(a => a.read = true); renderBadge(); save();
   const s = state.settings;
   return `<div class="max-w-4xl flex flex-col gap-5">
     <div><p class="label">Automatización 24/7</p><h1 class="font-display font-extrabold text-[30px] sm:text-[34px] leading-tight tracking-tight mt-1">Alertas</h1></div>
     <section class="rounded-2xl bg-ink-800/70 border border-ink-600/80 p-4 flex flex-wrap gap-4 items-center">
-      <div class="font-mono text-[13px] rounded-lg bg-ink-950 border border-ink-600 px-3 py-2"><span class="text-ai">if</span> (Precio_Actual <span class="text-gold">&lt;=</span> Precio_Objetivo) <span class="text-ai">dispatch</span>(web, telegram, discord)</div>
+      <div class="font-mono text-[13px] rounded-lg bg-ink-950 border border-ink-600 px-3 py-2"><span class="text-ai">if</span> (Precio_Actual <span class="text-gold">&lt;=</span> Precio_Objetivo) <span class="text-ai">dispatch</span>(web, telegram, discord, correo)</div>
       <div class="flex gap-2 text-[12px]">
         <span class="inline-flex items-center gap-1 rounded-md border border-good/30 text-good px-2 py-1"><i data-lucide="monitor" class="w-3.5 h-3.5"></i>Web + sonido</span>
         <span class="inline-flex items-center gap-1 rounded-md border px-2 py-1 ${s.telegram.enabled ? 'border-ai/30 text-ai' : 'border-ink-500 text-dim'}"><i data-lucide="send" class="w-3.5 h-3.5"></i>Telegram</span>
         <span class="inline-flex items-center gap-1 rounded-md border px-2 py-1 ${s.discord.enabled ? 'border-ai/30 text-ai' : 'border-ink-500 text-dim'}"><i data-lucide="message-circle" class="w-3.5 h-3.5"></i>Discord</span>
         <span class="inline-flex items-center gap-1 rounded-md border px-2 py-1 ${s.email.enabled ? 'border-ai/30 text-ai' : 'border-ink-500 text-dim'}"><i data-lucide="mail" class="w-3.5 h-3.5"></i>Correo</span>
       </div>
-      <button data-action="test-alert" class="ml-auto inline-flex items-center gap-1.5 rounded-xl bg-gold text-ink-950 font-semibold px-3 py-2 text-[13px]"><i data-lucide="zap" class="w-4 h-4"></i>Disparar alerta de prueba</button>
+      <button data-action="test-alert" class="ml-auto inline-flex items-center gap-1.5 rounded-xl bg-gold text-ink-950 font-semibold px-3 py-2 text-[13px]"><i data-lucide="zap" class="w-4 h-4"></i>${LIVE.on ? 'Enviar alerta de prueba' : 'Disparar alerta de prueba'}</button>
     </section>
     <section class="rounded-2xl bg-ink-800/70 border border-ink-600/80 overflow-hidden">
       ${state.alerts.length ? `<ul>${state.alerts.map(a => `<li class="flex flex-wrap items-center gap-3 px-4 py-3 border-b border-ink-700 last:border-0">
         <div class="w-9 h-9 rounded-lg ${a.atl ? 'bg-gold/15 text-gold' : 'bg-ink-700 text-mute'} grid place-items-center shrink-0"><i data-lucide="${a.atl ? 'trophy' : CAT[a.cat].icon}" class="w-4 h-4"></i></div>
         <div class="min-w-0 flex-1"><div class="font-medium text-[14px]">${esc(a.title)}</div><div class="text-[12px] text-mute tnum">${eur(a.price, a.cat === 'flight' ? 0 : 2)} ${a.reason === 'test' ? '· objetivo' : '≤ objetivo'} ${eur(a.target, a.cat === 'flight' ? 0 : 2)} · ${fmtDate(a.t)} ${new Date(a.t).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}${a.reason === 'test' ? ' · prueba' : ''}</div></div>
-        <div class="flex gap-1.5 text-[11px]">${['web', 'telegram', 'discord', 'email'].map(ch => `<span class="rounded px-1.5 py-0.5 border ${(a.channels[ch] || 'off') === 'off' ? 'border-ink-600 text-dim' : 'border-good/30 text-good'}">${({ web: 'Web', telegram: 'Telegram', discord: 'Discord', email: 'Correo' })[ch]}${a.channels[ch] === 'simulado' ? ' · sim.' : ''}</span>`).join('')}</div>
+        <div class="flex gap-1.5 text-[11px]">${['web', 'telegram', 'discord', 'email'].map(ch => { const v = String(a.channels[ch] || 'off'), err = v.startsWith('error'); return `<span ${err ? `title="${esc(v.replace(/^error: /, ''))}"` : ''} class="rounded px-1.5 py-0.5 border ${v === 'off' ? 'border-ink-600 text-dim' : err ? 'border-bad/40 text-bad' : 'border-good/30 text-good'}">${CH_LABEL[ch]}${v === 'simulado' ? ' · sim.' : err ? ' · error' : ''}</span>`; }).join('')}</div>
         <button data-action="open" data-id="${a.itemId}" class="rounded-lg border border-ink-500 px-2.5 py-1.5 text-[12px] hover:border-ai/60">Ver</button>
-      </li>`).join('')}</ul>` : '<p class="p-6 text-mute">Aún no hay alertas. Pulsa «Disparar alerta de prueba» o usa «Simular bajada» en cualquier tracker.</p>'}
+      </li>`).join('')}</ul>` : `<p class="p-6 text-mute">${LIVE.on ? 'Aún no hay alertas. Llegarán aquí (y a tus canales) cuando un precio baje de tu objetivo. Pulsa «Enviar alerta de prueba» para comprobar que te llegan.' : 'Aún no hay alertas. Pulsa «Disparar alerta de prueba» o usa «Simular bajada» en cualquier tracker.'}</p>`}
     </section>
   </div>`;
 }
@@ -951,11 +1046,11 @@ function viewEngine() {
         <button data-action="engine-run" class="inline-flex items-center gap-1.5 rounded-xl bg-fg text-ink-950 font-semibold px-3 py-2 text-[13px] hover:bg-gold"><i data-lucide="refresh-cw" class="w-4 h-4"></i>Ejecutar ciclo ahora</button>
       </div></div>
     <div class="grid gap-3 grid-cols-2 lg:grid-cols-4">
-      ${[['Ciclos', 'cycles', engine.cycles], ['Peticiones', 'reqs', engine.requests], ['Próximo ciclo', 'next', '—'], ['Intervalo', null, s.interval + ' s']].map(([l, k, v]) => `<div class="rounded-2xl bg-ink-800/70 border border-ink-600/80 p-4"><div class="label">${l}</div><div class="font-display font-extrabold text-[26px] mt-1.5 tnum" ${k ? `data-live="${k}"` : ''}>${v}</div></div>`).join('')}
+      ${[['Ciclos', 'cycles', engine.cycles], ['Peticiones', 'reqs', engine.requests], ['Próximo ciclo', 'next', '—'], ['Intervalo', null, LIVE.on ? s.intervalMin + ' min' : s.interval + ' s']].map(([l, k, v]) => `<div class="rounded-2xl bg-ink-800/70 border border-ink-600/80 p-4"><div class="label">${l}</div><div class="font-display font-extrabold text-[26px] mt-1.5 tnum" ${k ? `data-live="${k}"` : ''}>${v}</div></div>`).join('')}
     </div>
     <div class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
       <section class="rounded-2xl bg-ink-950 border border-ink-600/80 overflow-hidden flex flex-col min-w-0">
-        <div class="px-4 py-2.5 border-b border-ink-600 flex items-center gap-2 flex-wrap"><i data-lucide="terminal" class="w-4 h-4 text-mute"></i><span class="font-mono text-[12px] text-mute">chollogarde-worker · logs</span>
+        <div class="px-4 py-2.5 border-b border-ink-600 flex items-center gap-2 flex-wrap"><i data-lucide="terminal" class="w-4 h-4 text-mute"></i><span class="font-mono text-[12px] text-mute">chollogarde-worker · logs${LIVE.on ? ' · en directo desde tu PC' : ' · simulados'}</span>
           <div class="ml-auto flex gap-1">${lv.map(([k, l]) => `<button data-action="logf" data-lv="${k}" class="px-2 py-1 rounded-md text-[12px] ${ui.logFilter === k ? 'bg-ink-700 text-fg' : 'text-mute hover:text-fg'}">${l}</button>`).join('')}</div></div>
         <div class="p-4 h-[440px] overflow-y-auto"><ol id="term" class="term flex flex-col gap-0.5">${logs.filter(l => ui.logFilter === 'all' || l.level === ui.logFilter).slice(-400).map(logLine).join('')}</ol></div>
       </section>
@@ -966,22 +1061,26 @@ function viewEngine() {
         <section class="rounded-2xl bg-ink-800/70 border border-ink-600/80 p-4">
           <div class="font-display font-bold text-[15px] mb-2">Puntos de integración</div>
           <ul class="font-mono text-[12px] flex flex-col gap-1.5 text-mute">
-            <li><span class="text-ai">GET</span> /api/trackers <span class="text-dim">· CG.api (mock)</span></li>
-            <li><span class="text-ai">POST</span> /api/trackers <span class="text-dim">· crear</span></li>
+            <li><span class="text-ai">GET</span> /api/state <span class="text-dim">· carga inicial</span></li>
+            <li><span class="text-ai">POST·PATCH·DELETE</span> /api/trackers <span class="text-dim">· CRUD</span></li>
             <li><span class="text-ai">POST</span> /api/fetch-meta <span class="text-dim">· auto-fetch</span></li>
+            <li><span class="text-ai">POST</span> /api/notify/test <span class="text-dim">· pruebas de canal</span></li>
+            <li><span class="text-ai">SSE</span> /api/stream <span class="text-dim">· logs, precios y alertas</span></li>
             <li><span class="text-ai">POST</span> /api/ai/:task <span class="text-dim">· Gemini (Fase 3)</span></li>
-            <li><span class="text-ai">WS</span> /api/stream <span class="text-dim">· logs y precios</span></li>
           </ul>
-          <p class="text-[12px] text-mute mt-3 leading-relaxed">El frontend ya llama a estas capas. Cambiar <span class="font-mono text-fg">API.mode</span> a <span class="font-mono text-fg">'live'</span> y <span class="font-mono text-fg">AI.provider</span> a <span class="font-mono text-fg">'gemini'</span> conecta el backend real.</p>
+          <p class="text-[12px] text-mute mt-3 leading-relaxed">${LIVE.on ? 'Conectado al servidor de tu PC: todo lo de esta pantalla es real. La IA sigue siendo una heurística local hasta la Fase 3.' : 'Estás en la demo (abriste el archivo directamente). Arranca el servidor con <span class="font-mono text-fg">npm start</span> en <span class="font-mono text-fg">backend/</span> y abre <span class="font-mono text-fg">http://localhost:8787</span> para usar datos reales.'}</p>
         </section>
       </div>
     </div>
   </div>`;
 }
-const srcRows = () => SOURCES.map(s => `<tr class="border-b border-ink-700 last:border-0"><td class="px-4 py-2"><span class="inline-flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full ${s.status === 'ok' ? 'bg-good' : 'bg-warn'}"></span>${esc(s.name)}</span><div class="text-dim text-[11px]">${esc(s.covers)}</div></td><td class="px-2 py-2 text-mute">${esc(s.kind)}</td><td class="px-2 py-2 text-right">${s.ok} %</td><td class="px-4 py-2 text-right">${s.lat} ms</td></tr>`).join('');
+const srcRows = () => SOURCES.map(s => `<tr class="border-b border-ink-700 last:border-0"><td class="px-4 py-2"><span class="inline-flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full ${s.status === 'ok' ? 'bg-good' : s.status === 'idle' ? 'bg-dim' : 'bg-warn'}"></span>${esc(s.name)}</span><div class="text-dim text-[11px]">${esc(s.covers)}</div></td><td class="px-2 py-2 text-mute">${esc(s.kind)}</td><td class="px-2 py-2 text-right">${s.ok == null ? '—' : s.ok + ' %'}</td><td class="px-4 py-2 text-right">${s.lat == null ? '—' : s.lat + ' ms'}</td></tr>`).join('');
 
+// Tracker de muestra para las vistas previas (uno de ejemplo si aún no tienes ninguno).
+const sampleTracker = () => state.trackers.find(t => t.id === 'p-ally') || state.trackers[0] || seedTrackers().find(t => t.id === 'g-hades');
 function viewSettings() {
-  const s = state.settings, sample = state.trackers.find(t => t.id === 'p-ally') || state.trackers[0], a = AI.analyze(sample);
+  const s = state.settings, sample = sampleTracker(), a = AI.analyze(sample), L = LIVE.on;
+  const saved = (set, ph) => set ? '•••••• guardado (escribe para cambiarlo)' : ph;
   const field = (id, label, val, ph, type = 'text') => `<label class="flex flex-col gap-1.5 text-[13px]"><span class="text-mute">${label}</span><input id="${id}" type="${type}" value="${esc(val)}" placeholder="${esc(ph)}" autocomplete="off" class="bg-ink-850 border border-ink-600 rounded-xl px-3 py-2 placeholder:text-dim focus:outline-none focus:border-gold/70"></label>`;
   const toggle = (id, on, label) => `<label class="inline-flex items-center gap-2 text-[13px] cursor-pointer"><input id="${id}" type="checkbox" ${on ? 'checked' : ''} class="w-4 h-4">${label}</label>`;
   return `<div class="flex flex-col gap-5 max-w-5xl">
@@ -990,36 +1089,39 @@ function viewSettings() {
       <form id="settings-form" class="flex flex-col gap-5 min-w-0">
         <section class="rounded-2xl bg-ink-800/70 border border-ink-600/80 p-4 flex flex-col gap-3">
           <div class="flex items-center gap-2"><i data-lucide="send" class="w-4 h-4 text-ai"></i><h2 class="font-display font-bold text-[15px]">Bot de Telegram</h2><span class="ml-auto">${toggle('tg-on', s.telegram.enabled, 'Activo')}</span></div>
-          ${field('tg-token', 'Token del bot', s.telegram.token, '123456:ABC-DEF…', 'password')}
+          ${field('tg-token', 'Token del bot', L ? '' : s.telegram.token, L ? saved(s.telegram.tokenSet, '123456:ABC-DEF…') : '123456:ABC-DEF…', 'password')}
           ${field('tg-chat', 'Chat ID', s.telegram.chatId, '-1001234567890')}
-          <p class="text-[12px] text-dim">Se guarda solo en este navegador. En la Fase 2 el token vivirá en el backend, nunca en el cliente.</p>
+          <p class="text-[12px] text-dim">${L ? 'Crea el bot con @BotFather, escríbele un mensaje y saca tu chat ID con @userinfobot. El token se guarda en tu PC (backend/data) y nunca vuelve al navegador.' : 'Se guarda solo en este navegador (demo). Con el servidor, el token vive en tu PC, nunca en el navegador.'}</p>
           <button type="button" data-action="test-telegram" class="self-start inline-flex items-center gap-1.5 rounded-xl border border-ink-500 px-3 py-2 text-[13px] hover:border-ai/60"><i data-lucide="send" class="w-4 h-4"></i>Enviar prueba</button>
         </section>
         <section class="rounded-2xl bg-ink-800/70 border border-ink-600/80 p-4 flex flex-col gap-3">
           <div class="flex items-center gap-2"><i data-lucide="message-circle" class="w-4 h-4 text-ai"></i><h2 class="font-display font-bold text-[15px]">Webhook de Discord</h2><span class="ml-auto">${toggle('dc-on', s.discord.enabled, 'Activo')}</span></div>
-          ${field('dc-url', 'URL del webhook', s.discord.url, 'https://discord.com/api/webhooks/…')}
+          ${field('dc-url', 'URL del webhook', L ? '' : s.discord.url, L ? saved(s.discord.urlSet, 'https://discord.com/api/webhooks/…') : 'https://discord.com/api/webhooks/…', L ? 'password' : 'text')}
+          ${L ? '<p class="text-[12px] text-dim">En Discord: Ajustes del canal → Integraciones → Webhooks → Nuevo webhook → Copiar URL.</p>' : ''}
           <button type="button" data-action="test-discord" class="self-start inline-flex items-center gap-1.5 rounded-xl border border-ink-500 px-3 py-2 text-[13px] hover:border-ai/60"><i data-lucide="message-circle" class="w-4 h-4"></i>Enviar prueba</button>
         </section>
         <section class="rounded-2xl bg-ink-800/70 border border-ink-600/80 p-4 flex flex-col gap-3">
           <div class="flex items-center gap-2"><i data-lucide="mail" class="w-4 h-4 text-ai"></i><h2 class="font-display font-bold text-[15px]">Correo electrónico</h2><span class="ml-auto">${toggle('em-on', s.email.enabled, 'Activo')}</span></div>
           ${field('em-to', 'Enviar alertas a', s.email.to, 'tu@correo.com', 'email')}
-          <p class="text-[12px] text-dim">En la Fase 2 se envía por SMTP desde tu PC (Gmail con contraseña de aplicación u Outlook).</p>
+          ${L ? `<div class="grid sm:grid-cols-2 gap-3">${field('em-user', 'Cuenta que envía (SMTP)', s.email.user || '', 'tucuenta@gmail.com', 'email')}${field('em-pass', 'Contraseña de aplicación', '', saved(s.email.passSet, '16 letras de Google'), 'password')}</div>
+          <details class="text-[12px] text-mute"><summary class="cursor-pointer hover:text-fg">Servidor SMTP (por defecto Gmail)</summary><div class="grid grid-cols-[1fr_96px] gap-3 mt-2">${field('em-host', 'Servidor', s.email.host || 'smtp.gmail.com', 'smtp.gmail.com')}${field('em-port', 'Puerto', s.email.port || 465, '465', 'number')}</div><p class="mt-2">Outlook/Hotmail: smtp-mail.outlook.com, puerto 587.</p></details>
+          <p class="text-[12px] text-dim">Con Gmail: activa la verificación en 2 pasos y crea una «contraseña de aplicación» en myaccount.google.com/apppasswords. Tu contraseña normal no sirve.</p>` : '<p class="text-[12px] text-dim">Con el servidor se envía por SMTP desde tu PC (Gmail con contraseña de aplicación u Outlook).</p>'}
           <button type="button" data-action="test-email" class="self-start inline-flex items-center gap-1.5 rounded-xl border border-ink-500 px-3 py-2 text-[13px] hover:border-ai/60"><i data-lucide="mail" class="w-4 h-4"></i>Enviar prueba</button>
         </section>
         <section class="rounded-2xl bg-ink-800/70 border border-ink-600/80 p-4 flex flex-col gap-3">
           <div class="flex items-center gap-2"><i data-lucide="volume-2" class="w-4 h-4 text-gold"></i><h2 class="font-display font-bold text-[15px]">Dashboard abierto</h2></div>
           ${toggle('snd-on', s.sound, 'Alertas sonoras (radar + moneda)')}
           <div class="flex gap-2"><button type="button" data-action="snd-radar" class="rounded-lg border border-ink-500 px-2.5 py-1.5 text-[12px]">Probar radar</button><button type="button" data-action="snd-coin" class="rounded-lg border border-ink-500 px-2.5 py-1.5 text-[12px]">Probar moneda</button></div>
-          <label class="flex flex-col gap-1.5 text-[13px]"><span class="text-mute">Intervalo del motor simulado: <b id="int-val" class="text-fg tnum">${s.interval} s</b></span><input id="int" type="range" min="3" max="30" step="1" value="${s.interval}"></label>
+          ${L ? `<label class="flex flex-col gap-1.5 text-[13px]"><span class="text-mute">Revisar precios cada</span><select id="int" class="bg-ink-850 border border-ink-600 rounded-xl px-3 py-2 text-fg">${[15, 30, 60, 120, 240, 360].map(m => `<option value="${m}" ${m === s.intervalMin ? 'selected' : ''}>${m < 60 ? m + ' minutos' : m / 60 + (m === 60 ? ' hora' : ' horas')}</option>`).join('')}</select><span class="text-[12px] text-dim">Al encender el PC se revisa todo a los pocos segundos.</span></label>` : `<label class="flex flex-col gap-1.5 text-[13px]"><span class="text-mute">Intervalo del motor simulado: <b id="int-val" class="text-fg tnum">${s.interval} s</b></span><input id="int" type="range" min="3" max="30" step="1" value="${s.interval}"></label>`}
         </section>
         <section class="rounded-2xl bg-ink-800/70 border border-ink-600/80 p-4 flex flex-wrap items-center gap-3">
-          <div class="min-w-0 flex-1"><div class="font-display font-bold text-[15px]">Motor de IA</div><div class="text-[12px] text-mute">Proveedor: <span class="text-ai">simulado</span>. En la Fase 3 se conecta Gemini vía backend.</div></div>
-          <button type="button" data-action="reset" id="btn-reset" class="rounded-xl border border-bad/40 text-bad px-3 py-2 text-[13px] hover:bg-bad/10">Restablecer datos de ejemplo</button>
+          <div class="min-w-0 flex-1"><div class="font-display font-bold text-[15px]">Motor de IA</div><div class="text-[12px] text-mute">Proveedor: <span class="text-ai">${L ? 'heurística local' : 'simulado'}</span>. En la Fase 3 se conecta Gemini vía backend.</div></div>
+          ${L ? '' : '<button type="button" data-action="reset" id="btn-reset" class="rounded-xl border border-bad/40 text-bad px-3 py-2 text-[13px] hover:bg-bad/10">Restablecer datos de ejemplo</button>'}
         </section>
       </form>
       <div class="flex flex-col gap-5 min-w-0">
         <section class="rounded-2xl bg-ink-800/70 border border-ink-600/80 p-4">
-          <div class="label mb-3">Vista previa en Telegram</div>
+          <div class="label mb-3">Vista previa en Telegram${state.trackers.length ? '' : ' (ejemplo)'}</div>
           <div class="rounded-2xl bg-[#17212B] p-3 max-w-sm">
             <div class="rounded-xl overflow-hidden bg-[#182533]">
               ${art(sample, 'h-36')}
@@ -1060,11 +1162,12 @@ function refresh() {
   if (ui.openId) updateDrawerLive();
   renderNav(); icons();
 }
+const fmtWait = sec => sec >= 90 ? `${Math.round(sec / 60)} min` : `${sec} s`;
 function tickLive() {
   const sec = engine.timer ? Math.max(0, Math.ceil((engine.nextAt - Date.now()) / 1000)) : null;
-  const txt = sec === null ? 'pausa' : sec + ' s';
+  const txt = sec === null ? 'pausa' : engine.busy ? 'ahora' : fmtWait(sec);
   $$('[data-live="next"]').forEach(e => e.textContent = txt);
-  $('#side-next').textContent = sec === null ? 'Ciclos detenidos' : `Próximo ciclo en ${sec} s`;
+  $('#side-next').textContent = sec === null ? 'Ciclos detenidos' : engine.busy ? 'Ciclo en marcha' : `Próximo ciclo en ${fmtWait(sec)}`;
 }
 
 // ---------- drawer de detalle ----------
@@ -1110,11 +1213,11 @@ function drawerBody(it, a) {
         <button data-action="ask" data-id="${it.id}" class="inline-flex items-center gap-1.5 rounded-xl border border-ai/40 text-ai px-3 py-2.5 text-[13px] hover:bg-ai/10"><i data-lucide="bot" class="w-4 h-4"></i>Preguntar</button>
         <button data-action="compare" data-id="${it.id}" class="inline-flex items-center gap-1.5 rounded-xl border border-ink-500 px-3 py-2.5 text-[13px] hover:border-ai/60"><i data-lucide="scale" class="w-4 h-4"></i>Comparar</button>
       </div>
-      <p class="text-[12px] text-dim -mt-1">${isSearch(it) ? 'Datos simulados: abre la búsqueda del producto en la tienda. Con el scraper de la Fase 2 este botón irá directo a la ficha exacta.' : 'Abre la oferta directamente en la tienda, sin intermediarios ni enlaces de afiliado.'}</p>
+      <p class="text-[12px] text-dim -mt-1">${it.live ? (bestOf(it).url && bestOf(it).url.includes('cheapshark.com') ? 'Abre la oferta en la tienda. Los enlaces de CheapShark pasan por su redirección antes de llegar a la tienda.' : 'Abre la ficha del juego en la tienda.') : isSearch(it) ? 'Datos simulados: abre la búsqueda del producto en la tienda. Con un scraper real este botón irá directo a la ficha exacta.' : 'Abre la oferta directamente en la tienda, sin intermediarios ni enlaces de afiliado.'}</p>
     </header>
 
     <section class="rounded-2xl bg-ink-800/70 border border-ink-600/80 p-4">
-      <div class="flex items-center gap-2 mb-2"><i data-lucide="history" class="w-4 h-4 text-mute"></i><h3 class="font-display font-bold text-[15px]">Histórico de 90 días</h3>
+      <div class="flex items-center gap-2 mb-2"><i data-lucide="history" class="w-4 h-4 text-mute"></i><h3 class="font-display font-bold text-[15px]">${it.live ? `Histórico (${it.history.length} día${it.history.length === 1 ? '' : 's'})` : 'Histórico de 90 días'}</h3>
         <span class="ml-auto flex gap-3 text-[11px] text-mute"><span class="inline-flex items-center gap-1"><span class="w-3 h-0.5 bg-gold"></span>Precio</span><span class="inline-flex items-center gap-1"><span class="w-3 border-t border-dashed border-good"></span>Objetivo</span><span class="inline-flex items-center gap-1"><span class="w-3 border-t border-dashed border-ai"></span>Mínimo</span></span></div>
       <div class="h-[220px]"><canvas id="chart" aria-label="Gráfico del histórico de precios"></canvas></div>
     </section>
@@ -1131,8 +1234,8 @@ function drawerBody(it, a) {
         <form data-form="target" data-id="${it.id}" class="flex gap-2 mt-3"><label class="sr-only" for="d-target">Precio objetivo</label><input id="d-target" type="number" step="${it.cat === 'flight' ? 1 : 0.01}" min="1" value="${it.target}" class="w-full min-w-0 bg-ink-850 border border-ink-600 rounded-xl px-3 py-2 tnum focus:outline-none focus:border-gold/70"><button class="rounded-xl border border-ink-500 px-3 text-[13px] hover:border-gold/60">Guardar</button></form>
       </div>
       <div class="rounded-2xl bg-ink-800/70 border border-ink-600/80 p-4 flex flex-col gap-2">
-        <h3 class="font-display font-bold text-[15px] mb-1">Simulación</h3>
-        <button data-action="drop" data-id="${it.id}" class="inline-flex items-center gap-1.5 rounded-xl border border-good/40 text-good px-3 py-2 text-[13px] hover:bg-good/10"><i data-lucide="trending-down" class="w-4 h-4"></i>Simular bajada hasta el objetivo</button>
+        <h3 class="font-display font-bold text-[15px] mb-1">${it.live ? 'Acciones' : 'Simulación'}</h3>
+        ${it.live ? '' : `<button data-action="drop" data-id="${it.id}" class="inline-flex items-center gap-1.5 rounded-xl border border-good/40 text-good px-3 py-2 text-[13px] hover:bg-good/10"><i data-lucide="trending-down" class="w-4 h-4"></i>Simular bajada hasta el objetivo</button>`}
         <button data-action="scan" data-id="${it.id}" class="inline-flex items-center gap-1.5 rounded-xl border border-ink-500 px-3 py-2 text-[13px] hover:border-ai/60"><i data-lucide="refresh-cw" class="w-4 h-4"></i>Rastrear ahora</button>
         <button data-action="delete" data-id="${it.id}" class="inline-flex items-center gap-1.5 rounded-xl border border-bad/30 text-bad px-3 py-2 text-[13px] hover:bg-bad/10"><i data-lucide="trash-2" class="w-4 h-4"></i><span>Eliminar tracker</span></button>
       </div>
@@ -1150,7 +1253,7 @@ function schemaOf(it) {
 }
 function aiBlock(it, a) {
   const r = it.reviews;
-  return `<div class="flex items-center gap-2 mb-4"><i data-lucide="sparkles" class="w-4 h-4 text-ai"></i><h3 class="font-display font-bold text-[15px]">Análisis de la IA</h3><span class="text-[11px] text-mute border border-ink-600 rounded px-1.5 py-0.5">simulado · Gemini en Fase 3</span><button data-action="regen" data-id="${it.id}" class="ml-auto text-[12px] text-mute hover:text-ai inline-flex items-center gap-1"><i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>Regenerar</button></div>
+  return `<div class="flex items-center gap-2 mb-4"><i data-lucide="sparkles" class="w-4 h-4 text-ai"></i><h3 class="font-display font-bold text-[15px]">Análisis de la IA</h3><span class="text-[11px] text-mute border border-ink-600 rounded px-1.5 py-0.5">${it.live ? 'heurística local sobre datos reales · Gemini en Fase 3' : 'simulado · Gemini en Fase 3'}</span><button data-action="regen" data-id="${it.id}" class="ml-auto text-[12px] text-mute hover:text-ai inline-flex items-center gap-1"><i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>Regenerar</button></div>
   <div class="flex flex-col sm:flex-row gap-5">
     <div class="flex sm:flex-col items-center gap-3 sm:w-28 shrink-0">${ring(a.score, 92)}<div class="sm:text-center"><div class="label">AI Deal Index</div><div class="text-[12px] text-mute mt-0.5">${a.score >= 75 ? 'Descuento real' : a.score >= 50 ? 'Descuento moderado' : 'Descuento dudoso'}</div></div></div>
     <div class="min-w-0 flex-1">
@@ -1159,7 +1262,8 @@ function aiBlock(it, a) {
     </div>
   </div>
   <div class="mt-5 pt-4 border-t border-ink-600/70">
-    <div class="flex flex-wrap items-center gap-2 mb-3"><h4 class="font-medium text-[14px]">Opiniones de usuarios</h4><span class="inline-flex items-center gap-1 text-[12px] text-gold tnum"><i data-lucide="star" class="w-3.5 h-3.5"></i>${r.rating} / 5</span><span class="text-[12px] text-mute">· ${r.n.toLocaleString('es-ES')} reseñas · ${esc(r.src)}</span></div>
+    <div class="flex flex-wrap items-center gap-2 mb-3"><h4 class="font-medium text-[14px]">Opiniones de usuarios</h4>${r.rating != null ? `<span class="inline-flex items-center gap-1 text-[12px] text-gold tnum"><i data-lucide="star" class="w-3.5 h-3.5"></i>${r.rating} / 5</span>` : ''}<span class="text-[12px] text-mute">· ${r.n.toLocaleString('es-ES')} reseñas · ${esc(r.src)}</span></div>
+    ${!r.pros.length ? '<p class="text-[13px] text-mute">El resumen de pros y contras lo hará Gemini en la Fase 3.</p>' : ''}
     <div class="grid sm:grid-cols-2 gap-3">
       <ul class="flex flex-col gap-1.5 text-[13px]">${r.pros.map(p => `<li class="flex gap-2"><i data-lucide="thumbs-up" class="w-4 h-4 text-good shrink-0 mt-0.5"></i><span>${esc(p)}</span></li>`).join('')}</ul>
       <ul class="flex flex-col gap-1.5 text-[13px]">${r.cons.map(p => `<li class="flex gap-2"><i data-lucide="thumbs-down" class="w-4 h-4 text-bad shrink-0 mt-0.5"></i><span>${esc(p)}</span></li>`).join('')}</ul>
@@ -1191,13 +1295,13 @@ function flightBlock(it) {
 }
 function gameBlock(it) {
   const o = officialStore(it), sorted = [...it.stores].sort((a, b) => a.price - b.price), best = sorted[0];
-  const T = { key: 'Tienda de keys', official: 'Tienda oficial', retail: 'Tienda física' };
+  const T = it.live ? { key: 'Revendedor autorizado', official: 'Tienda oficial' } : { key: 'Tienda de keys', official: 'Tienda oficial', retail: 'Tienda física' };
   return `<section class="rounded-2xl bg-ink-800/70 border border-ink-600/80 overflow-hidden">
     <div class="px-4 pt-4 pb-2 flex flex-wrap items-center gap-2"><i data-lucide="key-round" class="w-4 h-4 text-mute"></i><h3 class="font-display font-bold text-[15px]">Keys frente a tienda oficial</h3>
-      <span class="ml-auto flex flex-wrap gap-1.5 text-[12px]"><span class="rounded-md border border-ink-500 px-2 py-0.5">${esc(it.platform)}</span><span class="rounded-md border border-ink-500 px-2 py-0.5">${esc(it.format)}</span>${it.deck ? `<span class="rounded-md border border-good/30 text-good px-2 py-0.5 inline-flex items-center gap-1"><i data-lucide="circle-check" class="w-3.5 h-3.5"></i>Steam Deck: ${esc(it.deck)}</span>` : ''}</span></div>
+      <span class="ml-auto flex flex-wrap gap-1.5 text-[12px]"><span class="rounded-md border border-ink-500 px-2 py-0.5">${esc(it.platform)}</span><span class="rounded-md border border-ink-500 px-2 py-0.5">${esc(it.format)}</span>${it.deck && it.deck !== 'No compatible' ? `<span class="rounded-md border border-good/30 text-good px-2 py-0.5 inline-flex items-center gap-1"><i data-lucide="circle-check" class="w-3.5 h-3.5"></i>Steam Deck: ${esc(it.deck)}</span>` : ''}</span></div>
     <div class="overflow-x-auto"><table class="w-full text-[13px] tnum min-w-[460px]"><thead><tr class="text-left text-mute border-b border-ink-600"><th class="font-medium px-4 py-2">Tienda</th><th class="font-medium px-4 py-2">Tipo</th><th class="font-medium px-4 py-2 text-right">Precio</th><th class="font-medium px-4 py-2 text-right">vs oficial</th><th class="px-4 py-2"></th></tr></thead>
-    <tbody>${sorted.map(s => `<tr class="border-b border-ink-700 last:border-0 ${s === best ? 'bg-good/[.06]' : ''}"><td class="px-4 py-2.5 font-medium">${esc(s.name)} ${s === best ? '<span class="ml-1 text-[11px] text-good">mejor precio</span>' : ''}</td><td class="px-4 py-2.5 text-mute">${T[s.type]}</td><td class="px-4 py-2.5 text-right font-medium">${eur(s.price)}</td><td class="px-4 py-2.5 text-right ${s.price < o.price ? 'text-good' : 'text-mute'}">${s === o ? '—' : pct(s.price / o.price - 1)}</td><td class="px-4 py-2.5 text-right"><a href="${esc(offerUrl(it, s))}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-[12px] text-mute hover:text-fg">Abrir<i data-lucide="external-link" class="w-3.5 h-3.5"></i></a></td></tr>`).join('')}</tbody></table></div>
-    <p class="px-4 py-3 text-[12px] text-dim">Fuentes: IsThereAnyDeal (tiendas oficiales) y CheapShark (keys). Las keys de terceros pueden tener restricción de región.</p>
+    <tbody>${sorted.map(s => `<tr class="border-b border-ink-700 last:border-0 ${s === best ? 'bg-good/[.06]' : ''}"><td class="px-4 py-2.5 font-medium">${esc(s.name)} ${s === best ? '<span class="ml-1 text-[11px] text-good">mejor precio</span>' : ''}</td><td class="px-4 py-2.5 text-mute">${T[s.type]}</td><td class="px-4 py-2.5 text-right font-medium">${approx(s)}${eur(s.price)}</td><td class="px-4 py-2.5 text-right ${o && s.price < o.price ? 'text-good' : 'text-mute'}">${!o || s === o ? '—' : pct(s.price / o.price - 1)}</td><td class="px-4 py-2.5 text-right"><a href="${esc(offerUrl(it, s))}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-[12px] text-mute hover:text-fg">Abrir<i data-lucide="external-link" class="w-3.5 h-3.5"></i></a></td></tr>`).join('')}</tbody></table></div>
+    <p class="px-4 py-3 text-[12px] text-dim">${it.live ? `Fuentes: Steam España (precio exacto en euros) y CheapShark (tiendas de PC; sus precios vienen en dólares y se convierten con el cambio del BCE, por eso llevan ≈).${it.atlEver ? ` Mínimo histórico en CheapShark: ≈ ${eur(it.atlEver.p)} (${fmtDate(it.atlEver.t)}).` : ''} Última comprobación: ${it.lastCheck ? ago(it.lastCheck) : '—'}.${it.lastError ? ` <span class="text-bad">Último error: ${esc(it.lastError)}</span>` : ''}` : 'Fuentes: IsThereAnyDeal (tiendas oficiales) y CheapShark (keys). Las keys de terceros pueden tener restricción de región.'}</p>
   </section>`;
 }
 function productBlock(it) {
@@ -1223,7 +1327,7 @@ function drawChart(it) {
   ui.chart = new Chart(ctx, {
     type: 'line',
     data: { labels, datasets: [
-      { label: 'Precio', data: it.history.map(h => h.p), borderColor: '#F2B544', backgroundColor: g, fill: true, tension: .25, borderWidth: 2, pointRadius: 0, pointHoverRadius: 4 },
+      { label: 'Precio', data: it.history.map(h => h.p), borderColor: '#F2B544', backgroundColor: g, fill: true, tension: .25, borderWidth: 2, pointRadius: it.history.length < 8 ? 3 : 0, pointHoverRadius: 4 },
       { label: 'Objetivo', data: it.history.map(() => it.target), borderColor: '#4ADE80', borderDash: [5, 5], borderWidth: 1.25, pointRadius: 0, fill: false },
       { label: 'Mínimo', data: it.history.map(() => a.atl), borderColor: '#7DD3FC', borderDash: [2, 4], borderWidth: 1.25, pointRadius: 0, fill: false }
     ] },
@@ -1271,12 +1375,24 @@ function openNew(cat = nt.cat) {
 function newHtml() {
   const tabs = [['product', 'Producto', 'package'], ['game', 'Videojuego', 'gamepad-2'], ['flight', 'Vuelo', 'plane']];
   return `<div class="p-5 sm:p-6 flex flex-col gap-5">
-    <div class="flex items-start gap-3"><div><h2 class="font-display font-extrabold text-[24px] leading-tight">Nuevo tracker</h2><p class="text-[13px] text-mute mt-1">${nt.cat === 'flight' ? 'Define la ruta y te avisamos cuando baje de tu precio.' : 'Pega un enlace y extraemos portada, título, precio y envío.'}</p></div><button data-action="close-modal" class="ml-auto w-9 h-9 grid place-items-center rounded-xl hover:bg-ink-700" aria-label="Cerrar"><i data-lucide="x" class="w-4 h-4"></i></button></div>
+    <div class="flex items-start gap-3"><div><h2 class="font-display font-extrabold text-[24px] leading-tight">Nuevo tracker</h2><p class="text-[13px] text-mute mt-1">${LIVE.on && nt.cat === 'game' ? 'Escribe el nombre de un juego de PC o pega su enlace de Steam. Buscamos su precio real en ~30 tiendas.' : nt.cat === 'flight' ? 'Define la ruta y te avisamos cuando baje de tu precio.' : 'Pega un enlace y extraemos portada, título, precio y envío.'}</p></div><button data-action="close-modal" class="ml-auto w-9 h-9 grid place-items-center rounded-xl hover:bg-ink-700" aria-label="Cerrar"><i data-lucide="x" class="w-4 h-4"></i></button></div>
     <div class="inline-flex self-start p-1 rounded-xl bg-ink-800 border border-ink-600" role="tablist">${tabs.map(([k, l, i]) => `<button role="tab" aria-selected="${nt.cat === k}" data-action="nt-cat" data-cat="${k}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] ${nt.cat === k ? 'bg-ink-600 text-fg' : 'text-mute hover:text-fg'}"><i data-lucide="${i}" class="w-4 h-4"></i>${l}</button>`).join('')}</div>
-    <div id="nt-body">${nt.cat === 'flight' ? flightForm() : urlForm()}</div>
+    <div id="nt-body">${LIVE.on && nt.cat !== 'game' ? soonHtml() : nt.cat === 'flight' ? flightForm() : urlForm()}</div>
   </div>`;
 }
+function soonHtml() {
+  return `<div class="rounded-2xl border border-ai/25 bg-ai/[.05] p-4 text-[13px] flex gap-3"><i data-lucide="construction" class="w-5 h-5 text-ai shrink-0"></i><div><div class="font-medium text-fg">${nt.cat === 'flight' ? 'Vuelos' : 'Productos'}: todavía sin fuente real</div><p class="text-mute mt-1">Por ahora el servidor rastrea precios reales de videojuegos de PC. ${nt.cat === 'flight' ? 'Los vuelos' : 'Amazon, PcComponentes, AliExpress y El Corte Inglés'} llegarán con su propio conector en una próxima fase.</p><button data-action="nt-cat" data-cat="game" class="mt-3 inline-flex items-center gap-1.5 rounded-xl border border-ink-500 px-3 py-1.5 text-[12px] text-fg hover:border-gold/60"><i data-lucide="gamepad-2" class="w-4 h-4"></i>Seguir un videojuego</button></div></div>`;
+}
+const LIVE_EXAMPLES = ['Hades II', "Baldur's Gate 3", 'Cyberpunk 2077', 'https://store.steampowered.com/app/1145350/Hades_II/'];
 function urlForm() {
+  if (LIVE.on) return `<form id="nt-fetch" class="flex flex-col gap-3">
+    <label for="nt-url" class="text-[13px] text-mute">Nombre del juego o enlace de Steam</label>
+    <div class="flex gap-2"><div class="relative flex-1 min-w-0"><i data-lucide="search" class="w-4 h-4 text-mute absolute left-3 top-1/2 -translate-y-1/2"></i><input id="nt-url" type="text" autocomplete="off" placeholder="Hades II  ·  https://store.steampowered.com/app/…" class="w-full bg-ink-800 border border-ink-600 rounded-xl pl-9 pr-3 py-2.5 text-[14px] placeholder:text-dim focus:outline-none focus:border-gold/70"></div>
+    <button class="shrink-0 inline-flex items-center gap-1.5 rounded-xl bg-gold text-ink-950 font-semibold px-4 text-[13px]" ${nt.busy ? 'disabled' : ''}><i data-lucide="search" class="w-4 h-4"></i>Buscar</button></div>
+    <div class="flex flex-wrap gap-1.5 items-center"><span class="text-[12px] text-dim">Prueba con:</span>${LIVE_EXAMPLES.map(u => `<button type="button" data-action="nt-example" data-url="${esc(u)}" class="text-[12px] rounded-md border border-ink-600 px-2 py-0.5 text-mute hover:text-fg max-w-[220px] truncate">${esc(u.startsWith('http') ? 'enlace de Steam' : u)}</button>`).join('')}</div>
+  </form>
+  <div id="nt-progress" class="mt-4"></div>
+  <div id="nt-preview" class="mt-4"></div>`;
   return `<form id="nt-fetch" class="flex flex-col gap-3">
     <label for="nt-url" class="text-[13px] text-mute">URL de ${nt.cat === 'game' ? 'la tienda (Steam, PS Store, eShop, Xbox, Eneba, Instant Gaming, CDKeys)' : 'la tienda (Amazon, PcComponentes, AliExpress, El Corte Inglés)'}</label>
     <div class="flex gap-2"><div class="relative flex-1 min-w-0"><i data-lucide="link" class="w-4 h-4 text-mute absolute left-3 top-1/2 -translate-y-1/2"></i><input id="nt-url" type="url" inputmode="url" autocomplete="off" placeholder="https://…" class="w-full bg-ink-800 border border-ink-600 rounded-xl pl-9 pr-3 py-2.5 text-[14px] placeholder:text-dim focus:outline-none focus:border-gold/70"></div>
@@ -1316,6 +1432,37 @@ function previewHtml(m) {
     ${m.manual ? '' : `<p class="px-4 py-2.5 border-t border-ink-600 text-[11px] text-dim">Extraído de ${esc(m.store)} vía ${esc(m.src)} · simulado. En la Fase 2 el backend descarga la imagen real.</p>`}
   </form>`;
 }
+function previewLive(m) {
+  const tgt = Math.max(0.01, round(m.price * .85));
+  const others = (m.candidates || []).filter(c => c.gameID !== m.gameID);
+  return `<form id="nt-create" class="rounded-2xl border border-ink-600 bg-ink-800/70 overflow-hidden fade-in">
+    <div class="flex flex-col">
+      ${m.image ? `<img src="${esc(m.image)}" alt="" referrerpolicy="no-referrer" class="w-full aspect-[460/215] max-h-52 object-cover bg-ink-850" onerror="this.remove()">` : ''}
+      <div class="p-4 flex flex-col gap-3 min-w-0">
+        <div><div class="font-display font-bold text-[18px] leading-snug">${esc(m.title)}</div><div class="text-[13px] text-mute mt-0.5">PC · mejor precio ahora: <b class="text-fg tnum">${m.approx ? '≈ ' : ''}${eur(m.price)}</b> en ${esc(m.store)}${m.msrp ? ` · oficial ${eur(m.msrp)}` : ''}</div></div>
+        <ul class="text-[12px] flex flex-col gap-0.5 tnum">${m.stores.slice(0, 5).map(x => `<li class="flex justify-between gap-3"><span class="text-mute">${esc(x.name)}</span><span>${x.approx ? '≈ ' : ''}${eur(x.price)}</span></li>`).join('')}${m.stores.length > 5 ? `<li class="text-dim">y ${m.stores.length - 5} tiendas más</li>` : ''}</ul>
+        ${m.atlEver ? `<div class="text-[12px] text-mute">Mínimo histórico en CheapShark: <span class="text-gold">≈ ${eur(m.atlEver.p)}</span> (${fmtDate(m.atlEver.t)})</div>` : ''}
+        <label class="flex flex-col gap-1 text-[12px] text-mute">Avísame cuando baje de (€)<input id="nt-target" type="number" step="0.01" min="0.01" required value="${tgt}" class="bg-ink-850 border border-gold/50 rounded-lg px-3 py-2 text-[14px] text-fg tnum"></label>
+        <label class="inline-flex items-center gap-2 text-[13px]"><input id="nt-alert" type="checkbox" checked>Enviar alerta por mis canales al llegar al objetivo</label>
+        <div class="flex justify-end gap-2 pt-1"><button type="button" data-action="close-modal" class="rounded-xl border border-ink-500 px-3 py-2 text-[13px]">Cancelar</button><button id="nt-submit" class="inline-flex items-center gap-1.5 rounded-xl bg-gold text-ink-950 font-semibold px-4 py-2 text-[13px]"><i data-lucide="radar" class="w-4 h-4"></i>Crear tracker</button></div>
+      </div>
+    </div>
+    ${others.length ? `<div class="px-4 py-2.5 border-t border-ink-600 flex flex-wrap gap-1.5 items-center"><span class="text-[12px] text-dim">¿No es este?</span>${others.map(c => `<button type="button" data-action="nt-pick" data-game="${esc(c.gameID)}" data-app="${esc(c.steamAppID || '')}" class="text-[12px] rounded-md border border-ink-600 px-2 py-0.5 text-mute hover:text-fg max-w-[240px] truncate">${esc(c.title)}</button>`).join('')}</div>` : ''}
+    <p class="px-4 py-2.5 border-t border-ink-600 text-[11px] text-dim">Datos reales de ${esc(m.src)}. CheapShark da los precios en dólares; se convierten a euros con el cambio del BCE y se marcan con ≈.</p>
+  </form>`;
+}
+async function createLive() {
+  const m = nt.meta, target = +$('#nt-target').value, btn = $('#nt-submit');
+  if (!(target > 0)) { toast({ tone: 'bad', icon: 'circle-alert', title: 'Falta el objetivo', body: 'Indica a qué precio quieres que te avise.' }); return; }
+  btn.disabled = true;
+  try {
+    const t = await api('POST', '/api/trackers', { cat: 'game', gameID: m.gameID, steamAppID: m.steamAppID, target, alert: $('#nt-alert').checked, url: /steampowered\.com/.test(m.url || '') ? m.url : undefined });
+    if (!state.trackers.some(x => x.id === t.id)) state.trackers.unshift(t);
+    closeModal();
+    toast({ tone: 'good', icon: 'radar', title: 'Tracker creado', body: `${esc(t.title)} · ${t.current <= t.target ? 'ya está por debajo de tu objetivo: te aviso ahora.' : 'el motor lo revisará en cada ciclo.'}`, actionLabel: 'Ver', action: () => openDrawer(t.id) });
+    if (location.hash === '#juegos') render(); else location.hash = 'juegos';
+  } catch (e) { btn.disabled = false; toast({ tone: 'bad', icon: 'circle-alert', title: 'No se pudo crear', body: esc(e.message) }); }
+}
 function flightForm() {
   const opts = sel => Object.entries(AIRPORTS).map(([k, v]) => `<option value="${k}" ${k === sel ? 'selected' : ''}>${k} · ${v}</option>`).join('');
   const d1 = isoLocal(dOff(45)), d2 = isoLocal(dOff(52));
@@ -1340,14 +1487,16 @@ function flightForm() {
 async function doFetch(url) {
   if (nt.busy) return; nt.busy = true;
   const prog = $('#nt-progress'), prev = $('#nt-preview'); prev.innerHTML = '';
+  const prevCands = typeof url === 'object' && nt.meta ? nt.meta.candidates : null;
   try {
     const m = await API.fetchMeta(url, (i, steps) => { prog.innerHTML = progressHtml(i, steps); icons(); });
     prog.innerHTML = progressHtml(99, ['Datos extraídos']); icons();
     if (m.cat !== nt.cat) { nt.cat = m.cat; $$('[data-action="nt-cat"]').forEach(b => { const on = b.dataset.cat === m.cat; b.setAttribute('aria-selected', on); b.className = `inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] ${on ? 'bg-ink-600 text-fg' : 'text-mute hover:text-fg'}`; }); }
-    nt.meta = m; prev.innerHTML = previewHtml(m); icons();
-    log('info', 'fetch-meta', `${new URL(m.url).hostname} → «${m.title}» ${eur(m.price)} (+${eur(m.ship)} envío)`);
+    if (prevCands) m.candidates = prevCands;
+    nt.meta = m; prev.innerHTML = m.live ? previewLive(m) : previewHtml(m); icons();
+    if (!m.live) log('info', 'fetch-meta', `${new URL(m.url).hostname} → «${m.title}» ${eur(m.price)} (+${eur(m.ship)} envío)`);
   } catch (e) {
-    prog.innerHTML = `<div class="rounded-xl border border-bad/30 bg-bad/10 p-3 text-[13px] flex flex-wrap items-center gap-3"><span class="flex-1 min-w-0">${esc(e.message)}</span><button data-action="nt-manual" class="rounded-lg border border-ink-500 px-2.5 py-1.5 text-[12px] text-fg">Rellenar a mano</button></div>`;
+    prog.innerHTML = `<div class="rounded-xl border border-bad/30 bg-bad/10 p-3 text-[13px] flex flex-wrap items-center gap-3"><span class="flex-1 min-w-0">${esc(e.message)}</span>${LIVE.on ? '' : '<button data-action="nt-manual" class="rounded-lg border border-ink-500 px-2.5 py-1.5 text-[12px] text-fg">Rellenar a mano</button>'}</div>`;
   } finally { nt.busy = false; }
 }
 function createFromForm() {
@@ -1404,6 +1553,7 @@ function addTracker(it) {
 // ---------- modal: comparador 1v1 ----------
 let cmp = { a: 'p-ally', b: 'p-deck' };
 function openCompare(withId) {
+  if (state.trackers.length < 2) { toast({ tone: 'ai', icon: 'scale', title: 'Necesitas dos trackers', body: 'El comparador 1v1 enfrenta dos de tus trackers. Crea otro y vuelve a probar.' }); return; }
   if (withId) { const it = state.trackers.find(t => t.id === withId); const other = state.trackers.find(t => t.cat === it.cat && t.id !== it.id); cmp = { a: withId, b: other ? other.id : cmp.b }; }
   if (!state.trackers.find(t => t.id === cmp.a)) cmp.a = state.trackers[0].id;
   if (!state.trackers.find(t => t.id === cmp.b) || cmp.b === cmp.a) cmp.b = state.trackers.find(t => t.id !== cmp.a).id;
@@ -1415,7 +1565,7 @@ function compareHtml(loading = false) {
   const c = AI.compare(A, B);
   const S = 'w-full bg-ink-800 border border-ink-600 rounded-xl px-3 py-2.5 text-[14px] text-fg focus:outline-none focus:border-ai/70';
   return `<div class="flex items-start gap-3 mb-4"><div><h2 class="font-display font-extrabold text-[24px] leading-tight">Comparador 1v1</h2><p class="text-[13px] text-mute mt-1">La IA cruza precio, histórico y opiniones para decidir.</p></div><button data-action="close-modal" class="ml-auto w-9 h-9 grid place-items-center rounded-xl hover:bg-ink-700" aria-label="Cerrar"><i data-lucide="x" class="w-4 h-4"></i></button></div>
-  <div class="flex flex-wrap gap-1.5 mb-4"><button data-action="cmp-preset" data-a="p-ally" data-b="p-deck" class="text-[12px] rounded-md border border-ink-600 px-2 py-1 text-mute hover:text-fg">ROG Ally X vs Steam Deck OLED</button><button data-action="cmp-preset" data-a="f-jfk-d" data-b="f-jfk-s" class="text-[12px] rounded-md border border-ink-600 px-2 py-1 text-mute hover:text-fg">Nueva York: directo vs con escala</button><button data-action="cmp-preset" data-a="g-bg3" data-b="g-hades" class="text-[12px] rounded-md border border-ink-600 px-2 py-1 text-mute hover:text-fg">Baldur's Gate 3 vs Hades II</button></div>
+  <div class="flex flex-wrap gap-1.5 mb-4">${[['p-ally', 'p-deck', 'ROG Ally X vs Steam Deck OLED'], ['f-jfk-d', 'f-jfk-s', 'Nueva York: directo vs con escala'], ['g-bg3', 'g-hades', "Baldur's Gate 3 vs Hades II"]].filter(([x, y]) => state.trackers.some(t => t.id === x) && state.trackers.some(t => t.id === y)).map(([x, y, l]) => `<button data-action="cmp-preset" data-a="${x}" data-b="${y}" class="text-[12px] rounded-md border border-ink-600 px-2 py-1 text-mute hover:text-fg">${esc(l)}</button>`).join('')}</div>
   <div class="grid grid-cols-[1fr_auto_1fr] items-end gap-2 mb-4">
     <label class="flex flex-col gap-1 text-[12px] text-mute min-w-0">Opción A<select id="cmp-a" data-action="cmp-sel" class="${S}">${opts(cmp.a)}</select></label>
     <span class="pb-3 font-display font-extrabold text-dim">vs</span>
@@ -1440,7 +1590,7 @@ function renderCpCtx() {
   $('#cp-ctx').textContent = it ? `Contexto: ${it.title}` : 'Contexto: todos tus trackers';
   $('#cp-ctx-btn').hidden = !it;
   const sug = it ? (it.cat === 'game' ? ['¿Suele bajar en las rebajas de otoño de Steam?', '¿El descuento es real?', '¿Vale la pena pagar más?'] : it.cat === 'flight' ? ['¿Compro ya o espero?', '¿Compensa el directo?', '¿Qué incluye el equipaje?'] : ['¿Vale la pena pagar 50 € más por otro modelo?', '¿El descuento es real o está inflado?', '¿Bajará en Black Friday?'])
-    : ['¿Qué chollo compro hoy?', 'Compara Ally vs Deck', '¿Algún precio inflado?'];
+    : ['¿Qué chollo compro hoy?', LIVE.on ? '¿Cuál está más cerca de mi objetivo?' : 'Compara Ally vs Deck', '¿Algún precio inflado?'];
   $('#cp-sugg').innerHTML = sug.map(s => `<button data-action="cp-sugg" data-q="${esc(s)}" class="shrink-0 text-[12px] rounded-full border border-ink-600 px-2.5 py-1 text-mute hover:text-ai hover:border-ai/50">${esc(s)}</button>`).join('');
 }
 function md(s) { return esc(s).replace(/\*\*(.+?)\*\*/g, '<b class="text-fg">$1</b>').replace(/\n/g, '<br>'); }
@@ -1497,8 +1647,9 @@ document.addEventListener('click', async e => {
     case 'copilot': toggleCp(); break;
     case 'cat': ui.cat = el.dataset.cat; render(); break;
     case 'logf': ui.logFilter = el.dataset.lv; render(); break;
-    case 'sound': state.settings.sound = !state.settings.sound; save(); renderSoundBtn(); if (state.settings.sound) Sound.coin(); break;
-    case 'engine-toggle': state.settings.engine = !engine.timer; save(); state.settings.engine ? engine.start() : engine.stop(); log('info', 'cron', state.settings.engine ? 'motor reanudado' : 'motor en pausa'); render(); break;
+    case 'sound': state.settings.sound = !state.settings.sound; save(); if (LIVE.on) api('PUT', '/api/settings', { sound: state.settings.sound }).catch(() => {}); renderSoundBtn(); if (state.settings.sound) Sound.coin(); break;
+    case 'engine-toggle': if (LIVE.on) { engine.timer ? engine.stop() : engine.start(); setTimeout(render, 300); break; }
+      state.settings.engine = !engine.timer; save(); state.settings.engine ? engine.start() : engine.stop(); log('info', 'cron', state.settings.engine ? 'motor reanudado' : 'motor en pausa'); render(); break;
     case 'engine-run': engine.tick(); break;
     case 'scan': engine.tick(id); break;
     case 'drop': {
@@ -1507,9 +1658,11 @@ document.addEventListener('click', async e => {
       it.alert = true; it.alerted = false;
       engine.setPrice(it, tgt); refresh(); rerenderDrawer(); break;
     }
-    case 'toggle-alert': it.alert = el.checked; if (it.alert && it.current <= it.target) it.alerted = false; save(); refresh(); break;
+    case 'toggle-alert': if (LIVE.on) { api('PATCH', `/api/trackers/${id}`, { alert: el.checked }).catch(err => toast({ tone: 'bad', icon: 'circle-alert', title: 'No se pudo cambiar la alerta', body: esc(err.message) })); break; }
+      it.alert = el.checked; if (it.alert && it.current <= it.target) it.alerted = false; save(); refresh(); break;
     case 'delete':
-      if (el.dataset.confirm) { state.trackers = state.trackers.filter(t => t.id !== id); save(); closeDrawer(); log('warn', 'api', `DELETE /api/trackers/${id} (mock)`); toast({ tone: 'bad', icon: 'trash-2', title: 'Tracker eliminado', body: esc(it.title) }); render(); }
+      if (el.dataset.confirm && LIVE.on) { api('DELETE', `/api/trackers/${id}`).then(() => { state.trackers = state.trackers.filter(t => t.id !== id); closeDrawer(); toast({ tone: 'bad', icon: 'trash-2', title: 'Tracker eliminado', body: esc(it.title) }); render(); }).catch(err => toast({ tone: 'bad', icon: 'circle-alert', title: 'No se pudo eliminar', body: esc(err.message) })); }
+      else if (el.dataset.confirm) { state.trackers = state.trackers.filter(t => t.id !== id); save(); closeDrawer(); log('warn', 'api', `DELETE /api/trackers/${id} (mock)`); toast({ tone: 'bad', icon: 'trash-2', title: 'Tracker eliminado', body: esc(it.title) }); render(); }
       else { el.dataset.confirm = '1'; el.querySelector('span').textContent = 'Pulsa otra vez para eliminar'; setTimeout(() => { if (el.isConnected) { delete el.dataset.confirm; el.querySelector('span').textContent = 'Eliminar tracker'; } }, 3500); }
       break;
     case 'regen': {
@@ -1529,19 +1682,21 @@ document.addEventListener('click', async e => {
     }
     case 'nt-cat': nt.cat = el.dataset.cat; nt.meta = null; $('#modal .relative').innerHTML = newHtml(); icons(); break;
     case 'nt-example': $('#nt-url').value = el.dataset.url; doFetch(el.dataset.url); break;
+    case 'nt-pick': doFetch({ gameID: el.dataset.game, steamAppID: el.dataset.app || null, candidates: [] }); break;
     case 'nt-manual': nt.meta = { cat: nt.cat, manual: true, title: '', price: '', ship: 0, store: nt.cat === 'game' ? 'Steam' : 'Amazon', platform: 'PC · Steam' }; $('#nt-progress').innerHTML = ''; $('#nt-preview').innerHTML = previewHtml(nt.meta); icons(); break;
     case 'cmp-preset': cmp = { a: el.dataset.a, b: el.dataset.b }; if (state.trackers.find(t => t.id === cmp.a) && state.trackers.find(t => t.id === cmp.b)) refreshCompare(); break;
     case 'test-alert': {
+      if (LIVE.on) { api('POST', '/api/notify/test', { channel: 'all' }).catch(e => toast({ tone: 'bad', icon: 'circle-alert', title: 'No se pudo enviar la prueba', body: esc(e.message) })); break; }
       const pick = state.trackers[Math.floor(Math.random() * state.trackers.length)];
       Notify.dispatch(pick, { reason: 'test' }); render(); break;
     }
-    case 'test-telegram': saveSettings(); log('info', 'telegram', `sendPhoto → chat ${state.settings.telegram.chatId || '(sin chat ID)'} · simulado`); toast({ tone: 'ai', icon: 'send', title: 'Prueba de Telegram simulada', body: 'El envío real llega con el backend de la Fase 2. El payload está a la derecha.' }); break;
-    case 'test-discord': saveSettings(); log('info', 'discord', 'POST webhook embed · simulado'); toast({ tone: 'ai', icon: 'message-circle', title: 'Prueba de Discord simulada', body: 'El envío real llega con el backend de la Fase 2.' }); break;
-    case 'test-email': saveSettings(); log('info', 'email', `SMTP → ${state.settings.email.to || '(sin correo)'} · simulado`); toast({ tone: 'ai', icon: 'mail', title: 'Prueba de correo simulada', body: 'El envío real llega con el servidor de la Fase 2. El contenido del correo está en la pestaña Payload.' }); break;
+    case 'test-telegram': if (LIVE.on) { testChannel('telegram'); break; } saveSettings(); log('info', 'telegram', `sendPhoto → chat ${state.settings.telegram.chatId || '(sin chat ID)'} · simulado`); toast({ tone: 'ai', icon: 'send', title: 'Prueba de Telegram simulada', body: 'El envío real llega con el backend de la Fase 2. El payload está a la derecha.' }); break;
+    case 'test-discord': if (LIVE.on) { testChannel('discord'); break; } saveSettings(); log('info', 'discord', 'POST webhook embed · simulado'); toast({ tone: 'ai', icon: 'message-circle', title: 'Prueba de Discord simulada', body: 'El envío real llega con el backend de la Fase 2.' }); break;
+    case 'test-email': if (LIVE.on) { testChannel('email'); break; } saveSettings(); log('info', 'email', `SMTP → ${state.settings.email.to || '(sin correo)'} · simulado`); toast({ tone: 'ai', icon: 'mail', title: 'Prueba de correo simulada', body: 'El envío real llega con el servidor de la Fase 2. El contenido del correo está en la pestaña Payload.' }); break;
     case 'snd-radar': Sound.radar(); break;
     case 'snd-coin': Sound.coin(); break;
     case 'payload': {
-      const sample = state.trackers.find(t => t.id === 'p-ally') || state.trackers[0], k = el.dataset.p;
+      const sample = sampleTracker(), k = el.dataset.p;
       $('#payload').textContent = JSON.stringify(k === 'tg' ? Notify.telegramPayload(sample) : k === 'dc' ? Notify.discordPayload(sample) : Notify.emailPayload(sample), null, 2);
       ['tg', 'dc', 'em'].forEach(x => { $('#pl-' + x).className = `px-2 py-1 rounded-md ${x === k ? 'bg-ink-600' : 'text-mute'}`; }); break;
     }
@@ -1559,21 +1714,46 @@ document.addEventListener('change', e => {
   if (el.closest && el.closest('#settings-form')) saveSettings();
 });
 document.addEventListener('input', e => {
-  if (e.target.id === 'int') { $('#int-val').textContent = e.target.value + ' s'; }
+  if (e.target.id === 'int' && $('#int-val')) { $('#int-val').textContent = e.target.value + ' s'; }
 });
 document.addEventListener('submit', e => {
   e.preventDefault();
   const f = e.target;
   if (f.id === 'nt-fetch') doFetch($('#nt-url').value.trim());
-  if (f.id === 'nt-create') createFromForm();
+  if (f.id === 'nt-create') LIVE.on ? createLive() : createFromForm();
   if (f.id === 'nt-flight') createFlight();
   if (f.id === 'cp-form') { const i = $('#cp-input'); ask(i.value); i.value = ''; }
   if (f.dataset.form === 'target') {
     const it = state.trackers.find(t => t.id === f.dataset.id), v = +$('#d-target').value;
-    if (v > 0) { it.target = it.cat === 'flight' ? Math.round(v) : round(v); it.alerted = it.current <= it.target; save(); refresh(); rerenderDrawer(); toast({ tone: 'good', icon: 'target', title: 'Objetivo actualizado', body: `${esc(it.title)} · ${money(it, it.target)}`, ms: 3000 }); if (it.current <= it.target && it.alert) Notify.dispatch(it); }
+    if (LIVE.on && v > 0) { api('PATCH', `/api/trackers/${it.id}`, { target: v }).then(t => { LIVE.upsert(t); rerenderDrawer(); toast({ tone: 'good', icon: 'target', title: 'Objetivo actualizado', body: `${esc(t.title)} · ${money(t, t.target)}`, ms: 3000 }); }).catch(err => toast({ tone: 'bad', icon: 'circle-alert', title: 'No se pudo guardar', body: esc(err.message) })); }
+    else if (v > 0) { it.target = it.cat === 'flight' ? Math.round(v) : round(v); it.alerted = it.current <= it.target; save(); refresh(); rerenderDrawer(); toast({ tone: 'good', icon: 'target', title: 'Objetivo actualizado', body: `${esc(it.title)} · ${money(it, it.target)}`, ms: 3000 }); if (it.current <= it.target && it.alert) Notify.dispatch(it); }
   }
 });
+// Modo real: los ajustes se guardan en el servidor. Los secretos solo se envían si los escribes.
+async function saveSettingsLive() {
+  const g = id => $('#' + id), v = id => g(id) ? g(id).value.trim() : '';
+  if (!g('tg-on')) return;
+  const body = {
+    telegram: { enabled: g('tg-on').checked, chatId: v('tg-chat'), token: v('tg-token') },
+    discord: { enabled: g('dc-on').checked, url: v('dc-url') },
+    email: { enabled: g('em-on').checked, to: v('em-to'), user: v('em-user'), pass: v('em-pass'), host: v('em-host'), port: +v('em-port') || undefined },
+    sound: g('snd-on').checked, intervalMin: +v('int')
+  };
+  try {
+    state.settings = await api('PUT', '/api/settings', body);
+    [['tg-token', state.settings.telegram.tokenSet], ['dc-url', state.settings.discord.urlSet], ['em-pass', state.settings.email.passSet]].forEach(([id, set]) => { const el = g(id); if (el && el.value && set) { el.value = ''; el.placeholder = '•••••• guardado (escribe para cambiarlo)'; } });
+    renderSoundBtn();
+  } catch (e) { toast({ tone: 'bad', icon: 'circle-alert', title: 'No se guardaron los ajustes', body: esc(e.message) }); }
+}
+async function testChannel(ch) {
+  await saveSettingsLive();
+  try {
+    await api('POST', '/api/notify/test', { channel: ch });
+    toast({ tone: 'good', icon: 'circle-check', title: `${CH_LABEL[ch]}: prueba enviada`, body: 'Revisa que te ha llegado el mensaje.' });
+  } catch (e) { toast({ tone: 'bad', icon: 'circle-alert', title: `${CH_LABEL[ch]}: no se pudo enviar`, body: esc(e.message), ms: 9000 }); }
+}
 function saveSettings() {
+  if (LIVE.on) return saveSettingsLive();
   const s = state.settings, g = id => $('#' + id);
   if (!g('tg-on')) return;
   s.telegram = { enabled: g('tg-on').checked, token: g('tg-token').value.trim(), chatId: g('tg-chat').value.trim() };
@@ -1606,10 +1786,23 @@ function route() {
   ui.view = NAV.some(n => n.id === h) ? h : 'dashboard';
   closeModal(); if ($('#drawer')) closeDrawer();
   render(); window.scrollTo(0, 0);
+  if (LIVE.on && ui.view === 'motor') api('GET', '/api/sources').then(x => { LIVE.sources(x); const b = $('#src-body'); if (b) b.innerHTML = srcRows(); }).catch(() => {});
 }
 window.addEventListener('hashchange', route);
 
 // ---------- arranque ----------
+(async () => {
+if (await LIVE.detect()) {
+  LIVE.connect();
+  $('#banner').remove();
+  $('#side-note').innerHTML = 'Precios reales de videojuegos de PC (CheapShark + Steam España). Productos y vuelos: próximas fases. IA con Gemini: Fase 3.';
+  nt.cat = 'game';
+  renderSoundBtn();
+  setInterval(tickLive, 1000);
+  route();
+  window.CG = { api: API, ai: AI, notify: Notify, engine, live: LIVE, state: () => state };
+  return;
+}
 state = load();
 // logs iniciales del worker (backdated)
 (() => {
@@ -1632,6 +1825,7 @@ setInterval(tickLive, 1000);
 route();
 
 // API pública para las fases 2 y 3
-window.CG = { api: API, ai: AI, notify: Notify, engine, state: () => state };
+window.CG = { api: API, ai: AI, notify: Notify, engine, live: LIVE, state: () => state };
+})();
 })();
 </script>

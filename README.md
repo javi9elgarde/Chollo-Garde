@@ -6,27 +6,118 @@ Rastreador de precios de vuelos, videojuegos y productos con análisis de IA y a
 
 | Fase | Qué incluye | Estado |
 |---|---|---|
-| 1 · Frontend | Dashboard SPA (Tailwind, Lucide, Chart.js) con datos simulados | Hecha |
-| 2 · Backend | Servidor local con scrapers/APIs, base de datos y alertas por Telegram, Discord y correo | Pendiente |
+| 1 · Frontend | Dashboard SPA (Tailwind, Lucide, Chart.js) | Hecha |
+| 2 · Backend | Servidor en tu PC, precios reales de videojuegos de PC, tiempo real y alertas por Telegram, Discord y correo | Hecha (juegos de PC) |
 | 3 · IA | Gemini para Deal Index, predicción de compra, reseñas, comparador y copiloto | Pendiente |
 
-> En la Fase 1 **todos los precios son de ejemplo**. Ninguno se lee todavía de las tiendas.
+**Qué es real y qué no, ahora mismo:**
 
-## Fase 1: probar el dashboard
+- **Videojuegos de PC: precios reales.** El precio de Steam es el de la tienda española, en euros. El resto de tiendas (GOG, Humble, Fanatical, Green Man Gaming, Epic… unas 30) vienen de CheapShark en dólares y se convierten a euros con el cambio del BCE; el panel las marca con «≈».
+- **Productos y vuelos:** todavía sin fuente real. En el panel aparecen como «próximamente».
+- **IA:** el Deal Index y la recomendación usan una heurística local sobre el histórico real. Gemini llega en la Fase 3.
+- **Demo:** si abres `frontend/index.html` directamente (sin servidor) ves la demo con 15 trackers de ejemplo y precios simulados.
 
-Abre `frontend/index.html` en el navegador. No necesita instalación.
+## Instalación en Windows (una sola vez)
 
-## Cómo se conectan las fases 2 y 3
+1. Instala **Node.js LTS** desde <https://nodejs.org/es> (siguiente, siguiente…).
+2. Descarga este repositorio (botón verde *Code* → *Download ZIP*) y descomprímelo donde quieras, por ejemplo en `Documentos\chollo-garde`.
+3. Haz doble clic en **`windows\instalar.bat`**.
 
-El frontend ya llama a estas capas (ver el bloque `<script>` de `frontend/index.html`):
+El instalador:
 
-- `API.mode = 'live'` → `POST /api/fetch-meta`, `GET/POST /api/trackers`
-- `AI.provider = 'gemini'` → `POST /api/ai/:task` (los prompts están en `AI.PROMPTS` y esperan JSON)
-- `Notify.telegramPayload`, `Notify.discordPayload`, `Notify.emailPayload` → formato de cada alerta
-- `engine` → simula el ciclo de rastreo; en la Fase 2 lo sustituye el servidor
+- instala las dependencias,
+- deja CholloGarde arrancando solo cada vez que enciendes el PC (sin ventanas),
+- crea un acceso directo **CholloGarde** en el escritorio,
+- abre el panel en <http://localhost:8787>.
 
-## Decisiones para la Fase 2
+Al encender el PC, el servidor revisa todos los precios a los pocos segundos y luego cada hora (se cambia en *Notificaciones*). Si tienes el panel abierto, los precios, los logs y las alertas se actualizan en directo.
 
-- Se ejecuta en el PC del usuario mientras está encendido (sin VPS por ahora) y actualiza el dashboard en tiempo real.
-- Canales de alerta: Telegram, Discord y correo (SMTP).
-- Primera fuente real: CheapShark (videojuegos, gratis y sin clave).
+Otros scripts de `windows\`:
+
+| Script | Para qué |
+|---|---|
+| `iniciar.bat` | Arranca el servidor con ventana visible (útil para ver qué pasa) |
+| `parar.bat` | Para el servidor |
+| `quitar-autoarranque.bat` | Quita el arranque automático y el acceso directo |
+
+> Los datos (trackers, histórico y ajustes) se guardan en `backend\data\db.json`. Si actualizas el código, no borres esa carpeta.
+
+## Configurar las alertas
+
+Todo se hace en el panel, en **Notificaciones**. Cada canal tiene un botón *Enviar prueba*. Los tokens y contraseñas se guardan solo en tu PC y nunca vuelven al navegador.
+
+**Telegram**
+
+1. En Telegram, abre **@BotFather**, escribe `/newbot` y sigue los pasos. Te da un *token*.
+2. Escribe cualquier mensaje a tu bot nuevo (si no, no puede escribirte).
+3. Abre **@userinfobot** y te dice tu *chat ID* (un número).
+4. Pega el token y el chat ID en el panel y pulsa *Enviar prueba*.
+
+**Discord**
+
+En tu servidor: *Ajustes del canal → Integraciones → Webhooks → Nuevo webhook → Copiar URL del webhook*. Pégala en el panel.
+
+**Correo (Gmail)**
+
+1. Activa la verificación en dos pasos de tu cuenta de Google.
+2. Crea una contraseña de aplicación en <https://myaccount.google.com/apppasswords> (16 letras).
+3. En el panel: *Cuenta que envía* = tu Gmail, *Contraseña de aplicación* = esas 16 letras, *Enviar alertas a* = donde quieras recibirlas.
+
+Para Outlook/Hotmail cambia el servidor a `smtp-mail.outlook.com`, puerto `587`.
+
+También puedes rellenar todo esto en `backend\.env` (ver `backend\.env.example`).
+
+## Cómo funciona
+
+```
+frontend/index.html   Dashboard. Si lo sirve el backend, usa datos reales; si no, la demo.
+backend/src/
+  server.js           API REST + /api/stream (tiempo real) + sirve el dashboard
+  engine.js           Motor: revisa los trackers cada X minutos y dispara las alertas
+  games.js            Vertical de videojuegos: CheapShark + Steam España
+  sources/            Conectores (cheapshark.js, steam.js, fx.js)
+  notify/             Telegram, Discord y correo (SMTP)
+  store.js            Base de datos en data/db.json
+windows/              Instalación y arranque automático
+```
+
+La alerta salta cuando `Precio_Actual <= Precio_Objetivo` y la alerta del tracker está activa. Solo avisa una vez; vuelve a avisar si el precio sube por encima del objetivo y vuelve a bajar.
+
+### API
+
+| Método | Ruta | Qué hace |
+|---|---|---|
+| GET | `/api/state` | Trackers, alertas, ajustes (sin secretos), estado del motor, logs y fuentes |
+| GET | `/api/stream` | Server-Sent Events: `log`, `tracker`, `tracker-removed`, `alert`, `engine`, `settings` |
+| POST | `/api/fetch-meta` | `{ q }` o `{ url }` (enlace de Steam) → vista previa con precios reales |
+| POST | `/api/trackers` | `{ gameID, steamAppID, target, alert }` → crea el tracker |
+| PATCH | `/api/trackers/:id` | `{ target }` y/o `{ alert }` |
+| DELETE | `/api/trackers/:id` | Borra el tracker |
+| POST | `/api/trackers/:id/scan` | Rastrea ese tracker ahora |
+| POST | `/api/engine` | `{ action: "start" \| "stop" \| "run" }` |
+| GET/PUT | `/api/settings` | Ajustes. Un secreto vacío significa «no lo cambies» |
+| POST | `/api/notify/test` | `{ channel: "telegram" \| "discord" \| "email" \| "all" }` |
+| POST | `/api/ai/:task` | Reservado para Gemini (Fase 3); hoy responde 501 |
+
+### Desarrollo
+
+```bash
+cd backend
+npm install
+npm start      # http://localhost:8787
+npm test       # pruebas de extremo a extremo con las APIs externas simuladas
+```
+
+## Limitaciones conocidas
+
+- CheapShark solo cubre tiendas oficiales y revendedores autorizados de PC. **No** incluye Eneba, Instant Gaming ni CDKeys, ni consolas (PS Store, eShop, Xbox).
+- Los precios convertidos de dólares pueden diferir unos céntimos del precio que ves en la tienda en euros. El de Steam sí es exacto.
+- El histórico empieza el día que creas el tracker. Hasta entonces, el «mínimo histórico» que se usa es el de CheapShark (convertido a euros).
+
+## Siguientes pasos
+
+- **IsThereAnyDeal** (clave gratuita): precios en euros de más tiendas, incluidas algunas de keys y consolas.
+- **Productos:** Keepa para Amazon (de pago) y un scraper con navegador para PcComponentes, AliExpress y El Corte Inglés.
+- **Vuelos:** conector para Skyscanner, Google Flights o Kayak.
+- **Fase 3:** Gemini detrás de `/api/ai/:task`.
+- **Acceso desde fuera de tu PC** (por ejemplo, para tu hermano): túnel de Cloudflare con contraseña (`DASHBOARD_PASSWORD`), o un VPS/Raspberry con el `docker-compose.yml` incluido.
