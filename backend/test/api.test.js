@@ -19,7 +19,7 @@ const upstream = http.createServer((req, res) => {
     if (p === '/cs/games' && u.searchParams.get('title')) return json(u.searchParams.get('title') === 'nada' ? [] : [{ gameID: '612', steamAppID: '1145350', external: 'Hades II', thumb: 'https://x/t.jpg', cheapest: '19.99' }, { gameID: '613', steamAppID: '1145360', external: 'Hades', thumb: 'https://x/h.jpg' }]);
     if (p === '/cs/games' && u.searchParams.get('steamAppID')) return json([{ gameID: '612', steamAppID: u.searchParams.get('steamAppID'), external: 'Hades II' }]);
     if (p === '/cs/games' && u.searchParams.get('id')) return json({ info: { title: 'Hades II', steamAppID: '1145350', thumb: 'https://x/t.jpg' }, cheapestPriceEver: { price: '17.49', date: 1717000000 },
-      deals: [{ storeID: '1', dealID: 'd1', price: '29.99', retailPrice: '29.99' }, { storeID: '15', dealID: 'd15', price: String(up.usd), retailPrice: '29.99' }, { storeID: '7', dealID: 'd7', price: '24.99', retailPrice: '29.99' }, { storeID: '99', dealID: 'd99', price: '1.00', retailPrice: '29.99' }] });
+      deals: [{ storeID: '1', dealID: 'd1', price: '29.99', retailPrice: '29.99' }, { storeID: '15', dealID: 'abc%3D', price: String(up.usd), retailPrice: '29.99' }, { storeID: '7', dealID: 'd7', price: '24.99', retailPrice: '29.99' }, { storeID: '99', dealID: 'd99', price: '1.00', retailPrice: '29.99' }] });
     if (p === '/steam/api/appdetails') {
       const id = u.searchParams.get('appids');
       return json({ [id]: { success: true, data: { name: 'Hades II', header_image: 'https://cdn/h.jpg', is_free: false, genres: [{ description: 'Acción' }], metacritic: { score: 95 }, developers: ['Supergiant Games'], release_date: { date: '25 sep 2025' }, price_overview: { currency: 'EUR', initial: 2950, final: Math.round(up.steamEur * 100), discount_percent: 0 } } } });
@@ -166,4 +166,13 @@ test('rechaza peticiones de otras webs (CSRF / DNS rebinding)', async () => {
   assert.equal(csrf.status, 403);
   const own = await fetch(base + '/api/alerts/read', { method: 'POST', headers: { Origin: base } });
   assert.equal(own.status, 200);
+});
+
+test('los enlaces de CheapShark no se codifican dos veces', async () => {
+  const { body } = await call('POST', '/api/fetch-meta', { q: 'hades' });
+  const fan = body.stores.find(s => s.name === 'Fanatical');
+  assert.ok(fan);
+  const { dealUrl } = await import('../src/sources/cheapshark.js');
+  assert.equal(dealUrl('abc%3D'), 'https://www.cheapshark.com/redirect?dealID=abc%3D');
+  assert.equal(dealUrl('abc='), 'https://www.cheapshark.com/redirect?dealID=abc%3D');
 });

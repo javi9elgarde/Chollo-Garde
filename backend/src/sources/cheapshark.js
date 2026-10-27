@@ -18,7 +18,13 @@ export async function stores() {
 }
 
 export const storeType = name => (OFFICIAL.has(name) ? 'official' : 'key');
-export const dealUrl = dealID => `https://www.cheapshark.com/redirect?dealID=${encodeURIComponent(dealID)}`;
+// La API ya devuelve el dealID codificado (termina en %3D): se normaliza para no codificarlo dos veces,
+// porque con un dealID mal codificado la redirección acaba en la portada de CheapShark.
+export function dealUrl(dealID) {
+  let id = String(dealID);
+  try { id = decodeURIComponent(id); } catch {}
+  return `https://www.cheapshark.com/redirect?dealID=${encodeURIComponent(id)}`;
+}
 
 export const search = (title, limit = 8) => getJson(api('/games', { title, limit }));
 export const byAppId = steamAppID => getJson(api('/games', { steamAppID }));

@@ -40,7 +40,7 @@ export async function details(appId) {
 
 export async function reviews(appId) {
   try {
-    const r = await getJson(`${base()}/appreviews/${appId}?json=1&language=all&purchase_type=all&num_per_page=0`, { retries: 0 });
+    const r = await getJson(`${base()}/appreviews/${appId}?json=1&language=all&purchase_type=all&num_per_page=1&filter=all`, { retries: 0 });
     const q = r?.query_summary;
     if (!q || !q.total_reviews) return null;
     return { rating: Math.round(q.total_positive / q.total_reviews * 50) / 10, n: q.total_reviews, desc: q.review_score_desc };

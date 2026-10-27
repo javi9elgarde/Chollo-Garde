@@ -130,6 +130,11 @@ export async function refresh(it) {
   if (last && dayKey(last.t) === dayKey(now)) { last.t = now; last.p = it.current; }
   else it.history.push({ t: now, p: it.current });
   if (it.history.length > 365) it.history = it.history.slice(-365);
+  // Si al crearlo Steam no devolvió reseñas, se vuelve a intentar.
+  if (it.steamAppID && !it.reviews?.n) {
+    const rev = await steam.reviews(it.steamAppID);
+    if (rev) it.reviews = { ...it.reviews, rating: rev.rating, n: rev.n, src: `Steam · ${rev.desc}` };
+  }
   it.lastCheck = now; it.lastError = null;
   return { old, current: it.current, best: qt.best };
 }
