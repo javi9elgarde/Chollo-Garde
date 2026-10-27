@@ -1,0 +1,13 @@
+# Opcional: CholloGarde 24/7 en un VPS o Raspberry Pi.  docker compose up -d
+services:
+  chollogarde:
+    build: .
+    restart: unless-stopped
+    env_file:
+      - path: backend/.env
+        required: false
+    volumes:
+      - ./data:/data
+    ports:
+      # Solo accesible desde la propia máquina. Para abrirlo fuera usa un túnel o proxy con contraseña.
+      - "127.0.0.1:8787:8787"

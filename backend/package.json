@@ -1,0 +1,17 @@
+{
+  "name": "chollogarde-backend",
+  "version": "0.2.0",
+  "private": true,
+  "description": "Servidor local de CholloGarde: rastreo de precios, tiempo real y alertas por Telegram, Discord y correo.",
+  "type": "module",
+  "main": "src/index.js",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "nodemailer": "^6.9.16"
+  }
+}
