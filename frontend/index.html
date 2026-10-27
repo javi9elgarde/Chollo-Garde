@@ -1,0 +1,1637 @@
+<title>CholloGarde</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          ink: { 950: '#080C16', 900: '#0D1220', 850: '#111829', 800: '#151D31', 700: '#1C263E', 600: '#27324E', 500: '#3A4767' },
+          fg: '#E7EAF2', mute: '#8D97B0', dim: '#5E6884',
+          gold: '#F2B544', ai: '#7DD3FC', good: '#4ADE80', warn: '#FB923C', bad: '#F87171'
+        },
+        fontFamily: {
+          display: ['"Bricolage Grotesque"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+          sans: ['"IBM Plex Sans"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+          mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace']
+        }
+      }
+    }
+  };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lucide@0.453.0/dist/umd/lucide.min.js"></script>
+<style>
+  /* Layout: barra lateral de navegación + columna principal (rejilla de trackers) + raíl derecho en directo (motor, alertas).
+     Tema oscuro único por decisión de producto (PRD). Oro = precio/chollo, cielo = IA. */
+  :root {
+    color-scheme: dark;
+    --bg: #0D1220; --surface: #151D31; --line: #27324E;
+    --fg: #E7EAF2; --mute: #8D97B0;
+    --gold: #F2B544; --ai: #7DD3FC; --good: #4ADE80; --warn: #FB923C; --bad: #F87171;
+    --font-display: "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
+    --font-body: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  }
+  html, body { background: var(--bg); color: var(--fg); }
+  body { font-family: var(--font-body); font-size: 14px; -webkit-font-smoothing: antialiased; }
+  body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+  .gutter { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  @media (min-width: 1024px) { .gutter { padding-left: max(28px, env(safe-area-inset-left, 0px)); padding-right: max(28px, env(safe-area-inset-right, 0px)); } }
+  .sticky-top { top: env(safe-area-inset-top, 0px); }
+  h1, h2, h3 { text-wrap: balance; }
+  .tnum { font-variant-numeric: tabular-nums; }
+  .label { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--mute); font-weight: 500; }
+  [hidden] { display: none !important; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-thumb { background: #27324E; border-radius: 10px; border: 2px solid var(--bg); }
+  ::-webkit-scrollbar-track { background: transparent; }
+  :focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; border-radius: 6px; }
+
+  .art::after { content: ""; position: absolute; inset: 0; background-image: radial-gradient(rgba(255,255,255,.09) 1px, transparent 1px); background-size: 14px 14px; mask-image: linear-gradient(120deg, transparent 30%, #000); pointer-events: none; }
+  .atl { position: relative; background: var(--gold); color: #1a1405; }
+  .atl::before { content: ""; position: absolute; inset: -3px; border-radius: inherit; border: 2px solid var(--gold); animation: atlPulse 1.6s ease-out infinite; }
+  @keyframes atlPulse { 0% { opacity: .9; transform: scale(1); } 100% { opacity: 0; transform: scale(1.25); } }
+  .live-dot { box-shadow: 0 0 0 0 rgba(74,222,128,.6); animation: live 2s infinite; }
+  @keyframes live { 0% { box-shadow: 0 0 0 0 rgba(74,222,128,.55); } 70% { box-shadow: 0 0 0 8px rgba(74,222,128,0); } 100% { box-shadow: 0 0 0 0 rgba(74,222,128,0); } }
+  .flash-down { animation: flashDown 2.2s ease-out; }
+  .flash-up { animation: flashUp 2.2s ease-out; }
+  @keyframes flashDown { 0% { box-shadow: 0 0 0 2px var(--good), 0 0 30px rgba(74,222,128,.35); } 100% { box-shadow: 0 0 0 1px transparent; } }
+  @keyframes flashUp { 0% { box-shadow: 0 0 0 2px var(--warn); } 100% { box-shadow: 0 0 0 1px transparent; } }
+  .shimmer { background: linear-gradient(90deg, #1C263E 0%, #27324E 50%, #1C263E 100%); background-size: 200% 100%; animation: shimmer 1.2s linear infinite; }
+  @keyframes shimmer { to { background-position: -200% 0; } }
+  .term { font-family: var(--font-mono); font-size: 12px; line-height: 1.65; }
+  .drawer-panel { transform: translateX(100%); transition: transform .28s cubic-bezier(.2,.8,.2,1); }
+  .drawer-open .drawer-panel { transform: none; }
+  .fade-in { animation: fadeIn .22s ease-out; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  .typing span { display: inline-block; width: 6px; height: 6px; border-radius: 9px; background: var(--ai); margin-right: 3px; animation: blink 1s infinite; }
+  .typing span:nth-child(2) { animation-delay: .15s; } .typing span:nth-child(3) { animation-delay: .3s; }
+  @keyframes blink { 0%, 100% { opacity: .25; } 50% { opacity: 1; } }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { scrollbar-width: none; }
+  input[type="range"] { accent-color: var(--gold); }
+  input[type="checkbox"] { accent-color: var(--gold); }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+  }
+</style>
+
+<div id="app" class="min-h-screen lg:flex">
+  <!-- Barra lateral -->
+  <aside class="hidden lg:flex flex-col w-60 shrink-0 h-screen sticky top-0 border-r border-ink-600/70 bg-ink-950/60">
+    <div class="px-5 pt-6 pb-5 flex items-center gap-2.5">
+      <div class="w-9 h-9 rounded-xl bg-gold text-ink-950 grid place-items-center"><i data-lucide="radar" class="w-5 h-5"></i></div>
+      <div>
+        <div class="font-display font-extrabold text-[19px] leading-none tracking-tight">CholloGarde</div>
+        <div class="text-[11px] text-mute mt-1">Deal Intelligence Engine</div>
+      </div>
+    </div>
+    <nav id="side-nav" class="px-3 flex flex-col gap-0.5" aria-label="Secciones"></nav>
+    <div class="mt-auto p-4">
+      <div class="rounded-xl border border-ink-600 bg-ink-850 p-3.5">
+        <div class="flex items-center gap-2 text-[13px] font-medium"><span id="side-dot" class="w-2 h-2 rounded-full bg-good live-dot"></span><span id="side-engine">Motor 24/7 activo</span></div>
+        <div class="text-[12px] text-mute mt-1.5 tnum" id="side-next">Próximo ciclo en —</div>
+      </div>
+      <p class="text-[11px] text-dim mt-3 leading-snug">Fase 1 · datos simulados. Scrapers (Fase 2) y Gemini (Fase 3) se conectan en <span class="font-mono">CG.api</span> y <span class="font-mono">CG.ai</span>.</p>
+    </div>
+  </aside>
+
+  <div class="flex-1 min-w-0">
+    <header class="sticky sticky-top z-30 bg-ink-900/90 backdrop-blur border-b border-ink-600/70">
+      <div class="gutter py-3 flex items-center gap-3">
+        <a href="#dashboard" class="lg:hidden flex items-center gap-2 shrink-0" aria-label="CholloGarde inicio">
+          <span class="w-8 h-8 rounded-lg bg-gold text-ink-950 grid place-items-center"><i data-lucide="radar" class="w-4 h-4"></i></span>
+          <span class="font-display font-extrabold text-[17px] hidden sm:inline">CholloGarde</span>
+        </a>
+        <label class="relative flex-1 min-w-0 max-w-xl">
+          <span class="sr-only">Buscar trackers</span>
+          <i data-lucide="search" class="w-4 h-4 text-mute absolute left-3 top-1/2 -translate-y-1/2"></i>
+          <input id="q" type="search" autocomplete="off" placeholder="Buscar juego, ruta o producto…" class="w-full bg-ink-800 border border-ink-600 rounded-xl pl-9 pr-3 py-2 text-[14px] placeholder:text-dim focus:outline-none focus:border-gold/70">
+        </label>
+        <button data-action="compare" class="hidden md:inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-ink-600 hover:border-ai/60 hover:text-ai text-[13px]"><i data-lucide="scale" class="w-4 h-4"></i>Comparar 1v1</button>
+        <button data-action="sound" id="btn-sound" class="w-9 h-9 grid place-items-center rounded-xl border border-ink-600 hover:border-gold/60" aria-label="Sonido de alertas"><i data-lucide="volume-2" class="w-4 h-4"></i></button>
+        <a href="#alertas" class="relative w-9 h-9 grid place-items-center rounded-xl border border-ink-600 hover:border-gold/60" aria-label="Alertas">
+          <i data-lucide="bell" class="w-4 h-4"></i>
+          <span id="bell-badge" hidden class="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-gold text-ink-950 text-[11px] font-semibold grid place-items-center tnum">0</span>
+        </a>
+        <button data-action="new" class="inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 rounded-xl bg-gold text-ink-950 font-semibold text-[13px] hover:brightness-110 shrink-0"><i data-lucide="plus" class="w-4 h-4"></i><span class="hidden sm:inline">Nuevo tracker</span></button>
+      </div>
+      <nav id="mobile-nav" class="lg:hidden gutter pb-2.5 flex gap-1.5 overflow-x-auto no-scrollbar" aria-label="Secciones"></nav>
+    </header>
+    <div class="gutter py-2 bg-warn/10 border-b border-warn/30 text-[12px] sm:text-[13px] text-warn flex items-center gap-2"><i data-lucide="flask-conical" class="w-4 h-4 shrink-0"></i><span><b>Precios de ejemplo, no reales.</b> Esta es la Fase 1 (solo interfaz): ningún precio se lee todavía de las tiendas. Los precios reales llegan con los scrapers de la Fase 2.</span></div>
+    <main id="main" class="gutter pt-6 pb-28"></main>
+  </div>
+</div>
+
+<div id="layer"></div>
+<div id="toasts" class="fixed z-[70] flex flex-col gap-2 w-[min(380px,calc(100vw-32px))]" style="top: calc(env(safe-area-inset-top, 0px) + 72px); right: max(16px, env(safe-area-inset-right, 0px));"></div>
+
+<!-- Co-Piloto -->
+<button id="fab" data-action="copilot" class="fixed z-40 flex items-center gap-2 pl-3.5 pr-4 h-12 rounded-full bg-ink-800 border border-ai/40 text-ai shadow-[0_10px_40px_-10px_rgba(125,211,252,.45)] hover:bg-ink-700" style="right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px));">
+  <i data-lucide="sparkles" class="w-5 h-5"></i><span class="font-medium text-[13px]">Co-Piloto IA</span>
+</button>
+<section id="copilot" hidden class="fixed z-50 flex flex-col bg-ink-850 border border-ink-600 rounded-2xl shadow-2xl overflow-hidden fade-in" style="right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); width: min(400px, calc(100vw - 32px)); height: min(600px, calc(100vh - 120px));" aria-label="Co-Piloto IA">
+  <div class="px-4 py-3 border-b border-ink-600 flex items-center gap-3">
+    <div class="w-8 h-8 rounded-lg bg-ai/15 text-ai grid place-items-center"><i data-lucide="bot" class="w-4 h-4"></i></div>
+    <div class="min-w-0 flex-1">
+      <div class="font-display font-bold text-[15px] leading-tight">Co-Piloto</div>
+      <div id="cp-ctx" class="text-[11px] text-mute truncate">Contexto: todos tus trackers</div>
+    </div>
+    <button data-action="cp-clear-ctx" class="text-[11px] text-mute hover:text-fg px-2 py-1 rounded-md border border-ink-600" id="cp-ctx-btn" hidden>Quitar contexto</button>
+    <button data-action="copilot" class="w-8 h-8 grid place-items-center rounded-lg hover:bg-ink-700" aria-label="Cerrar co-piloto"><i data-lucide="x" class="w-4 h-4"></i></button>
+  </div>
+  <div id="cp-msgs" class="flex-1 overflow-y-auto p-4 flex flex-col gap-3"></div>
+  <div id="cp-sugg" class="px-4 pb-2 flex gap-1.5 overflow-x-auto no-scrollbar"></div>
+  <form id="cp-form" class="p-3 border-t border-ink-600 flex gap-2">
+    <label class="sr-only" for="cp-input">Pregunta al co-piloto</label>
+    <input id="cp-input" autocomplete="off" placeholder="¿Suele bajar en las rebajas de otoño?" class="flex-1 min-w-0 bg-ink-800 border border-ink-600 rounded-xl px-3 py-2 text-[14px] placeholder:text-dim focus:outline-none focus:border-ai/70">
+    <button class="w-10 h-10 grid place-items-center rounded-xl bg-ai text-ink-950" aria-label="Enviar"><i data-lucide="send" class="w-4 h-4"></i></button>
+  </form>
+</section>
+
+<script>
+/* =====================================================================
+   CholloGarde · Fase 1 (frontend SPA con datos simulados)
+   Capas preparadas para conectar:
+     CG.api    → Fase 2: REST del backend (CRUD trackers, auto-fetch, logs)
+     CG.ai     → Fase 3: Gemini vía backend (Deal Index, predicción, reseñas, 1v1, chat)
+     CG.notify → Fase 2: despacho real a Telegram / Discord
+     CG.engine → Fase 2: lo sustituye el cron de scraping; aquí se simula
+   ===================================================================== */
+(() => {
+'use strict';
+
+// ---------- utilidades ----------
+const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const median = a => { const s = [...a].sort((x, y) => x - y), m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
+const mean = a => a.reduce((x, y) => x + y, 0) / a.length;
+const round = (v, d = 2) => Math.round(v * 10 ** d) / 10 ** d;
+function hash(s) { let h = 2166136261; for (const c of String(s)) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
+function rng(seed) { let a = hash(seed); return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const EUR0 = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
+const EUR2 = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const eur = (v, d = 2) => (d === 0 ? EUR0 : EUR2).format(v);
+const money = (it, v = it.current) => eur(v, it.cat === 'flight' ? 0 : 2);
+const pct = v => `${v > 0 ? '+' : v < 0 ? '−' : ''}${Math.abs(Math.round(v * 100))} %`;
+function dOff(n) { const d = new Date(); d.setHours(12, 0, 0, 0); d.setDate(d.getDate() + n); return d; }
+const pd = s => { if (typeof s !== 'string') return new Date(s); const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d, 12); };
+const isoLocal = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const fmtDate = d => pd(d).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+const fmtDateL = d => pd(d).toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+const fmtTime = d => new Date(d).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+const ago = t => { const s = Math.round((Date.now() - t) / 1000); if (s < 60) return `hace ${s} s`; if (s < 3600) return `hace ${Math.round(s / 60)} min`; if (s < 86400) return `hace ${Math.round(s / 3600)} h`; return `hace ${Math.round(s / 86400)} d`; };
+const icons = () => window.lucide && lucide.createIcons({ attrs: { 'stroke-width': 1.75 } });
+const uid = p => p + '-' + Math.random().toString(36).slice(2, 8);
+
+// ---------- catálogo ----------
+const CAT = {
+  flight: { label: 'Vuelo', plural: 'Vuelos', icon: 'plane', route: 'vuelos', hue: [195, 225] },
+  game: { label: 'Videojuego', plural: 'Videojuegos', icon: 'gamepad-2', route: 'juegos', hue: [255, 320] },
+  product: { label: 'Producto', plural: 'Productos', icon: 'package', route: 'productos', hue: [18, 46] }
+};
+const AIRPORTS = { MAD: 'Madrid', BCN: 'Barcelona', VLC: 'Valencia', SVQ: 'Sevilla', AGP: 'Málaga', BIO: 'Bilbao', HND: 'Tokio Haneda', JFK: 'Nueva York JFK', KEF: 'Reikiavik', LIS: 'Lisboa', LHR: 'Londres', CDG: 'París', FCO: 'Roma', BKK: 'Bangkok', MEX: 'Ciudad de México', EZE: 'Buenos Aires' };
+const SELLERS = ['Amazon', 'PcComponentes', 'AliExpress', 'El Corte Inglés'];
+const GAME_STORES = { key: ['Eneba', 'Instant Gaming', 'CDKeys'], official: ['Steam', 'PS Store', 'Nintendo eShop', 'Xbox Store'] };
+function storeUrl(store, q) {
+  const e = encodeURIComponent(q);
+  return ({
+    'Amazon': `https://www.amazon.es/s?k=${e}`,
+    'PcComponentes': `https://www.pccomponentes.com/buscar/?query=${e}`,
+    'AliExpress': `https://es.aliexpress.com/wholesale?SearchText=${e}`,
+    'El Corte Inglés': `https://www.elcorteingles.es/search-nwx/?s=${e}`,
+    'Steam': `https://store.steampowered.com/search/?term=${e}`,
+    'Eneba': `https://www.eneba.com/es/store?text=${e}`,
+    'Instant Gaming': `https://www.instant-gaming.com/es/busquedas/?q=${e}`,
+    'CDKeys': `https://www.cdkeys.com/catalogsearch/result/?q=${e}`,
+    'PS Store': `https://store.playstation.com/es-es/search/${e}`,
+    'Nintendo eShop': `https://www.nintendo.com/es-es/Buscar/Buscar-299117.html?q=${e}`,
+    'Xbox Store': `https://www.xbox.com/es-ES/Search/Results?q=${e}`
+  })[store] || `https://www.google.com/search?q=${e}`;
+}
+function flightUrl(it) {
+  const f = d => d.slice(2).replace(/-/g, '');
+  return `https://www.skyscanner.es/transporte/vuelos/${it.origin.toLowerCase()}/${it.dest.toLowerCase()}/${f(it.depart)}/${it.trip === 'roundtrip' && it.ret ? f(it.ret) + '/' : ''}`;
+}
+
+// ---------- histórico simulado ----------
+function genHistory(seed, { base, end, days = 90, vol = .025, dips = 2, dipDepth = [.8, .9], inflate = null, atl = false, dec = 2 }) {
+  const r = rng(seed + ':h'); let p = base; const v = [];
+  const dipAt = new Set(); for (let k = 0; k < dips; k++) dipAt.add(5 + Math.floor(r() * (days - 24)));
+  let left = 0, f = 1;
+  for (let i = 0; i < days - 1; i++) {
+    p = clamp(p * (1 + (r() - .5) * vol), base * .92, base * 1.07);
+    if (dipAt.has(i)) { left = 3 + Math.floor(r() * 5); f = dipDepth[0] + r() * (dipDepth[1] - dipDepth[0]); }
+    let x = left > 0 ? p * f : p; if (left > 0) left--;
+    if (inflate && i >= days - 1 - inflate.from && i < days - 1 - inflate.to) x = inflate.peak * (1 + (r() - .5) * .006);
+    v.push(x);
+  }
+  let last = end; if (atl) { const m = Math.min(...v) * .985; if (m < end) last = dec ? Math.floor(m) - .01 : Math.floor(m); }
+  v.push(last);
+  return v.map((x, i) => ({ t: dOff(i - days + 1).getTime(), p: round(x, dec) }));
+}
+
+// ---------- datos de ejemplo (3 verticales) ----------
+function seedTrackers() {
+  const P = (name, price, ship = 0, extra = {}) => ({ name, price, ship, stock: true, ...extra });
+  const S = (name, type, price) => ({ name, type, price });
+  const list = [
+    // --- Productos ---
+    { id: 'p-deck', query: 'Steam Deck OLED 512GB', kw: ['deck'], cat: 'product', title: 'Steam Deck OLED 512 GB', brand: 'Valve', icon: 'gamepad-2', category: 'Consolas portátiles', pvp: 569, target: 499,
+      sellers: [P('Amazon', 549), P('PcComponentes', 559), P('Steam', 569, 0, { url: 'https://store.steampowered.com/steamdeck', note: 'oficial' }), P('El Corte Inglés', 569)],
+      coupons: [],
+      specs: { Pantalla: '7,4" OLED HDR 90 Hz', Peso: '640 g', Batería: '50 Wh', Almacenamiento: '512 GB NVMe', Sistema: 'SteamOS', 'Precio por GB': '' },
+      reviews: { rating: 4.7, n: 18420, src: 'Amazon, Reddit, Xataka', pros: ['Pantalla OLED con negros puros y HDR', 'Autonomía de 3 a 12 h según el juego', 'SteamOS y modo suspensión muy pulidos'], cons: ['Rendimiento justo en AAA recientes', 'Tamaño y peso para manos pequeñas', 'Solo 1 puerto USB-C sin dock'] },
+      gen: { base: 559, end: 541, dips: 2, dipDepth: [.9, .95] } },
+    { id: 'p-ally', query: 'ASUS ROG Ally X', kw: ['ally', 'rog'], cat: 'product', title: 'ASUS ROG Ally X · Ryzen Z1 Extreme · 1 TB', brand: 'ASUS', icon: 'gamepad-2', category: 'Consolas portátiles', pvp: 899, target: 760,
+      sellers: [P('Amazon', 749), P('PcComponentes', 769), P('El Corte Inglés', 799)],
+      coupons: [{ code: 'APPCOMP20', desc: '20 € extra comprando desde la app', store: 'PcComponentes', value: 20 }],
+      specs: { Pantalla: '7" IPS 120 Hz VRR', Peso: '678 g', Batería: '80 Wh', Almacenamiento: '1 TB NVMe', Sistema: 'Windows 11', 'Precio por GB': '' },
+      reviews: { rating: 4.5, n: 6210, src: 'Amazon, Reddit, Hardzone', pros: ['Batería de 80 Wh, la mayor del segmento', 'Compatible con Game Pass, Epic y Steam', 'Pantalla a 120 Hz con VRR'], cons: ['Windows 11 incómodo en modo portátil', 'Ventilador audible en modo Turbo', 'Pantalla IPS frente al OLED de la Deck'] },
+      gen: { base: 835, end: 749, dips: 2, dipDepth: [.93, .97], atl: true } },
+    { id: 'p-ssd', query: 'Samsung 990 PRO 2TB', kw: ['990', 'ssd'], cat: 'product', title: 'Samsung 990 PRO 2 TB NVMe M.2', brand: 'Samsung', icon: 'hard-drive', category: 'Almacenamiento', pvp: 249.99, target: 135,
+      sellers: [P('Amazon', 149.90), P('PcComponentes', 154.90), P('AliExpress', 139.00, 0, { note: 'Choice' }), P('El Corte Inglés', 179.90)],
+      coupons: [{ code: 'ESCHOLLO8', desc: '8 € menos en pedidos de más de 99 €', store: 'AliExpress', value: 8 }, { code: 'SSDWEEK', desc: '5 % en almacenamiento hasta el domingo', store: 'PcComponentes', value: 7.75 }],
+      specs: { Interfaz: 'PCIe 4.0 x4', Lectura: '7.450 MB/s', Escritura: '6.900 MB/s', TBW: '1.200 TB', Garantía: '5 años', 'Precio por GB': '' },
+      reviews: { rating: 4.8, n: 32110, src: 'Amazon, Reddit, Tom’s Hardware', pros: ['Velocidad sostenida entre las mejores PCIe 4.0', 'Temperaturas contenidas con disipador', 'Firmware maduro y 5 años de garantía'], cons: ['Caro frente al 990 EVO Plus en uso diario', 'Sin disipador en esta versión', 'Ganancia nula en tiempos de carga de juegos frente a gama media'] },
+      gen: { base: 158, end: 139, dips: 3, dipDepth: [.82, .9] } },
+    { id: 'p-xm5', query: 'Sony WH-1000XM5', kw: ['xm5', 'sony'], cat: 'product', title: 'Sony WH-1000XM5 · cancelación de ruido', brand: 'Sony', icon: 'headphones', category: 'Audio', pvp: 379, target: 260,
+      sellers: [P('El Corte Inglés', 299, 0, { claimed: 399 }), P('Amazon', 309), P('PcComponentes', 315)],
+      coupons: [],
+      specs: { Autonomía: '30 h (ANC activo)', Peso: '250 g', Códecs: 'SBC, AAC, LDAC', Multipunto: 'Sí', Carga: 'USB-C, 3 min = 3 h', 'Precio por GB': '' },
+      reviews: { rating: 4.6, n: 51200, src: 'Amazon, Rtings, Reddit', pros: ['Cancelación de ruido de referencia', 'Llamadas muy claras con 8 micrófonos', 'Cómodos en sesiones largas'], cons: ['No se pliegan como los XM4', 'Estuche voluminoso', 'Fiabilidad de la diadema en algunas unidades'] },
+      gen: { base: 284, end: 299, dips: 2, dipDepth: [.9, .95], inflate: { from: 16, to: 1, peak: 399 } } },
+    { id: 'p-oled', query: 'LG UltraGear 27GR95QE', kw: ['monitor', 'ultragear'], cat: 'product', title: 'LG UltraGear 27GR95QE OLED 240 Hz', brand: 'LG', icon: 'monitor', category: 'Monitores', pvp: 999, target: 650,
+      sellers: [P('Amazon', 749), P('PcComponentes', 729), P('El Corte Inglés', 799)],
+      coupons: [{ code: 'MONITOR30', desc: '30 € en monitores de más de 500 €', store: 'PcComponentes', value: 30 }],
+      specs: { Panel: 'WOLED 27" QHD', Refresco: '240 Hz · 0,03 ms', HDR: 'DisplayHDR True Black 400', Conexiones: '2× HDMI 2.1, DP 1.4', Peana: 'Altura, giro e inclinación', 'Precio por GB': '' },
+      reviews: { rating: 4.4, n: 3890, src: 'Amazon, Rtings, Hardware Unboxed', pros: ['Respuesta instantánea y negros perfectos', '240 Hz reales con G-Sync compatible', 'Peana completa'], cons: ['Brillo limitado en escritorio', 'Texto con franjas por subpíxeles WRGB', 'Riesgo de quemado con barras estáticas'] },
+      gen: { base: 799, end: 729, dips: 2, dipDepth: [.8, .87] } },
+
+    // --- Videojuegos ---
+    { id: 'g-bg3', kw: ['bg3', 'baldur'], cat: 'game', title: "Baldur's Gate 3", platform: 'PC · Steam', format: 'Digital', msrp: 59.99, target: 30, deck: 'Verificado',
+      stores: [{ ...S('Steam', 'official', 41.99), url: 'https://store.steampowered.com/app/1086940/' }, S('Instant Gaming', 'key', 33.49), S('Eneba', 'key', 34.80), S('CDKeys', 'key', 36.99)],
+      coupons: [{ code: 'ENEBA5', desc: '5 % extra pagando con Eneba Wallet', store: 'Eneba', value: 1.74 }],
+      specs: { Género: 'RPG por turnos', Duración: '75–100 h', Metacritic: '96', Cooperativo: 'Hasta 4 jugadores' },
+      reviews: { rating: 4.9, n: 610000, src: 'Steam, Metacritic, Reddit', pros: ['Libertad de decisiones con consecuencias reales', 'Doblaje y escritura sobresalientes', 'Cooperativo completo de 4 jugadores'], cons: ['Acto 3 con bajadas de rendimiento', 'Curva de entrada exigente para novatos en D&D', 'Gestión de inventario engorrosa'] },
+      gen: { base: 38.5, end: 33.49, dips: 2, dipDepth: [.76, .82] } },
+    { id: 'g-totk', kw: ['zelda', 'totk'], cat: 'game', title: 'Zelda: Tears of the Kingdom', platform: 'Switch', format: 'Físico', msrp: 69.99, target: 45, deck: null,
+      stores: [S('Nintendo eShop', 'official', 69.99), S('Amazon', 'retail', 47.90), S('El Corte Inglés', 'retail', 52.90), S('Eneba', 'key', 54.99)],
+      coupons: [],
+      specs: { Género: 'Aventura de mundo abierto', Duración: '60–150 h', Metacritic: '96', Cooperativo: 'No' },
+      reviews: { rating: 4.8, n: 98000, src: 'Metacritic, Reddit, Vandal', pros: ['Ultramano y construcción muy creativas', 'Mundo enorme con islas y subsuelo', 'Rejugabilidad altísima'], cons: ['Rendimiento inestable en Switch original', 'Reutiliza mucho mapa de Breath of the Wild', 'Precio oficial rara vez baja'] },
+      gen: { base: 50.5, end: 47.90, dips: 2, dipDepth: [.88, .93] } },
+    { id: 'g-cp', kw: ['cyberpunk'], cat: 'game', title: 'Cyberpunk 2077: Ultimate Edition', platform: 'PS5', format: 'Digital', msrp: 69.99, target: 35, deck: null,
+      stores: [S('PS Store', 'official', 34.99), S('CDKeys', 'key', 39.99), S('Eneba', 'key', 37.50)],
+      coupons: [],
+      specs: { Género: 'RPG de acción', Duración: '60–90 h', Metacritic: '89 (2.0)', Cooperativo: 'No' },
+      reviews: { rating: 4.6, n: 240000, src: 'PS Store, Metacritic, Reddit', pros: ['Versión 2.0 y Phantom Liberty rehacen el juego', 'Night City con un nivel de detalle enorme', 'Banda sonora y actuación de primer nivel'], cons: ['Mala fama inicial que aún pesa', 'IA policial mejorable', 'Árbol de ventajas abrumador al principio'] },
+      gen: { base: 46, end: 34.99, dips: 1, dipDepth: [.82, .86], atl: true } },
+    { id: 'g-hades', kw: ['hades'], cat: 'game', title: 'Hades II', platform: 'PC · Steam', format: 'Digital', msrp: 29.50, target: 19, deck: 'Verificado',
+      stores: [{ ...S('Steam', 'official', 29.50), url: 'https://store.steampowered.com/app/1145350/' }, S('Instant Gaming', 'key', 23.79), S('Eneba', 'key', 24.10), S('CDKeys', 'key', 25.49)],
+      coupons: [],
+      specs: { Género: 'Roguelike de acción', Duración: '40+ h', Metacritic: '95', Cooperativo: 'No' },
+      reviews: { rating: 4.9, n: 88000, src: 'Steam, Metacritic, Reddit', pros: ['Combate aún más profundo que el primero', 'Arte y música de Supergiant', 'Funciona perfecto en Steam Deck'], cons: ['Progresión lenta en las primeras horas', 'Algunos jefes reciclados del acceso anticipado', 'Poca variedad de biomas al inicio'] },
+      gen: { base: 25.2, end: 23.79, dips: 1, dipDepth: [.85, .9] } },
+    { id: 'g-sf', kw: ['starfield'], cat: 'game', title: 'Starfield', platform: 'Xbox', format: 'Digital', msrp: 69.99, target: 25, deck: null,
+      stores: [S('Xbox Store', 'official', 34.99), S('CDKeys', 'key', 27.99), S('Eneba', 'key', 26.40)],
+      coupons: [{ code: 'XGPU1M', desc: 'Incluido en Game Pass Ultimate (1 mes a 1 €, nuevas cuentas)', store: 'Xbox Store', value: 0 }],
+      specs: { Género: 'RPG espacial', Duración: '40–150 h', Metacritic: '83', Cooperativo: 'No' },
+      reviews: { rating: 3.9, n: 120000, src: 'Metacritic, Reddit, 3DJuegos', pros: ['Construcción de naves muy completa', 'Misiones de facciones bien escritas', 'Incluido en Game Pass'], cons: ['Exploración planetaria repetitiva', 'Demasiadas pantallas de carga', 'Ritmo lento en las primeras horas'] },
+      gen: { base: 30.5, end: 26.40, dips: 2, dipDepth: [.84, .9] } },
+
+    // --- Vuelos ---
+    { id: 'f-tyo', cat: 'flight', title: 'Madrid → Tokio', origin: 'MAD', dest: 'HND', depart: '2027-03-12', ret: '2027-03-26', trip: 'roundtrip', maxStops: 1, stops: 1, via: 'DOH',
+      airline: 'Qatar Airways', durMin: 1060, baggage: { cabin: true, hold: true, holdFee: 0 }, routeAvg: 845, target: 650,
+      reviews: { rating: 4.6, n: 9120, src: 'Skytrax, TripAdvisor, Reddit', pros: ['Servicio a bordo muy valorado', 'Escala en Doha rápida y cómoda', 'Puntualidad por encima del 85 %'], cons: ['Escala nocturna de 3 h 10 min', 'Asiento de turista estrecho en el 777', 'Cambios caros con tarifa Classic'] },
+      gen: { base: 815, end: 689, dips: 2, dipDepth: [.82, .9], dec: 0 } },
+    { id: 'f-jfk-d', cat: 'flight', title: 'Barcelona → Nueva York (directo)', origin: 'BCN', dest: 'JFK', depart: '2027-01-14', ret: '2027-01-21', trip: 'roundtrip', maxStops: 0, stops: 0, via: null,
+      airline: 'Level', durMin: 520, baggage: { cabin: true, hold: false, holdFee: 60 }, routeAvg: 470, target: 350,
+      reviews: { rating: 3.8, n: 4300, src: 'Skytrax, TripAdvisor', pros: ['Vuelo directo de 8 h 40 min', 'Precio base muy competitivo', 'A330 con entretenimiento a bordo'], cons: ['Maleta facturada aparte (+60 €)', 'Comida no incluida', 'Retrasos frecuentes en invierno'] },
+      gen: { base: 455, end: 389, dips: 2, dipDepth: [.76, .8], dec: 0 } },
+    { id: 'f-jfk-s', cat: 'flight', title: 'Barcelona → Nueva York (escala)', origin: 'BCN', dest: 'JFK', depart: '2027-01-14', ret: '2027-01-21', trip: 'roundtrip', maxStops: 1, stops: 1, via: 'LIS',
+      airline: 'TAP Air Portugal', durMin: 775, baggage: { cabin: true, hold: true, holdFee: 0 }, routeAvg: 470, target: 280,
+      reviews: { rating: 3.5, n: 7800, src: 'Skytrax, TripAdvisor', pros: ['Maleta de 23 kg incluida en Classic', 'Precio muy por debajo de la media', 'Stopover gratis en Lisboa'], cons: ['Escala de 2 h 15 min en Lisboa', 'Puntualidad irregular', 'Atención al cliente lenta'] },
+      gen: { base: 405, end: 298, dips: 2, dipDepth: [.7, .73], dec: 0 } },
+    { id: 'f-kef', cat: 'flight', title: 'Valencia → Reikiavik', origin: 'VLC', dest: 'KEF', depart: '2027-02-05', ret: '2027-02-09', trip: 'roundtrip', maxStops: 1, stops: 1, via: 'MAD',
+      airline: 'Iberia Express + Icelandair', durMin: 425, baggage: { cabin: true, hold: false, holdFee: 45 }, routeAvg: 302, target: 230,
+      reviews: { rating: 4.1, n: 2100, src: 'Skytrax, TripAdvisor', pros: ['Icelandair puntual y cómoda', 'Buena temporada para auroras', 'Conexión corta en Madrid'], cons: ['Facturar cuesta 45 €', 'Escala con cambio de terminal T4S', 'Sin entretenimiento en el tramo corto'] },
+      gen: { base: 296, end: 214, dips: 2, dipDepth: [.85, .92], atl: true, dec: 0 } },
+    { id: 'f-lis', cat: 'flight', title: 'Sevilla → Lisboa', origin: 'SVQ', dest: 'LIS', depart: '2026-12-04', ret: null, trip: 'oneway', maxStops: 0, stops: 0, via: null,
+      airline: 'TAP Air Portugal', durMin: 65, baggage: { cabin: true, hold: false, holdFee: 30 }, routeAvg: 72, target: 45,
+      reviews: { rating: 3.6, n: 1900, src: 'Skytrax, TripAdvisor', pros: ['Vuelo de 1 h 05 min', 'Llega al centro en metro', 'Equipaje de mano incluido'], cons: ['Facturar cuesta 30 €', 'Horario temprano (07:10)', 'Avión pequeño (Embraer)'] },
+      gen: { base: 66, end: 49, dips: 2, dipDepth: [.78, .86], dec: 0 } }
+  ];
+  return list.map(o => build(o, 20 + hash(o.id) % 60));
+}
+
+function build(o, daysAgo = 0) {
+  const it = { alert: true, alerted: false, createdAt: Date.now() - DAY * daysAgo, coupons: [], ...o };
+  it.history = genHistory(o.id, { dec: o.cat === 'flight' ? 0 : 2, ...o.gen });
+  delete it.gen;
+  it.current = it.history.at(-1).p;
+  syncBest(it);
+  if (it.current <= it.target) it.alerted = true;
+  return it;
+}
+const DAY = 864e5;
+
+// El mejor vendedor/tienda refleja siempre el precio actual del tracker.
+function syncBest(it) {
+  if (it.cat === 'product') {
+    const best = [...it.sellers].sort((a, b) => (a.price + a.ship) - (b.price + b.ship))[0];
+    best.price = round(it.current - best.ship);
+  } else if (it.cat === 'game') {
+    const best = [...it.stores].sort((a, b) => a.price - b.price)[0];
+    best.price = it.current;
+  }
+}
+const bestSeller = it => [...it.sellers].sort((a, b) => (a.price + a.ship) - (b.price + b.ship))[0];
+const bestStore = it => [...it.stores].sort((a, b) => a.price - b.price)[0];
+const officialStore = it => it.stores.find(s => s.type === 'official');
+// Fase 1: sin scraper no hay URL exacta de cada ficha, así que se abre la búsqueda en la tienda
+// salvo que el tracker o el vendedor tengan URL propia. En Fase 2 el scraper guarda la URL real.
+const bestOf = it => it.cat === 'product' ? bestSeller(it) : bestStore(it);
+const offerUrl = (it, s) => s.url || (it.userUrl && it.url && s.name === it.fetchedFrom ? it.url : storeUrl(s.name, it.query || it.title));
+function buyUrl(it) {
+  if (it.cat === 'flight') return flightUrl(it);
+  return offerUrl(it, bestOf(it));
+}
+const isSearch = it => it.cat !== 'flight' && !bestOf(it).url && !(it.userUrl && bestOf(it).name === it.fetchedFrom);
+const buyStore = it => it.cat === 'flight' ? 'Skyscanner' : it.cat === 'product' ? bestSeller(it).name : bestStore(it).name;
+const refPrice = it => it.cat === 'product' ? it.pvp : it.cat === 'game' ? it.msrp : it.routeAvg;
+const prevMin = it => Math.min(...it.history.slice(0, -1).map(h => h.p));
+const isATL = it => it.current <= prevMin(it);
+function subtitle(it) {
+  if (it.cat === 'flight') return `${it.origin} → ${it.dest} · ${fmtDate(it.depart)}${it.ret ? ' – ' + fmtDate(it.ret) : ' · solo ida'} · ${it.stops ? it.stops + ' escala' + (it.stops > 1 ? 's' : '') : 'directo'} · ${it.airline}`;
+  if (it.cat === 'game') return `${it.platform} · ${it.format} · mejor en ${bestStore(it).name}`;
+  return `${it.category} · mejor en ${bestSeller(it).name}`;
+}
+const durTxt = m => `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, '0')} min`;
+
+/* =====================================================================
+   CG.ai · capa de IA. En Fase 3 `provider = 'gemini'` y `run()` llama a
+   POST /api/ai/:task en el backend, que reenvía a Gemini con los PROMPTS
+   y valida el JSON de salida. Aquí se usan heurísticas locales equivalentes.
+   ===================================================================== */
+const AI = {
+  provider: 'simulado',
+  PROMPTS: {
+    dealIndex: 'Eres un auditor de precios. Entrada: {titulo, categoria, pvp, historico:[{fecha,precio}], precio_actual}. Detecta si el PVP se infló en los 30 días previos a la oferta. Devuelve SOLO JSON {"score":1-100,"inflado":bool,"descuento_real":0-1,"motivos":[string]}.',
+    predict: 'Analiza el histórico y el calendario de rebajas (Black Friday, rebajas de Steam, temporada de vuelos). Devuelve SOLO JSON {"recomendacion":"COMPRAR_AHORA"|"ESPERAR_BAJADA"|"PRECIO_INFLADO","confianza":0-1,"motivos":[string]}.',
+    sentiment: 'Resume reseñas de usuarios en español. Devuelve SOLO JSON {"pros":[3 strings],"contras":[3 strings],"nota":0-5}.',
+    compare: 'Compara A y B para un comprador en España. Devuelve SOLO JSON {"filas":[{"criterio","a","b","gana":"a"|"b"|"empate"}],"veredicto":string}.',
+    copilot: 'Eres el Co-Piloto de CholloGarde. Responde en español, breve y con cifras del histórico que recibes en el contexto. Nunca inventes precios.'
+  },
+  async run(task, payload) {
+    if (this.provider === 'gemini') {
+      const r = await fetch(`/api/ai/${task}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: this.PROMPTS[task], payload }) });
+      return r.json();
+    }
+    await sleep(500 + Math.random() * 700);
+    return null; // el modo simulado responde con las heurísticas de abajo
+  },
+
+  analyze(it) {
+    const ps = it.history.map(h => h.p), cur = it.current;
+    const atl = prevMin(it), atlPoint = it.history.slice(0, -1).reduce((a, h) => h.p < a.p ? h : a);
+    const baseline = median(ps.slice(0, Math.max(10, ps.length - 30)));
+    const recent = ps.slice(-21, -1);
+    const spike = Math.max(...recent) / baseline;
+    const ref = refPrice(it);
+    const discount = 1 - cur / ref;
+    const vsMedian = cur / baseline - 1;
+    const atlNow = cur <= atl;
+    const inflated = spike > 1.15 && vsMedian > -.05;
+    let score = 45 + Math.min(discount, .5) * 90 - Math.max(0, vsMedian) * 120 + (atlNow ? 18 : 0) - (inflated ? 25 : 0) + (cur <= it.target ? 6 : 0);
+    score = Math.round(clamp(score, 1, 99));
+    const verdict = inflated ? 'INFLADO' : (atlNow || score >= 72 || cur <= atl * 1.03) ? 'COMPRAR' : 'ESPERAR';
+    const conf = clamp(.62 + Math.abs(score - 55) / 120 + (atlNow ? .08 : 0), .55, .95);
+    const reasons = [];
+    if (atlNow) reasons.push(`Iguala o mejora el mínimo histórico registrado (${money(it, atl)} el ${fmtDate(atlPoint.t)}).`);
+    else reasons.push(`Está a ${money(it, cur - atl)} (${pct(cur / atl - 1)}) del mínimo de 90 días: ${money(it, atl)} el ${fmtDate(atlPoint.t)}.`);
+    if (it.cat === 'product') reasons.push(`Descuento real sobre el PVP recomendado (${money(it, ref)}): ${pct(-discount)}.`);
+    if (it.cat === 'game') reasons.push(`Frente al precio oficial de lanzamiento (${money(it, ref)}): ${pct(-discount)}.`);
+    if (it.cat === 'flight') reasons.push(`Frente al promedio de la ruta (${money(it, ref)}): ${pct(-discount)}.`);
+    if (inflated) {
+      const claimed = it.cat === 'product' ? (it.sellers.find(s => s.claimed) || {}).claimed : null;
+      reasons.push(`El precio subió a ${money(it, Math.max(...recent))} en las últimas 3 semanas (${pct(spike - 1)} sobre su mediana) justo antes de esta «oferta».`);
+      if (claimed) reasons.push(`La tienda anuncia ${pct(cur / claimed - 1)} desde ${money(it, claimed)}, pero sigue ${pct(vsMedian)} por encima de su precio habitual (${money(it, baseline)}).`);
+    } else if (vsMedian < -.03) reasons.push(`Un ${pct(-vsMedian).replace('+', '')} por debajo de su precio habitual (${money(it, baseline)}).`);
+    if (verdict === 'ESPERAR') reasons.push(this.upcoming(it));
+    return { score, verdict, conf, reasons, atl, atlPoint, baseline, spike, discount, vsMedian, atlNow, inflated, ref };
+  },
+
+  upcoming(it) {
+    if (it.cat === 'flight') {
+      const weeks = Math.round((pd(it.depart) - Date.now()) / (7 * DAY));
+      return weeks > 12 ? `Faltan ${weeks} semanas: en largo radio el precio suele tocar suelo entre 8 y 12 semanas antes. Mantén la alerta.` : `Faltan ${weeks} semanas: las bajadas de última hora son raras en esta ruta. Si llega al objetivo, compra.`;
+    }
+    if (it.cat === 'game' && it.platform.includes('Steam')) return 'Las rebajas de otoño de Steam empiezan a finales de noviembre: este juego suele bajar un 30–40 % en ellas.';
+    if (it.cat === 'game') return 'Black Friday (27 nov) y las rebajas de invierno de consola suelen traer el precio de este juego a su mínimo.';
+    return 'Black Friday es el 27 de noviembre: en esta categoría el precio suele bajar entre un 8 y un 15 % adicional.';
+  },
+
+  compare(a, b) {
+    const A = this.analyze(a), B = this.analyze(b);
+    const rows = [];
+    const row = (k, va, vb, win) => rows.push({ k, a: va, b: vb, win });
+    row('Precio actual', money(a), money(b), a.current < b.current ? 'a' : a.current > b.current ? 'b' : '=');
+    row('Mínimo histórico', money(a, A.atl), money(b, B.atl), '');
+    row('Deal Index', A.score + '/100', B.score + '/100', A.score > B.score ? 'a' : A.score < B.score ? 'b' : '=');
+    row('Recomendación', VERD[A.verdict].label, VERD[B.verdict].label, '');
+    let verdict = '';
+    if (a.cat === 'flight' && b.cat === 'flight') {
+      const ta = a.current + (a.baggage.hold ? 0 : a.baggage.holdFee), tb = b.current + (b.baggage.hold ? 0 : b.baggage.holdFee);
+      row('Escalas', a.stops ? `${a.stops} (${a.via})` : 'Directo', b.stops ? `${b.stops} (${b.via})` : 'Directo', a.stops < b.stops ? 'a' : a.stops > b.stops ? 'b' : '=');
+      row('Duración', durTxt(a.durMin), durTxt(b.durMin), a.durMin < b.durMin ? 'a' : 'b');
+      row('Maleta facturada', a.baggage.hold ? 'Incluida' : `+${eur(a.baggage.holdFee, 0)}`, b.baggage.hold ? 'Incluida' : `+${eur(b.baggage.holdFee, 0)}`, a.baggage.hold && !b.baggage.hold ? 'a' : b.baggage.hold && !a.baggage.hold ? 'b' : '=');
+      row('Precio con maleta', eur(ta, 0), eur(tb, 0), ta < tb ? 'a' : 'b');
+      row('Valoración aerolínea', a.reviews.rating + ' / 5', b.reviews.rating + ' / 5', a.reviews.rating > b.reviews.rating ? 'a' : 'b');
+      const cheap = ta <= tb ? a : b, fast = a.durMin <= b.durMin ? a : b;
+      const saving = Math.abs(ta - tb), extra = Math.abs(a.durMin - b.durMin);
+      verdict = cheap === fast ? `${cheap.title} gana en precio y en tiempo. No hay dilema.`
+        : `Con maleta incluida, ${cheap.airline} ahorra ${eur(saving, 0)} a cambio de ${durTxt(extra)} más de viaje (unos ${eur(saving / (extra / 60), 0)} por cada hora extra). Si tu hora vale menos que eso o viajas con maleta, elige el de escala; si vas solo con mochila, el directo de ${fast.airline} compensa.`;
+    } else if (a.cat === 'product' && b.cat === 'product') {
+      const keys = [...new Set([...Object.keys(a.specs || {}), ...Object.keys(b.specs || {})])].filter(k => k !== 'Precio por GB');
+      keys.forEach(k => row(k, (a.specs || {})[k] || '—', (b.specs || {})[k] || '—', ''));
+      row('Valoración', `${a.reviews.rating} (${a.reviews.n.toLocaleString('es-ES')})`, `${b.reviews.rating} (${b.reviews.n.toLocaleString('es-ES')})`, a.reviews.rating > b.reviews.rating ? 'a' : 'b');
+      const diff = Math.abs(a.current - b.current), cheaper = a.current < b.current ? a : b, pricier = cheaper === a ? b : a;
+      verdict = `${pricier.title} cuesta ${eur(diff)} más. ${cheaper.reviews.rating >= pricier.reviews.rating ? `${cheaper.title} está igual o mejor valorado, así que es la compra más sensata.` : `Lo justifica si te importa: ${pricier.reviews.pros[0].toLowerCase()}. Si no, ${cheaper.title} ofrece más por euro.`} ${A.verdict === 'COMPRAR' || B.verdict === 'COMPRAR' ? `Ahora mismo la IA ve buen momento para comprar ${A.verdict === 'COMPRAR' ? a.title : b.title}.` : 'Ninguno está en su mejor precio: espera a Black Friday.'}`;
+    } else if (a.cat === 'game' && b.cat === 'game') {
+      row('Plataforma', a.platform, b.platform, '');
+      row('Formato', a.format, b.format, '');
+      row('Steam Deck', a.deck || '—', b.deck || '—', '');
+      row('Valoración', a.reviews.rating + ' / 5', b.reviews.rating + ' / 5', a.reviews.rating > b.reviews.rating ? 'a' : 'b');
+      row('Duración', (a.specs || {}).Duración || '—', (b.specs || {}).Duración || '—', '');
+      const best = A.score >= B.score ? a : b;
+      verdict = `${best.title} es mejor chollo ahora mismo (Deal Index ${Math.max(A.score, B.score)}). Precio por hora de juego estimado: ${a.title} ~${eur(a.current / (parseInt((a.specs || {}).Duración) || 30))}/h, ${b.title} ~${eur(b.current / (parseInt((b.specs || {}).Duración) || 30))}/h.`;
+    } else {
+      verdict = 'Son de categorías distintas: solo se comparan precio, Deal Index y recomendación. Para un 1v1 completo elige dos del mismo tipo.';
+    }
+    return { rows, verdict, A, B };
+  },
+
+  chat(q, ctx) {
+    const s = q.toLowerCase();
+    const items = state.trackers;
+    const STOP = new Set(['steam', 'edition', 'ultimate', 'nvme', 'ryzen', 'extreme', 'cancelación', 'ruido']);
+    const words = x => (x.kw || []).concat(x.title.toLowerCase().split(/[^a-z0-9áéíóúñ']+/).filter(w => w.length >= 4 && !STOP.has(w)));
+    const hit = w => new RegExp(`(^|[^a-z0-9])${w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}([^a-z0-9]|$)`).test(s);
+    const mentioned = items.filter(x => words(x).some(hit));
+    let it = ctx || mentioned[0];
+    if (/compar| vs |versus| o el | o la /.test(' ' + s + ' ') && mentioned.length >= 2) {
+      const c = this.compare(mentioned[0], mentioned[1]);
+      return `**${mentioned[0].title} vs ${mentioned[1].title}**\n${c.verdict}\n\nAbre el comparador 1v1 para ver la tabla completa.`;
+    }
+    if (!it) {
+      const an = items.map(x => [x, this.analyze(x)]);
+      const atl = an.filter(([, a]) => a.atlNow).map(([x]) => x.title);
+      const top = an.sort((x, y) => y[1].score - x[1].score)[0];
+      const inf = an.filter(([, a]) => a.inflated).map(([x]) => x.title);
+      return `Sigues **${items.length} trackers**. ${atl.length ? `En mínimo histórico ahora: ${atl.join(', ')}.` : 'Ninguno está en mínimo histórico ahora mismo.'} El mejor chollo según el Deal Index es **${top[0].title}** (${top[1].score}/100, ${money(top[0])}).${inf.length ? ` Ojo con ${inf.join(', ')}: la IA detecta precio inflado antes de la oferta.` : ''}\n\nAbre cualquier tarjeta y pregúntame por ella para un análisis concreto.`;
+    }
+    const a = this.analyze(it);
+    if (/baj|rebaj|otoño|black|esper|cuándo|cuando|suele/.test(s)) {
+      const dips = it.history.filter((h, i, arr) => i > 0 && h.p < arr[i - 1].p * .93).length;
+      return `**${it.title}** en 90 días: mínimo ${money(it, a.atl)} (${fmtDate(a.atlPoint.t)}), precio habitual ${money(it, a.baseline)}, ahora ${money(it)}. He visto ${dips || 'pocas'} bajadas bruscas en el periodo.\n${this.upcoming(it)}\n\nRecomendación: **${VERD[a.verdict].label}** (confianza ${Math.round(a.conf * 100)} %).`;
+    }
+    if (/vale la pena|merece|compensa|pagar|más caro|diferencia/.test(s)) {
+      const alt = items.filter(x => x.cat === it.cat && x.id !== it.id && (it.cat !== 'product' || x.category === it.category))[0];
+      if (!alt) return `Para **${it.title}** no tengo una alternativa en tus trackers con la que comparar. Por calidad-precio: Deal Index ${a.score}/100 y valoración ${it.reviews.rating}/5. ${a.verdict === 'COMPRAR' ? 'A este precio sí compensa.' : 'A este precio aún no compensa; espera a tu objetivo de ' + money(it, it.target) + '.'}`;
+      return `${this.compare(it, alt).verdict}`;
+    }
+    if (/inflad|real|fiable|trampa|falso|truco/.test(s)) {
+      return `Deal Index de **${it.title}: ${a.score}/100**. ${a.inflated ? 'Detecto inflado de precio: ' : 'No detecto inflado de precio. '}${a.reasons.slice(0, 3).join(' ')}`;
+    }
+    if (it.cat === 'flight' && /escala|equipaje|maleta|directo|aerol/.test(s)) {
+      return `${it.title} con ${it.airline}: ${it.stops ? `${it.stops} escala en ${it.via}` : 'vuelo directo'}, ${durTxt(it.durMin)}. Maleta facturada ${it.baggage.hold ? 'incluida' : `no incluida (+${eur(it.baggage.holdFee, 0)})`}. Precio total con maleta: ${eur(it.current + (it.baggage.hold ? 0 : it.baggage.holdFee), 0)}.`;
+    }
+    return `**${it.title}** · ${money(it)} en ${buyStore(it)}. Deal Index ${a.score}/100 → **${VERD[a.verdict].label}**.\n${a.reasons.slice(0, 2).join(' ')}\nLo mejor según los usuarios: ${it.reviews.pros[0].toLowerCase()}. Lo peor: ${it.reviews.cons[0].toLowerCase()}.`;
+  }
+};
+const VERD = {
+  COMPRAR: { label: 'Comprar ahora', cls: 'bg-good/15 text-good border-good/30', icon: 'shopping-cart' },
+  ESPERAR: { label: 'Esperar bajada', cls: 'bg-ai/10 text-ai border-ai/30', icon: 'timer' },
+  INFLADO: { label: 'Precio inflado', cls: 'bg-bad/15 text-bad border-bad/30', icon: 'triangle-alert' }
+};
+
+/* =====================================================================
+   CG.api · auto-fetch de URLs. En Fase 2: POST /api/fetch-meta {url}
+   (Playwright abre la página y devuelve og:image, título, precio y envío).
+   ===================================================================== */
+const API = {
+  mode: 'mock',
+  DOMAINS: [
+    { re: /amazon\./, cat: 'product', store: 'Amazon', src: 'Keepa API' },
+    { re: /pccomponentes\./, cat: 'product', store: 'PcComponentes', src: 'Playwright' },
+    { re: /aliexpress\./, cat: 'product', store: 'AliExpress', src: 'Playwright + proxy' },
+    { re: /elcorteingles\./, cat: 'product', store: 'El Corte Inglés', src: 'Playwright' },
+    { re: /steampowered\.|steamcommunity\./, cat: 'game', store: 'Steam', platform: 'PC · Steam', src: 'IsThereAnyDeal API' },
+    { re: /playstation\./, cat: 'game', store: 'PS Store', platform: 'PS5', src: 'Playwright' },
+    { re: /nintendo\./, cat: 'game', store: 'Nintendo eShop', platform: 'Switch', src: 'Playwright' },
+    { re: /xbox\.|microsoft\./, cat: 'game', store: 'Xbox Store', platform: 'Xbox', src: 'Playwright' },
+    { re: /eneba\./, cat: 'game', store: 'Eneba', platform: 'PC · Steam', src: 'CheapShark API' },
+    { re: /instant-gaming\./, cat: 'game', store: 'Instant Gaming', platform: 'PC · Steam', src: 'CheapShark API' },
+    { re: /cdkeys\./, cat: 'game', store: 'CDKeys', platform: 'PC · Steam', src: 'CheapShark API' }
+  ],
+  async fetchMeta(raw, onStep) {
+    if (this.mode === 'live') return (await fetch('/api/fetch-meta', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url: raw }) })).json();
+    let u;
+    try { u = new URL(/^https?:\/\//i.test(raw) ? raw : 'https://' + raw); } catch { throw new Error('Esa dirección no es una URL válida. Pega el enlace completo de la tienda.'); }
+    const d = this.DOMAINS.find(x => x.re.test(u.hostname));
+    if (!d) throw new Error(`Todavía no hay conector para ${u.hostname}. Prueba con Amazon, PcComponentes, AliExpress, El Corte Inglés, Steam, PS Store, eShop o tiendas de keys, o rellénalo a mano.`);
+    const steps = [`Resolviendo ${u.hostname}`, `Renderizando la página (${d.src})`, 'Extrayendo og:image y título', 'Leyendo precio y gastos de envío', 'Buscando cupones aplicables'];
+    for (let i = 0; i < steps.length; i++) { onStep && onStep(i, steps); await sleep(320 + Math.random() * 260); }
+    const r = rng(u.href);
+    const title = this.slugTitle(u) || (d.cat === 'game' ? 'Juego sin título' : 'Producto sin título');
+    const price = d.cat === 'game' ? round(9.99 + r() * 55, 2) : round(39 + r() * 560, 2);
+    const ship = d.cat === 'product' && r() > .55 ? round(2.99 + r() * 5, 2) : 0;
+    return { url: u.href, cat: d.cat, store: d.store, platform: d.platform, src: d.src, title, price, ship, coupon: r() > .6 ? { code: 'BIENVENIDA' + Math.floor(5 + r() * 10), desc: 'Cupón de primera compra detectado en la página', store: d.store, value: 5 } : null };
+  },
+  slugTitle(u) {
+    const segs = u.pathname.split('/').filter(Boolean).map(decodeURIComponent);
+    const cand = segs.filter(s => /[a-z]/i.test(s) && /[-_]/.test(s) && !/^(dp|gp|app|product|p|item|es|es-es|es-ES)$/i.test(s)).sort((a, b) => b.length - a.length)[0];
+    if (!cand) return '';
+    return cand.replace(/\.html?$/, '').replace(/[-_]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase()).slice(0, 80).trim();
+  }
+};
+
+/* =====================================================================
+   CG.notify · alertas. En Fase 2 el backend envía de verdad:
+   Telegram sendPhoto + inline_keyboard, Discord webhook con embed.
+   ===================================================================== */
+const Sound = {
+  ctx: null,
+  ensure() { if (!this.ctx) { try { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch { return null; } } if (this.ctx.state === 'suspended') this.ctx.resume(); return this.ctx; },
+  tone(c, { type = 'sine', f0, f1, at, dur, vol = .16 }) {
+    const o = c.createOscillator(), g = c.createGain(); o.type = type;
+    o.frequency.setValueAtTime(f0, at); if (f1) o.frequency.exponentialRampToValueAtTime(f1, at + dur);
+    g.gain.setValueAtTime(.0001, at); g.gain.exponentialRampToValueAtTime(vol, at + .015); g.gain.exponentialRampToValueAtTime(.0001, at + dur);
+    o.connect(g).connect(c.destination); o.start(at); o.stop(at + dur + .02);
+  },
+  radar() { const c = this.ensure(); if (!c) return; const t = c.currentTime; [0, .38].forEach(d => this.tone(c, { f0: 1500, f1: 650, at: t + d, dur: .34 })); },
+  coin() { const c = this.ensure(); if (!c) return; const t = c.currentTime; this.tone(c, { type: 'square', f0: 988, at: t, dur: .09, vol: .07 }); this.tone(c, { type: 'square', f0: 1319, at: t + .09, dur: .35, vol: .07 }); }
+};
+const Notify = {
+  telegramPayload(it) {
+    const a = AI.analyze(it);
+    return { method: 'sendPhoto', chat_id: state.settings.telegram.chatId || '<chat_id>', photo: `https://cdn.chollogarde.app/covers/${it.id}.jpg`, parse_mode: 'HTML',
+      caption: `🔥 <b>${it.title}</b>\n${money(it)} en ${buyStore(it)} (${pct(-a.discount)} vs ${it.cat === 'flight' ? 'media de la ruta' : 'PVP'})\nObjetivo: ${money(it, it.target)} · Deal Index ${a.score}/100${a.atlNow ? '\n🏆 Mínimo histórico' : ''}`,
+      reply_markup: { inline_keyboard: [[{ text: '🛒 Comprar ahora', url: buyUrl(it) }]] } };
+  },
+  discordPayload(it) {
+    const a = AI.analyze(it);
+    return { username: 'CholloGarde', embeds: [{ title: it.title, url: buyUrl(it), color: 0xF2B544, description: `**${money(it)}** en ${buyStore(it)} · ${pct(-a.discount)}`,
+      fields: [{ name: 'Objetivo', value: money(it, it.target), inline: true }, { name: 'Deal Index', value: `${a.score}/100`, inline: true }, { name: 'IA', value: VERD[a.verdict].label, inline: true }], thumbnail: { url: `https://cdn.chollogarde.app/covers/${it.id}.jpg` } }] };
+  },
+  emailPayload(it) {
+    const a = AI.analyze(it);
+    return { to: state.settings.email.to || '<tu-correo>', from: 'CholloGarde <alertas@tu-dominio>', subject: `🔥 ${it.title} a ${money(it)} (objetivo ${money(it, it.target)})`,
+      html: `<h2>${it.title}</h2><p><b>${money(it)}</b> en ${buyStore(it)} · ${pct(-a.discount)} · Deal Index ${a.score}/100${a.atlNow ? ' · Mínimo histórico' : ''}</p><p>IA: ${VERD[a.verdict].label}</p><a href="${buyUrl(it)}">Ver oferta</a>`,
+      transport: 'SMTP (Gmail con contraseña de aplicación, Outlook o Resend) · Fase 2' };
+  },
+  dispatch(it, { reason = 'target', silent = false } = {}) {
+    const a = AI.analyze(it);
+    const s = state.settings;
+    const al = { id: uid('al'), itemId: it.id, title: it.title, cat: it.cat, t: Date.now(), price: it.current, target: it.target, atl: a.atlNow, reason, read: false,
+      channels: { web: true, telegram: s.telegram.enabled ? 'simulado' : 'off', discord: s.discord.enabled ? 'simulado' : 'off', email: s.email.enabled ? 'simulado' : 'off' } };
+    state.alerts.unshift(al); state.alerts = state.alerts.slice(0, 60);
+    log('ok', 'trigger', `Precio_Actual ${money(it)} <= Precio_Objetivo ${money(it, it.target)} · ${it.title}`);
+    if (s.telegram.enabled) log('info', 'telegram', `sendPhoto → chat ${s.telegram.chatId || '(sin configurar)'} · simulado (Fase 2)`);
+    if (s.discord.enabled) log('info', 'discord', `POST webhook embed · simulado (Fase 2)`);
+    if (s.email.enabled) log('info', 'email', `SMTP → ${s.email.to || '(sin correo)'} · simulado (Fase 2)`);
+    if (!silent) {
+      if (s.sound) { Sound.radar(); setTimeout(() => Sound.coin(), 780); }
+      toast({ tone: 'gold', icon: a.atlNow ? 'trophy' : 'bell-ring', title: a.atlNow ? '¡Mínimo histórico!' : 'Precio objetivo alcanzado', body: `${it.title} · <b class="text-fg">${money(it)}</b> (objetivo ${money(it, it.target)})`, actionLabel: 'Ver', action: () => openDrawer(it.id) });
+    }
+    renderBadge(); save();
+  }
+};
+
+// ---------- estado ----------
+const STORE_KEY = 'chollogarde:v2';
+const defaults = () => ({ trackers: seedTrackers(), alerts: [], settings: { telegram: { enabled: true, token: '', chatId: '' }, discord: { enabled: false, url: '' }, email: { enabled: true, to: '' }, sound: true, interval: 7, engine: true } });
+let state;
+function load() {
+  try { const raw = localStorage.getItem(STORE_KEY); if (raw) { const s = JSON.parse(raw); if (s && s.trackers && s.trackers.length) return { ...defaults(), ...s, settings: { ...defaults().settings, ...s.settings } }; } } catch {}
+  const d = defaults();
+  d.trackers.filter(t => t.alerted).forEach((t, i) => d.alerts.push({ id: uid('al'), itemId: t.id, title: t.title, cat: t.cat, t: Date.now() - (i + 1) * 3.2 * 3600e3, price: t.current, target: t.target, atl: isATL(t), reason: 'target', read: false, channels: { web: true, telegram: 'simulado', discord: 'off' } }));
+  return d;
+}
+let saveT;
+function save() { clearTimeout(saveT); saveT = setTimeout(() => { try { localStorage.setItem(STORE_KEY, JSON.stringify({ trackers: state.trackers, alerts: state.alerts, settings: state.settings })); } catch {} }, 400); }
+const ui = { view: 'dashboard', cat: 'all', sort: 'deal', onlyAtl: false, q: '', openId: null, logFilter: 'all', cpCtx: null, chart: null };
+const logs = [];
+function log(level, src, msg, t = Date.now()) {
+  logs.push({ t, level, src, msg }); if (logs.length > 500) logs.shift();
+  appendLogLine(logs.at(-1));
+}
+
+/* =====================================================================
+   CG.engine · simulación del ciclo de scraping 24/7.
+   ===================================================================== */
+const SOURCES = [
+  { name: 'Keepa API', kind: 'API', covers: 'Amazon', host: 'api.keepa.com' },
+  { name: 'PcComponentes', kind: 'Playwright', covers: 'PcComponentes', host: 'pccomponentes.com' },
+  { name: 'AliExpress', kind: 'Playwright + proxy', covers: 'AliExpress', host: 'es.aliexpress.com' },
+  { name: 'El Corte Inglés', kind: 'Playwright', covers: 'El Corte Inglés', host: 'elcorteingles.es' },
+  { name: 'IsThereAnyDeal', kind: 'API', covers: 'Steam, PS Store, eShop, Xbox', host: 'api.isthereanydeal.com' },
+  { name: 'CheapShark', kind: 'API', covers: 'Eneba, Instant Gaming, CDKeys', host: 'cheapshark.com/api' },
+  { name: 'Skyscanner', kind: 'Playwright', covers: 'Vuelos', host: 'skyscanner.es' },
+  { name: 'Google Flights', kind: 'Playwright', covers: 'Vuelos', host: 'google.com/travel/flights' },
+  { name: 'Kayak', kind: 'Playwright', covers: 'Vuelos', host: 'kayak.es' }
+].map(s => ({ ...s, ok: 96 + hash(s.name) % 4, lat: 400 + hash(s.name) % 1400, last: Date.now() - (hash(s.name) % 300) * 1000, status: 'ok', runs: 1200 + hash(s.name) % 900 }));
+const engine = { timer: null, cycles: 0, requests: 0, nextAt: 0,
+  start() { this.stop(); if (!state.settings.engine) return; this.nextAt = Date.now() + state.settings.interval * 1000; this.timer = setInterval(() => this.tick(), state.settings.interval * 1000); renderEngineStatus(); },
+  stop() { clearInterval(this.timer); this.timer = null; renderEngineStatus(); },
+  sourcesFor(it) {
+    if (it.cat === 'flight') return SOURCES.filter(s => s.covers === 'Vuelos');
+    if (it.cat === 'game') return SOURCES.filter(s => s.name === 'IsThereAnyDeal' || s.name === 'CheapShark');
+    return SOURCES.filter(s => it.sellers.some(x => s.covers === x.name));
+  },
+  tick(forcedId) {
+    this.nextAt = Date.now() + state.settings.interval * 1000;
+    this.cycles++;
+    const it = forcedId ? state.trackers.find(t => t.id === forcedId) : state.trackers[Math.floor(Math.random() * state.trackers.length)];
+    if (!it) return;
+    const srcs = this.sourcesFor(it);
+    log('info', 'cron', `ciclo #${this.cycles} · ${it.title} · ${srcs.length} fuente${srcs.length > 1 ? 's' : ''} en paralelo`);
+    srcs.forEach(s => {
+      this.requests++;
+      const lat = Math.round(s.lat * (.6 + Math.random() * .8));
+      s.last = Date.now(); s.runs++;
+      if (Math.random() < .07) {
+        s.status = 'warn'; s.ok = Math.max(88, s.ok - 1);
+        log('warn', s.name, `HTTP 429 en ${s.host} · reintento con rotación de proxy (backoff 4 s)`);
+      } else {
+        s.status = 'ok'; s.lat = Math.round(s.lat * .8 + lat * .2);
+        log('info', s.name, `GET ${s.host} 200 · ${(lat / 1000).toFixed(2)} s`);
+      }
+    });
+    const r = Math.random(), old = it.current;
+    let next = old;
+    if (r < .5) next = old * (1 + (Math.random() - .55) * .03);
+    else if (r < .86) next = old;
+    else next = old * (.92 + Math.random() * .04);
+    this.setPrice(it, next);
+    if (it.current !== old) log(it.current < old ? 'ok' : 'info', 'parser', `${it.title}: ${money(it, old)} → ${money(it)} (${pct(it.current / old - 1)})`);
+    else log('info', 'parser', `${it.title}: sin cambios (${money(it)})`);
+    if (Math.random() < .3) { const a = AI.analyze(it); log('ai', 'gemini', `Deal Index ${a.score}/100 · ${VERD[a.verdict].label} (simulado)`); }
+    refresh();
+  },
+  setPrice(it, v) {
+    const old = it.current;
+    v = it.cat === 'flight' ? Math.round(v) : round(v);
+    if (v === old) return;
+    const wasAtl = v < prevMin(it);
+    it.current = v;
+    it.history[it.history.length - 1].p = v;
+    syncBest(it);
+    it.flash = { t: Date.now(), dir: v < old ? -1 : 1 };
+    if (it.current <= it.target && it.alert && !it.alerted) { it.alerted = true; Notify.dispatch(it); }
+    else if (wasAtl && v < old) { toast({ tone: 'gold', icon: 'trophy', title: 'Nuevo mínimo histórico', body: `${esc(it.title)} · <b class="text-fg">${money(it)}</b>`, actionLabel: 'Ver', action: () => openDrawer(it.id) }); if (state.settings.sound) Sound.coin(); }
+    if (it.current > it.target * 1.02) it.alerted = false;
+    save();
+  }
+};
+
+// ---------- piezas visuales ----------
+function art(it, cls = 'h-28', big = false) {
+  const [h0, h1] = CAT[it.cat].hue; const h = h0 + hash(it.id) % (h1 - h0);
+  const bg = `background: radial-gradient(120% 140% at 0% 0%, hsl(${h} 72% 48% / .85), transparent 58%), linear-gradient(135deg, hsl(${h} 42% 22%), hsl(${(h + 35) % 360} 48% 12%));`;
+  let inner;
+  if (it.cat === 'flight') inner = `<div class="font-mono ${big ? 'text-4xl' : 'text-2xl'} font-medium tracking-wider text-white/95 flex items-center gap-3">${esc(it.origin)}<i data-lucide="plane" class="${big ? 'w-7 h-7' : 'w-5 h-5'} opacity-80"></i>${esc(it.dest)}</div>`;
+  else if (it.cat === 'game') { const ini = it.title.replace(/[^A-Za-zÀ-ÿ0-9 ]/g, '').split(/\s+/).filter(w => w.length > 1 && !/^(the|of|de|la|el)$/i.test(w)).slice(0, 2).map(w => w[0]).join('').toUpperCase(); inner = `<div class="font-display ${big ? 'text-6xl' : 'text-4xl'} font-extrabold text-white/90 tracking-tight">${esc(ini)}</div>`; }
+  else inner = `<div class="flex items-center gap-3 text-white/90"><i data-lucide="${esc(it.icon || 'package')}" class="${big ? 'w-12 h-12' : 'w-9 h-9'}"></i><span class="font-display ${big ? 'text-3xl' : 'text-xl'} font-bold tracking-tight">${esc(it.brand || it.title.split(' ')[0])}</span></div>`;
+  return `<div class="art relative ${cls} overflow-hidden grid place-items-center" style="${bg}">${inner}</div>`;
+}
+function spark(it, w = 116, h = 38) {
+  const pts = it.history.slice(-30).map(x => x.p);
+  const mn = Math.min(...pts), mx = Math.max(...pts), rg = mx - mn || 1;
+  const xy = pts.map((p, i) => [round(i / (pts.length - 1) * (w - 6) + 3, 1), round(h - 4 - (p - mn) / rg * (h - 8), 1)]);
+  const d = xy.map((p, i) => (i ? 'L' : 'M') + p.join(' ')).join(' ');
+  const down = pts.at(-1) <= pts[0];
+  const col = down ? 'var(--good)' : 'var(--warn)';
+  const gid = 'g' + hash(it.id + w);
+  const last = xy.at(-1);
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" class="shrink-0" role="img" aria-label="Tendencia 30 días: ${down ? 'bajando' : 'subiendo'}">
+    <defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${col}" stop-opacity=".28"/><stop offset="1" stop-color="${col}" stop-opacity="0"/></linearGradient></defs>
+    <line x1="0" x2="${w}" y1="${h / 2}" y2="${h / 2}" stroke="#27324E" stroke-dasharray="2 4"/>
+    <path d="${d} L${last[0]} ${h} L3 ${h} Z" fill="url(#${gid})"/>
+    <path d="${d}" fill="none" stroke="${col}" stroke-width="1.75" stroke-linejoin="round" stroke-linecap="round"/>
+    <circle cx="${last[0]}" cy="${last[1]}" r="3" fill="${col}" stroke="#0D1220" stroke-width="1.5"/></svg>`;
+}
+const atlBadge = (sm = false) => `<span class="atl inline-flex items-center gap-1 rounded-full ${sm ? 'px-2 py-0.5 text-[10px]' : 'px-2.5 py-1 text-[11px]'} font-semibold uppercase tracking-wide"><i data-lucide="trophy" class="w-3 h-3"></i>Mínimo histórico</span>`;
+const dealTone = s => s >= 75 ? 'text-good border-good/30 bg-good/10' : s >= 50 ? 'text-gold border-gold/30 bg-gold/10' : 'text-bad border-bad/30 bg-bad/10';
+const dealChip = a => `<span class="inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[12px] font-medium tnum ${dealTone(a.score)}" title="AI Deal Index"><i data-lucide="gauge" class="w-3.5 h-3.5"></i>${a.score}</span>`;
+const verdPill = (a, big = false) => { const v = VERD[a.verdict]; return `<span class="inline-flex items-center gap-1.5 rounded-md border ${big ? 'px-3 py-1.5 text-[13px]' : 'px-2 py-0.5 text-[12px]'} font-medium ${v.cls}"><i data-lucide="${v.icon}" class="${big ? 'w-4 h-4' : 'w-3.5 h-3.5'}"></i>${v.label}</span>`; };
+function ring(score, size = 76) {
+  const r = size / 2 - 6, c = 2 * Math.PI * r, col = score >= 75 ? 'var(--good)' : score >= 50 ? 'var(--gold)' : 'var(--bad)';
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" role="img" aria-label="Deal Index ${score} de 100"><circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="#27324E" stroke-width="6"/><circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="${col}" stroke-width="6" stroke-linecap="round" stroke-dasharray="${c * score / 100} ${c}" transform="rotate(-90 ${size / 2} ${size / 2})"/><text x="50%" y="50%" dy=".35em" text-anchor="middle" fill="#E7EAF2" font-family="Bricolage Grotesque, sans-serif" font-weight="800" font-size="${size * .3}">${score}</text></svg>`;
+}
+
+function card(it) {
+  const a = AI.analyze(it), ref = refPrice(it);
+  const flash = it.flash && Date.now() - it.flash.t < 2500 ? (it.flash.dir < 0 ? 'flash-down' : 'flash-up') : '';
+  const gap = it.current - it.target, reached = gap <= 0;
+  const prog = clamp(it.target / it.current, 0, 1) * 100;
+  const coupons = (it.coupons || []).length;
+  return `<article class="group rounded-2xl bg-ink-800 border border-ink-600/80 overflow-hidden flex flex-col hover:border-ink-500 transition-colors ${flash}" data-id="${it.id}">
+    <button data-action="open" data-id="${it.id}" class="block text-left relative" aria-label="Abrir análisis de ${esc(it.title)}">
+      ${art(it)}
+      <span class="absolute top-2.5 left-2.5 inline-flex items-center gap-1 rounded-md bg-ink-950/70 backdrop-blur px-2 py-1 text-[11px] text-fg"><i data-lucide="${CAT[it.cat].icon}" class="w-3 h-3"></i>${CAT[it.cat].label}</span>
+      ${a.atlNow ? `<span class="absolute top-2.5 right-2.5">${atlBadge(true)}</span>` : ''}
+      ${!it.alert ? `<span class="absolute bottom-2.5 right-2.5 inline-flex items-center gap-1 rounded-md bg-ink-950/70 px-2 py-1 text-[11px] text-mute"><i data-lucide="bell-off" class="w-3 h-3"></i>Alerta pausada</span>` : ''}
+    </button>
+    <div class="p-4 flex flex-col gap-3 flex-1">
+      <div class="min-w-0">
+        <h3 class="font-display font-bold text-[16px] leading-snug">${esc(it.title)}</h3>
+        <p class="text-[12px] text-mute mt-1 leading-snug">${esc(subtitle(it))}</p>
+      </div>
+      <div class="flex items-end justify-between gap-3">
+        <div class="min-w-0">
+          <div class="font-display font-extrabold text-[26px] leading-none tnum">${money(it)}</div>
+          <div class="text-[12px] mt-1.5 tnum"><span class="text-dim line-through">${money(it, ref)}</span> <span class="${a.discount > 0 ? 'text-good' : 'text-bad'} font-medium">${pct(-a.discount)}</span> <span class="text-dim">${it.cat === 'flight' ? 'vs media' : it.cat === 'game' ? 'vs oficial' : 'vs PVP'}</span></div>
+        </div>
+        ${spark(it)}
+      </div>
+      <div class="flex flex-wrap items-center gap-1.5">${dealChip(a)}${verdPill(a)}${coupons ? `<span class="inline-flex items-center gap-1 rounded-md border border-ink-500 px-2 py-0.5 text-[12px] text-fg"><i data-lucide="ticket" class="w-3.5 h-3.5 text-gold"></i>${coupons} cupón${coupons > 1 ? 'es' : ''}</span>` : ''}${it.cat === 'game' && it.deck ? `<span class="inline-flex items-center gap-1 rounded-md border border-ink-500 px-2 py-0.5 text-[12px] text-mute"><i data-lucide="circle-check" class="w-3.5 h-3.5 text-good"></i>Deck</span>` : ''}${it.cat === 'flight' ? `<span class="inline-flex items-center gap-1 rounded-md border border-ink-500 px-2 py-0.5 text-[12px] text-mute"><i data-lucide="luggage" class="w-3.5 h-3.5"></i>${it.baggage.hold ? 'Maleta incl.' : 'Solo mano'}</span>` : ''}</div>
+      <div class="mt-auto">
+        <div class="flex justify-between text-[12px] tnum"><span class="${reached ? 'text-good font-medium' : 'text-mute'}">${reached ? 'Objetivo alcanzado' : `Faltan ${money(it, gap)}`}</span><span class="text-dim">objetivo ${money(it, it.target)}</span></div>
+        <div class="h-1.5 rounded-full bg-ink-700 mt-1.5 overflow-hidden"><div class="h-full rounded-full ${reached ? 'bg-good' : 'bg-gold'}" style="width:${prog}%"></div></div>
+      </div>
+      <div class="flex gap-2">
+        <button data-action="open" data-id="${it.id}" class="flex-1 inline-flex justify-center items-center gap-1.5 rounded-xl border border-ink-500 hover:border-ai/60 hover:text-ai py-2 text-[13px]"><i data-lucide="sparkles" class="w-4 h-4"></i>Analizar</button>
+        <a href="${esc(buyUrl(it))}" target="_blank" rel="noopener noreferrer" class="flex-1 inline-flex justify-center items-center gap-1.5 rounded-xl bg-fg text-ink-950 font-semibold hover:bg-gold py-2 text-[13px]"><i data-lucide="${isSearch(it) ? 'search' : 'shopping-cart'}" class="w-4 h-4"></i>${isSearch(it) ? 'Buscar' : 'Comprar'}</a>
+      </div>
+    </div>
+  </article>`;
+}
+
+// ---------- vistas ----------
+const NAV = [
+  { id: 'dashboard', label: 'Panel', icon: 'layout-dashboard' },
+  { id: 'vuelos', label: 'Vuelos', icon: 'plane', cat: 'flight' },
+  { id: 'juegos', label: 'Videojuegos', icon: 'gamepad-2', cat: 'game' },
+  { id: 'productos', label: 'Productos', icon: 'package', cat: 'product' },
+  { id: 'alertas', label: 'Alertas', icon: 'bell' },
+  { id: 'motor', label: 'Motor de scraping', icon: 'terminal' },
+  { id: 'ajustes', label: 'Notificaciones', icon: 'webhook' }
+];
+function renderNav() {
+  const count = id => { const n = NAV.find(x => x.id === id); return n.cat ? state.trackers.filter(t => t.cat === n.cat).length : id === 'alertas' ? state.alerts.filter(a => !a.read).length : null; };
+  $('#side-nav').innerHTML = NAV.map(n => { const c = count(n.id); const on = ui.view === n.id; return `<a href="#${n.id}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-[14px] ${on ? 'bg-ink-700 text-fg' : 'text-mute hover:text-fg hover:bg-ink-800'}" ${on ? 'aria-current="page"' : ''}><i data-lucide="${n.icon}" class="w-4 h-4 ${on ? 'text-gold' : ''}"></i><span class="flex-1">${n.label}</span>${c ? `<span class="text-[11px] tnum ${n.id === 'alertas' ? 'bg-gold text-ink-950 px-1.5 rounded-full font-semibold' : 'text-dim'}">${c}</span>` : ''}</a>`; }).join('');
+  $('#mobile-nav').innerHTML = NAV.map(n => { const on = ui.view === n.id; return `<a href="#${n.id}" class="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] border ${on ? 'bg-ink-700 border-ink-500 text-fg' : 'border-ink-600 text-mute'}"><i data-lucide="${n.icon}" class="w-3.5 h-3.5"></i>${n.label}</a>`; }).join('');
+}
+function renderBadge() {
+  const n = state.alerts.filter(a => !a.read).length, b = $('#bell-badge');
+  b.hidden = !n; b.textContent = n;
+}
+function renderEngineStatus() {
+  const on = !!engine.timer;
+  $('#side-dot').className = `w-2 h-2 rounded-full ${on ? 'bg-good live-dot' : 'bg-dim'}`;
+  $('#side-engine').textContent = on ? 'Motor 24/7 activo' : 'Motor en pausa';
+}
+
+function filtered(catOverride) {
+  const cat = catOverride || ui.cat;
+  let l = state.trackers.filter(t => cat === 'all' || t.cat === cat);
+  if (ui.q) { const q = ui.q.toLowerCase(); l = l.filter(t => (t.title + ' ' + subtitle(t)).toLowerCase().includes(q)); }
+  if (ui.onlyAtl) l = l.filter(isATL);
+  const key = { deal: t => -AI.analyze(t).score, disc: t => -AI.analyze(t).discount, target: t => t.current / t.target, recent: t => -t.createdAt }[ui.sort];
+  return l.map(t => [key(t), t]).sort((a, b) => a[0] - b[0]).map(x => x[1]);
+}
+function toolbar(showCats) {
+  const cats = [['all', 'Todo'], ['flight', 'Vuelos'], ['game', 'Videojuegos'], ['product', 'Productos']];
+  return `<div class="flex flex-wrap items-center gap-2">
+    ${showCats ? `<div class="inline-flex p-1 rounded-xl bg-ink-800 border border-ink-600" role="tablist">${cats.map(([k, l]) => `<button role="tab" aria-selected="${ui.cat === k}" data-action="cat" data-cat="${k}" class="px-3 py-1.5 rounded-lg text-[13px] ${ui.cat === k ? 'bg-ink-600 text-fg' : 'text-mute hover:text-fg'}">${l}</button>`).join('')}</div>` : ''}
+    <label class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-ink-800 border border-ink-600 text-[13px] cursor-pointer"><input id="only-atl" type="checkbox" data-action="atl" ${ui.onlyAtl ? 'checked' : ''}>Solo mínimos históricos</label>
+    <label class="inline-flex items-center gap-2 text-[13px] text-mute ml-auto">Ordenar por
+      <select id="sort" data-action="sort" class="bg-ink-800 border border-ink-600 rounded-xl px-3 py-2 text-fg text-[13px]">
+        ${[['deal', 'AI Deal Index'], ['disc', 'Mayor descuento'], ['target', 'Más cerca del objetivo'], ['recent', 'Más recientes']].map(([k, l]) => `<option value="${k}" ${ui.sort === k ? 'selected' : ''}>${l}</option>`).join('')}
+      </select></label>
+  </div>`;
+}
+function grid(list) {
+  if (!list.length) return `<div class="rounded-2xl border border-dashed border-ink-500 p-10 text-center text-mute"><i data-lucide="search-x" class="w-8 h-8 mx-auto mb-3 text-dim"></i><p class="text-fg font-medium">No hay trackers con estos filtros.</p><p class="text-[13px] mt-1">Cambia la búsqueda o crea uno nuevo con «Nuevo tracker».</p></div>`;
+  return `<div id="grid" class="grid gap-4 grid-cols-1 sm:grid-cols-2 2xl:grid-cols-3">${list.map(card).join('')}</div>`;
+}
+function kpis() {
+  const T = state.trackers, an = T.map(t => [t, AI.analyze(t)]);
+  const today = state.alerts.filter(a => Date.now() - a.t < DAY).length;
+  const saving = T.reduce((s, t) => s + Math.max(0, refPrice(t) - t.current), 0);
+  const avg = Math.round(mean(an.map(x => x[1].score)));
+  const atl = an.filter(x => x[1].atlNow).length;
+  const k = (label, value, note, icon, tone = 'text-fg') => `<div class="rounded-2xl bg-ink-800/70 border border-ink-600/80 p-4 min-w-0"><div class="flex items-center justify-between"><span class="label">${label}</span><i data-lucide="${icon}" class="w-4 h-4 text-dim"></i></div><div class="font-display font-extrabold text-[28px] mt-2 leading-none tnum ${tone}">${value}</div><div class="text-[12px] text-mute mt-2">${note}</div></div>`;
+  return `<div id="kpis" class="grid gap-3 grid-cols-2 xl:grid-cols-4">
+    ${k('Trackers activos', T.length, `${T.filter(t => t.cat === 'flight').length} vuelos · ${T.filter(t => t.cat === 'game').length} juegos · ${T.filter(t => t.cat === 'product').length} productos`, 'radar')}
+    ${k('Mínimos históricos', atl, 'precio actual = récord más bajo', 'trophy', atl ? 'text-gold' : 'text-fg')}
+    ${k('Ahorro detectado', eur(saving, 0), 'suma vs PVP, precio oficial o media de ruta', 'piggy-bank', 'text-good')}
+    ${k('Deal Index medio', avg + '<span class="text-[15px] text-dim font-bold">/100</span>', `${today} alerta${today === 1 ? '' : 's'} en las últimas 24 h`, 'gauge')}
+  </div>`;
+}
+function featured() {
+  const top = state.trackers.map(t => [t, AI.analyze(t)]).sort((a, b) => b[1].score - a[1].score).slice(0, 3);
+  return `<section class="rounded-2xl border border-ai/25 bg-gradient-to-br from-ai/[.07] to-transparent p-4 sm:p-5">
+    <div class="flex items-center gap-2 mb-3"><i data-lucide="sparkles" class="w-4 h-4 text-ai"></i><h2 class="font-display font-bold text-[16px]">La IA compraría hoy</h2><span class="text-[11px] text-mute ml-auto">Ordenado por AI Deal Index · simulado</span></div>
+    <div class="grid gap-3 md:grid-cols-3">${top.map(([t, a]) => `<button data-action="open" data-id="${t.id}" class="text-left flex gap-3 items-center rounded-xl bg-ink-850/80 border border-ink-600 hover:border-ai/50 p-3 min-w-0">${ring(a.score, 54)}<div class="min-w-0"><div class="font-medium text-[14px] leading-snug truncate">${esc(t.title)}</div><div class="text-[12px] text-mute tnum mt-0.5">${money(t)} · ${esc(buyStore(t))}</div><div class="mt-1.5">${verdPill(a)}</div></div></button>`).join('')}</div>
+  </section>`;
+}
+function rail() {
+  const tail = logs.slice(-9).reverse();
+  const al = state.alerts.slice(0, 4);
+  return `<aside class="flex flex-col gap-4 min-w-0">
+    <section class="rounded-2xl bg-ink-800/70 border border-ink-600/80 p-4">
+      <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full ${engine.timer ? 'bg-good live-dot' : 'bg-dim'}"></span><h2 class="font-display font-bold text-[15px]">Motor en directo</h2><a href="#motor" class="ml-auto text-[12px] text-mute hover:text-fg inline-flex items-center gap-1">Logs<i data-lucide="chevron-right" class="w-3.5 h-3.5"></i></a></div>
+      <div class="grid grid-cols-3 gap-2 mt-3 text-center">
+        <div class="rounded-lg bg-ink-850 py-2"><div class="font-display font-bold text-[18px] tnum" data-live="cycles">${engine.cycles}</div><div class="text-[11px] text-mute">ciclos</div></div>
+        <div class="rounded-lg bg-ink-850 py-2"><div class="font-display font-bold text-[18px] tnum" data-live="reqs">${engine.requests}</div><div class="text-[11px] text-mute">peticiones</div></div>
+        <div class="rounded-lg bg-ink-850 py-2"><div class="font-display font-bold text-[18px] tnum" data-live="next">—</div><div class="text-[11px] text-mute">próximo</div></div>
+      </div>
+      <ol id="rail-log" class="term mt-3 flex flex-col gap-0.5 text-[11px] max-h-56 overflow-hidden">${tail.map(logLine).join('')}</ol>
+    </section>
+    <section class="rounded-2xl bg-ink-800/70 border border-ink-600/80 p-4">
+      <div class="flex items-center gap-2"><i data-lucide="bell-ring" class="w-4 h-4 text-gold"></i><h2 class="font-display font-bold text-[15px]">Alertas recientes</h2><a href="#alertas" class="ml-auto text-[12px] text-mute hover:text-fg">Ver todas</a></div>
+      <ul class="mt-3 flex flex-col gap-2">${al.length ? al.map(x => `<li><button data-action="open" data-id="${x.itemId}" class="w-full text-left flex items-start gap-2.5 rounded-lg hover:bg-ink-700/60 p-1.5 -m-1.5"><i data-lucide="${CAT[x.cat].icon}" class="w-4 h-4 mt-0.5 text-mute shrink-0"></i><span class="min-w-0 flex-1"><span class="block text-[13px] truncate">${esc(x.title)}</span><span class="block text-[12px] text-mute tnum">${eur(x.price, x.cat === 'flight' ? 0 : 2)} · ${ago(x.t)}</span></span>${x.atl ? '<i data-lucide="trophy" class="w-4 h-4 text-gold shrink-0"></i>' : ''}</button></li>`).join('') : '<li class="text-[13px] text-mute">Aún no se ha disparado ninguna alerta.</li>'}</ul>
+    </section>
+  </aside>`;
+}
+const LV = { info: 'text-mute', ok: 'text-good', warn: 'text-warn', err: 'text-bad', ai: 'text-ai' };
+const logLine = l => `<li class="min-w-0 break-words"><span class="text-dim tnum">${fmtTime(l.t)}</span> <span class="${LV[l.level]}">[${esc(l.src)}]</span> <span class="text-fg/85">${esc(l.msg)}</span></li>`;
+function appendLogLine(l) {
+  const t = $('#term');
+  if (t && (ui.logFilter === 'all' || ui.logFilter === l.level)) { t.insertAdjacentHTML('beforeend', logLine(l)); if (t.children.length > 400) t.firstElementChild.remove(); const box = t.parentElement; if (box.scrollHeight - box.scrollTop - box.clientHeight < 80) box.scrollTop = box.scrollHeight; }
+  const r = $('#rail-log');
+  if (r) { r.insertAdjacentHTML('afterbegin', logLine(l)); while (r.children.length > 9) r.lastElementChild.remove(); }
+}
+
+function viewGrid(catKey) {
+  const n = NAV.find(x => x.id === ui.view);
+  const isDash = ui.view === 'dashboard';
+  const list = filtered(isDash ? null : catKey);
+  let extra = '';
+  if (catKey === 'flight') extra = flightTable();
+  if (catKey === 'game') extra = gameTable();
+  if (catKey === 'product') extra = couponList();
+  const now = new Date();
+  return `<div class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
+    <div class="flex flex-col gap-5 min-w-0">
+      <div class="flex flex-wrap items-end gap-3 justify-between">
+        <div><p class="label">${isDash ? now.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' }) : 'Vertical'}</p><h1 class="font-display font-extrabold text-[30px] sm:text-[34px] leading-tight tracking-tight mt-1">${isDash ? 'Tus chollos, vigilados 24/7' : n.label}</h1></div>
+        <span class="inline-flex items-center gap-1.5 text-[12px] text-mute border border-ink-600 rounded-lg px-2.5 py-1"><i data-lucide="flask-conical" class="w-3.5 h-3.5"></i>Datos simulados · Fase 1</span>
+      </div>
+      ${isDash ? kpis() + featured() : ''}
+      ${extra}
+      ${toolbar(isDash)}
+      ${grid(list)}
+    </div>
+    ${rail()}
+  </div>`;
+}
+function flightTable() {
+  const F = state.trackers.filter(t => t.cat === 'flight');
+  return `<section class="rounded-2xl bg-ink-800/70 border border-ink-600/80 overflow-hidden"><div class="px-4 pt-4 pb-2 flex items-center gap-2"><i data-lucide="route" class="w-4 h-4 text-ai"></i><h2 class="font-display font-bold text-[15px]">Rutas frente a su promedio histórico</h2></div>
+  <div class="overflow-x-auto"><table class="w-full text-[13px] tnum min-w-[640px]"><thead><tr class="text-left text-mute border-b border-ink-600"><th class="font-medium px-4 py-2">Ruta</th><th class="font-medium px-4 py-2">Fechas</th><th class="font-medium px-4 py-2">Aerolínea</th><th class="font-medium px-4 py-2 text-right">Actual</th><th class="font-medium px-4 py-2 text-right">Media ruta</th><th class="font-medium px-4 py-2 text-right">Diferencia</th></tr></thead>
+  <tbody>${F.map(t => `<tr class="border-b border-ink-700 last:border-0 hover:bg-ink-700/40 cursor-pointer" data-action="open" data-id="${t.id}"><td class="px-4 py-2.5 font-mono">${t.origin} → ${t.dest}</td><td class="px-4 py-2.5 text-mute">${fmtDate(t.depart)}${t.ret ? ' – ' + fmtDate(t.ret) : ' (ida)'}</td><td class="px-4 py-2.5">${esc(t.airline)}</td><td class="px-4 py-2.5 text-right font-medium">${money(t)}</td><td class="px-4 py-2.5 text-right text-mute">${money(t, t.routeAvg)}</td><td class="px-4 py-2.5 text-right ${t.current < t.routeAvg ? 'text-good' : 'text-bad'}">${pct(t.current / t.routeAvg - 1)}</td></tr>`).join('')}</tbody></table></div></section>`;
+}
+function gameTable() {
+  const G = state.trackers.filter(t => t.cat === 'game');
+  return `<section class="rounded-2xl bg-ink-800/70 border border-ink-600/80 overflow-hidden"><div class="px-4 pt-4 pb-2 flex items-center gap-2"><i data-lucide="key-round" class="w-4 h-4 text-ai"></i><h2 class="font-display font-bold text-[15px]">Tiendas de keys frente a tienda oficial</h2></div>
+  <div class="overflow-x-auto"><table class="w-full text-[13px] tnum min-w-[620px]"><thead><tr class="text-left text-mute border-b border-ink-600"><th class="font-medium px-4 py-2">Juego</th><th class="font-medium px-4 py-2">Plataforma</th><th class="font-medium px-4 py-2 text-right">Oficial</th><th class="font-medium px-4 py-2 text-right">Mejor key / tienda</th><th class="font-medium px-4 py-2 text-right">Ahorro</th></tr></thead>
+  <tbody>${G.map(t => { const o = officialStore(t), b = bestStore(t); return `<tr class="border-b border-ink-700 last:border-0 hover:bg-ink-700/40 cursor-pointer" data-action="open" data-id="${t.id}"><td class="px-4 py-2.5 font-medium">${esc(t.title)}</td><td class="px-4 py-2.5 text-mute">${esc(t.platform)}</td><td class="px-4 py-2.5 text-right">${eur(o.price)} <span class="text-dim">${esc(o.name)}</span></td><td class="px-4 py-2.5 text-right">${eur(b.price)} <span class="text-dim">${esc(b.name)}</span></td><td class="px-4 py-2.5 text-right ${b.price < o.price ? 'text-good' : 'text-mute'}">${b === o ? 'Oficial es lo mejor' : pct(b.price / o.price - 1)}</td></tr>`; }).join('')}</tbody></table></div></section>`;
+}
+function couponList() {
+  const C = state.trackers.filter(t => t.cat === 'product').flatMap(t => (t.coupons || []).map(c => ({ ...c, t })));
+  return `<section class="rounded-2xl bg-ink-800/70 border border-ink-600/80 p-4"><div class="flex items-center gap-2 mb-3"><i data-lucide="ticket" class="w-4 h-4 text-gold"></i><h2 class="font-display font-bold text-[15px]">Cupones activos en tus productos</h2></div>
+  ${C.length ? `<div class="grid gap-2 md:grid-cols-2">${C.map(c => couponRow(c, c.t)).join('')}</div>` : '<p class="text-mute text-[13px]">No hay cupones detectados ahora mismo.</p>'}</section>`;
+}
+const couponRow = (c, it) => `<div class="flex items-center gap-3 rounded-xl border border-dashed border-gold/40 bg-gold/[.04] p-3 min-w-0"><div class="min-w-0 flex-1"><div class="font-mono text-[14px] text-gold tracking-wide">${esc(c.code)}</div><div class="text-[12px] text-mute leading-snug mt-0.5">${esc(c.desc)} · ${esc(c.store)}${it ? ` · <span class="text-fg/80">${esc(it.title)}</span>` : ''}</div></div><button data-action="copy" data-text="${esc(c.code)}" class="shrink-0 inline-flex items-center gap-1 rounded-lg border border-ink-500 px-2.5 py-1.5 text-[12px] hover:border-gold/60"><i data-lucide="copy" class="w-3.5 h-3.5"></i>Copiar</button></div>`;
+
+function viewAlerts() {
+  state.alerts.forEach(a => a.read = true); renderBadge(); save();
+  const s = state.settings;
+  return `<div class="max-w-4xl flex flex-col gap-5">
+    <div><p class="label">Automatización 24/7</p><h1 class="font-display font-extrabold text-[30px] sm:text-[34px] leading-tight tracking-tight mt-1">Alertas</h1></div>
+    <section class="rounded-2xl bg-ink-800/70 border border-ink-600/80 p-4 flex flex-wrap gap-4 items-center">
+      <div class="font-mono text-[13px] rounded-lg bg-ink-950 border border-ink-600 px-3 py-2"><span class="text-ai">if</span> (Precio_Actual <span class="text-gold">&lt;=</span> Precio_Objetivo) <span class="text-ai">dispatch</span>(web, telegram, discord)</div>
+      <div class="flex gap-2 text-[12px]">
+        <span class="inline-flex items-center gap-1 rounded-md border border-good/30 text-good px-2 py-1"><i data-lucide="monitor" class="w-3.5 h-3.5"></i>Web + sonido</span>
+        <span class="inline-flex items-center gap-1 rounded-md border px-2 py-1 ${s.telegram.enabled ? 'border-ai/30 text-ai' : 'border-ink-500 text-dim'}"><i data-lucide="send" class="w-3.5 h-3.5"></i>Telegram</span>
+        <span class="inline-flex items-center gap-1 rounded-md border px-2 py-1 ${s.discord.enabled ? 'border-ai/30 text-ai' : 'border-ink-500 text-dim'}"><i data-lucide="message-circle" class="w-3.5 h-3.5"></i>Discord</span>
+        <span class="inline-flex items-center gap-1 rounded-md border px-2 py-1 ${s.email.enabled ? 'border-ai/30 text-ai' : 'border-ink-500 text-dim'}"><i data-lucide="mail" class="w-3.5 h-3.5"></i>Correo</span>
+      </div>
+      <button data-action="test-alert" class="ml-auto inline-flex items-center gap-1.5 rounded-xl bg-gold text-ink-950 font-semibold px-3 py-2 text-[13px]"><i data-lucide="zap" class="w-4 h-4"></i>Disparar alerta de prueba</button>
+    </section>
+    <section class="rounded-2xl bg-ink-800/70 border border-ink-600/80 overflow-hidden">
+      ${state.alerts.length ? `<ul>${state.alerts.map(a => `<li class="flex flex-wrap items-center gap-3 px-4 py-3 border-b border-ink-700 last:border-0">
+        <div class="w-9 h-9 rounded-lg ${a.atl ? 'bg-gold/15 text-gold' : 'bg-ink-700 text-mute'} grid place-items-center shrink-0"><i data-lucide="${a.atl ? 'trophy' : CAT[a.cat].icon}" class="w-4 h-4"></i></div>
+        <div class="min-w-0 flex-1"><div class="font-medium text-[14px]">${esc(a.title)}</div><div class="text-[12px] text-mute tnum">${eur(a.price, a.cat === 'flight' ? 0 : 2)} ${a.reason === 'test' ? '· objetivo' : '≤ objetivo'} ${eur(a.target, a.cat === 'flight' ? 0 : 2)} · ${fmtDate(a.t)} ${new Date(a.t).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}${a.reason === 'test' ? ' · prueba' : ''}</div></div>
+        <div class="flex gap-1.5 text-[11px]">${['web', 'telegram', 'discord', 'email'].map(ch => `<span class="rounded px-1.5 py-0.5 border ${(a.channels[ch] || 'off') === 'off' ? 'border-ink-600 text-dim' : 'border-good/30 text-good'}">${({ web: 'Web', telegram: 'Telegram', discord: 'Discord', email: 'Correo' })[ch]}${a.channels[ch] === 'simulado' ? ' · sim.' : ''}</span>`).join('')}</div>
+        <button data-action="open" data-id="${a.itemId}" class="rounded-lg border border-ink-500 px-2.5 py-1.5 text-[12px] hover:border-ai/60">Ver</button>
+      </li>`).join('')}</ul>` : '<p class="p-6 text-mute">Aún no hay alertas. Pulsa «Disparar alerta de prueba» o usa «Simular bajada» en cualquier tracker.</p>'}
+    </section>
+  </div>`;
+}
+
+function viewEngine() {
+  const s = state.settings;
+  const lv = [['all', 'Todo'], ['ok', 'Éxito'], ['warn', 'Avisos'], ['ai', 'IA']];
+  return `<div class="flex flex-col gap-5">
+    <div class="flex flex-wrap items-end gap-3 justify-between"><div><p class="label">Scraper Backend & Bot Service</p><h1 class="font-display font-extrabold text-[30px] sm:text-[34px] leading-tight tracking-tight mt-1">Motor de scraping</h1></div>
+      <div class="flex flex-wrap gap-2">
+        <button data-action="engine-toggle" class="inline-flex items-center gap-1.5 rounded-xl border border-ink-500 px-3 py-2 text-[13px] hover:border-gold/60"><i data-lucide="${engine.timer ? 'pause' : 'play'}" class="w-4 h-4"></i>${engine.timer ? 'Pausar motor' : 'Reanudar motor'}</button>
+        <button data-action="engine-run" class="inline-flex items-center gap-1.5 rounded-xl bg-fg text-ink-950 font-semibold px-3 py-2 text-[13px] hover:bg-gold"><i data-lucide="refresh-cw" class="w-4 h-4"></i>Ejecutar ciclo ahora</button>
+      </div></div>
+    <div class="grid gap-3 grid-cols-2 lg:grid-cols-4">
+      ${[['Ciclos', 'cycles', engine.cycles], ['Peticiones', 'reqs', engine.requests], ['Próximo ciclo', 'next', '—'], ['Intervalo', null, s.interval + ' s']].map(([l, k, v]) => `<div class="rounded-2xl bg-ink-800/70 border border-ink-600/80 p-4"><div class="label">${l}</div><div class="font-display font-extrabold text-[26px] mt-1.5 tnum" ${k ? `data-live="${k}"` : ''}>${v}</div></div>`).join('')}
+    </div>
+    <div class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
+      <section class="rounded-2xl bg-ink-950 border border-ink-600/80 overflow-hidden flex flex-col min-w-0">
+        <div class="px-4 py-2.5 border-b border-ink-600 flex items-center gap-2 flex-wrap"><i data-lucide="terminal" class="w-4 h-4 text-mute"></i><span class="font-mono text-[12px] text-mute">chollogarde-worker · logs</span>
+          <div class="ml-auto flex gap-1">${lv.map(([k, l]) => `<button data-action="logf" data-lv="${k}" class="px-2 py-1 rounded-md text-[12px] ${ui.logFilter === k ? 'bg-ink-700 text-fg' : 'text-mute hover:text-fg'}">${l}</button>`).join('')}</div></div>
+        <div class="p-4 h-[440px] overflow-y-auto"><ol id="term" class="term flex flex-col gap-0.5">${logs.filter(l => ui.logFilter === 'all' || l.level === ui.logFilter).slice(-400).map(logLine).join('')}</ol></div>
+      </section>
+      <div class="flex flex-col gap-5 min-w-0">
+        <section class="rounded-2xl bg-ink-800/70 border border-ink-600/80 overflow-hidden"><div class="px-4 pt-4 pb-2 font-display font-bold text-[15px]">Fuentes</div>
+          <div class="overflow-x-auto"><table class="w-full text-[12px] tnum min-w-[340px]"><thead><tr class="text-left text-mute border-b border-ink-600"><th class="font-medium px-4 py-1.5">Conector</th><th class="font-medium px-2 py-1.5">Método</th><th class="font-medium px-2 py-1.5 text-right">Éxito</th><th class="font-medium px-4 py-1.5 text-right">Latencia</th></tr></thead>
+          <tbody id="src-body">${srcRows()}</tbody></table></div></section>
+        <section class="rounded-2xl bg-ink-800/70 border border-ink-600/80 p-4">
+          <div class="font-display font-bold text-[15px] mb-2">Puntos de integración</div>
+          <ul class="font-mono text-[12px] flex flex-col gap-1.5 text-mute">
+            <li><span class="text-ai">GET</span> /api/trackers <span class="text-dim">· CG.api (mock)</span></li>
+            <li><span class="text-ai">POST</span> /api/trackers <span class="text-dim">· crear</span></li>
+            <li><span class="text-ai">POST</span> /api/fetch-meta <span class="text-dim">· auto-fetch</span></li>
+            <li><span class="text-ai">POST</span> /api/ai/:task <span class="text-dim">· Gemini (Fase 3)</span></li>
+            <li><span class="text-ai">WS</span> /api/stream <span class="text-dim">· logs y precios</span></li>
+          </ul>
+          <p class="text-[12px] text-mute mt-3 leading-relaxed">El frontend ya llama a estas capas. Cambiar <span class="font-mono text-fg">API.mode</span> a <span class="font-mono text-fg">'live'</span> y <span class="font-mono text-fg">AI.provider</span> a <span class="font-mono text-fg">'gemini'</span> conecta el backend real.</p>
+        </section>
+      </div>
+    </div>
+  </div>`;
+}
+const srcRows = () => SOURCES.map(s => `<tr class="border-b border-ink-700 last:border-0"><td class="px-4 py-2"><span class="inline-flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full ${s.status === 'ok' ? 'bg-good' : 'bg-warn'}"></span>${esc(s.name)}</span><div class="text-dim text-[11px]">${esc(s.covers)}</div></td><td class="px-2 py-2 text-mute">${esc(s.kind)}</td><td class="px-2 py-2 text-right">${s.ok} %</td><td class="px-4 py-2 text-right">${s.lat} ms</td></tr>`).join('');
+
+function viewSettings() {
+  const s = state.settings, sample = state.trackers.find(t => t.id === 'p-ally') || state.trackers[0], a = AI.analyze(sample);
+  const field = (id, label, val, ph, type = 'text') => `<label class="flex flex-col gap-1.5 text-[13px]"><span class="text-mute">${label}</span><input id="${id}" type="${type}" value="${esc(val)}" placeholder="${esc(ph)}" autocomplete="off" class="bg-ink-850 border border-ink-600 rounded-xl px-3 py-2 placeholder:text-dim focus:outline-none focus:border-gold/70"></label>`;
+  const toggle = (id, on, label) => `<label class="inline-flex items-center gap-2 text-[13px] cursor-pointer"><input id="${id}" type="checkbox" ${on ? 'checked' : ''} class="w-4 h-4">${label}</label>`;
+  return `<div class="flex flex-col gap-5 max-w-5xl">
+    <div><p class="label">Canales de salida</p><h1 class="font-display font-extrabold text-[30px] sm:text-[34px] leading-tight tracking-tight mt-1">Notificaciones</h1></div>
+    <div class="grid gap-5 lg:grid-cols-2">
+      <form id="settings-form" class="flex flex-col gap-5 min-w-0">
+        <section class="rounded-2xl bg-ink-800/70 border border-ink-600/80 p-4 flex flex-col gap-3">
+          <div class="flex items-center gap-2"><i data-lucide="send" class="w-4 h-4 text-ai"></i><h2 class="font-display font-bold text-[15px]">Bot de Telegram</h2><span class="ml-auto">${toggle('tg-on', s.telegram.enabled, 'Activo')}</span></div>
+          ${field('tg-token', 'Token del bot', s.telegram.token, '123456:ABC-DEF…', 'password')}
+          ${field('tg-chat', 'Chat ID', s.telegram.chatId, '-1001234567890')}
+          <p class="text-[12px] text-dim">Se guarda solo en este navegador. En la Fase 2 el token vivirá en el backend, nunca en el cliente.</p>
+          <button type="button" data-action="test-telegram" class="self-start inline-flex items-center gap-1.5 rounded-xl border border-ink-500 px-3 py-2 text-[13px] hover:border-ai/60"><i data-lucide="send" class="w-4 h-4"></i>Enviar prueba</button>
+        </section>
+        <section class="rounded-2xl bg-ink-800/70 border border-ink-600/80 p-4 flex flex-col gap-3">
+          <div class="flex items-center gap-2"><i data-lucide="message-circle" class="w-4 h-4 text-ai"></i><h2 class="font-display font-bold text-[15px]">Webhook de Discord</h2><span class="ml-auto">${toggle('dc-on', s.discord.enabled, 'Activo')}</span></div>
+          ${field('dc-url', 'URL del webhook', s.discord.url, 'https://discord.com/api/webhooks/…')}
+          <button type="button" data-action="test-discord" class="self-start inline-flex items-center gap-1.5 rounded-xl border border-ink-500 px-3 py-2 text-[13px] hover:border-ai/60"><i data-lucide="message-circle" class="w-4 h-4"></i>Enviar prueba</button>
+        </section>
+        <section class="rounded-2xl bg-ink-800/70 border border-ink-600/80 p-4 flex flex-col gap-3">
+          <div class="flex items-center gap-2"><i data-lucide="mail" class="w-4 h-4 text-ai"></i><h2 class="font-display font-bold text-[15px]">Correo electrónico</h2><span class="ml-auto">${toggle('em-on', s.email.enabled, 'Activo')}</span></div>
+          ${field('em-to', 'Enviar alertas a', s.email.to, 'tu@correo.com', 'email')}
+          <p class="text-[12px] text-dim">En la Fase 2 se envía por SMTP desde tu PC (Gmail con contraseña de aplicación u Outlook).</p>
+          <button type="button" data-action="test-email" class="self-start inline-flex items-center gap-1.5 rounded-xl border border-ink-500 px-3 py-2 text-[13px] hover:border-ai/60"><i data-lucide="mail" class="w-4 h-4"></i>Enviar prueba</button>
+        </section>
+        <section class="rounded-2xl bg-ink-800/70 border border-ink-600/80 p-4 flex flex-col gap-3">
+          <div class="flex items-center gap-2"><i data-lucide="volume-2" class="w-4 h-4 text-gold"></i><h2 class="font-display font-bold text-[15px]">Dashboard abierto</h2></div>
+          ${toggle('snd-on', s.sound, 'Alertas sonoras (radar + moneda)')}
+          <div class="flex gap-2"><button type="button" data-action="snd-radar" class="rounded-lg border border-ink-500 px-2.5 py-1.5 text-[12px]">Probar radar</button><button type="button" data-action="snd-coin" class="rounded-lg border border-ink-500 px-2.5 py-1.5 text-[12px]">Probar moneda</button></div>
+          <label class="flex flex-col gap-1.5 text-[13px]"><span class="text-mute">Intervalo del motor simulado: <b id="int-val" class="text-fg tnum">${s.interval} s</b></span><input id="int" type="range" min="3" max="30" step="1" value="${s.interval}"></label>
+        </section>
+        <section class="rounded-2xl bg-ink-800/70 border border-ink-600/80 p-4 flex flex-wrap items-center gap-3">
+          <div class="min-w-0 flex-1"><div class="font-display font-bold text-[15px]">Motor de IA</div><div class="text-[12px] text-mute">Proveedor: <span class="text-ai">simulado</span>. En la Fase 3 se conecta Gemini vía backend.</div></div>
+          <button type="button" data-action="reset" id="btn-reset" class="rounded-xl border border-bad/40 text-bad px-3 py-2 text-[13px] hover:bg-bad/10">Restablecer datos de ejemplo</button>
+        </section>
+      </form>
+      <div class="flex flex-col gap-5 min-w-0">
+        <section class="rounded-2xl bg-ink-800/70 border border-ink-600/80 p-4">
+          <div class="label mb-3">Vista previa en Telegram</div>
+          <div class="rounded-2xl bg-[#17212B] p-3 max-w-sm">
+            <div class="rounded-xl overflow-hidden bg-[#182533]">
+              ${art(sample, 'h-36')}
+              <div class="p-3 text-[13px] leading-relaxed text-[#E9EEF3]">🔥 <b>${esc(sample.title)}</b><br>${money(sample)} en ${esc(buyStore(sample))} (${pct(-a.discount)} vs PVP)<br>Objetivo: ${money(sample, sample.target)} · Deal Index ${a.score}/100${a.atlNow ? '<br>🏆 Mínimo histórico' : ''}<div class="text-right text-[11px] text-[#6D7F8F] mt-1">${new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</div></div>
+            </div>
+            <div class="mt-1 rounded-lg bg-[#2B5278]/60 text-center text-[#E9EEF3] text-[13px] py-2">🛒 Comprar ahora</div>
+          </div>
+        </section>
+        <section class="rounded-2xl bg-ink-800/70 border border-ink-600/80 overflow-hidden">
+          <div class="px-4 pt-4 flex items-center gap-2"><div class="label">Payload</div><div class="ml-auto inline-flex p-0.5 rounded-lg bg-ink-850 border border-ink-600 text-[12px]"><button data-action="payload" data-p="tg" class="px-2 py-1 rounded-md bg-ink-600" id="pl-tg">Telegram</button><button data-action="payload" data-p="dc" class="px-2 py-1 rounded-md text-mute" id="pl-dc">Discord</button><button data-action="payload" data-p="em" class="px-2 py-1 rounded-md text-mute" id="pl-em">Correo</button></div></div>
+          <pre id="payload" class="term text-[11px] text-fg/85 p-4 overflow-x-auto max-h-80">${esc(JSON.stringify(Notify.telegramPayload(sample), null, 2))}</pre>
+        </section>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ---------- render principal ----------
+function render() {
+  const v = ui.view;
+  const map = { dashboard: () => viewGrid(), vuelos: () => viewGrid('flight'), juegos: () => viewGrid('game'), productos: () => viewGrid('product'), alertas: viewAlerts, motor: viewEngine, ajustes: viewSettings };
+  if (ui.chart && !ui.openId) { ui.chart.destroy(); ui.chart = null; }
+  $('#main').innerHTML = `<div class="fade-in">${(map[v] || map.dashboard)()}</div>`;
+  renderNav(); renderBadge(); icons(); tickLive();
+}
+// Refresco ligero tras cada ciclo del motor: no toca formularios ni el scroll.
+function refresh() {
+  const v = ui.view;
+  if (['dashboard', 'vuelos', 'juegos', 'productos'].includes(v)) {
+    const g = $('#grid');
+    if (g) { const cat = { vuelos: 'flight', juegos: 'game', productos: 'product' }[v]; g.innerHTML = filtered(v === 'dashboard' ? null : cat).map(card).join(''); }
+    const k = $('#kpis'); if (k) k.outerHTML = kpis();
+    icons();
+  }
+  if (v === 'motor') { const b = $('#src-body'); if (b) b.innerHTML = srcRows(); }
+  $$('[data-live="cycles"]').forEach(e => e.textContent = engine.cycles);
+  $$('[data-live="reqs"]').forEach(e => e.textContent = engine.requests);
+  if (ui.openId) updateDrawerLive();
+  renderNav(); icons();
+}
+function tickLive() {
+  const sec = engine.timer ? Math.max(0, Math.ceil((engine.nextAt - Date.now()) / 1000)) : null;
+  const txt = sec === null ? 'pausa' : sec + ' s';
+  $$('[data-live="next"]').forEach(e => e.textContent = txt);
+  $('#side-next').textContent = sec === null ? 'Ciclos detenidos' : `Próximo ciclo en ${sec} s`;
+}
+
+// ---------- drawer de detalle ----------
+function openDrawer(id) {
+  const it = state.trackers.find(t => t.id === id); if (!it) return;
+  ui.openId = id; ui.cpCtx = it; renderCpCtx();
+  const a = AI.analyze(it);
+  const layer = $('#layer');
+  layer.innerHTML = `<div id="drawer" class="fixed inset-0 z-[60]" role="dialog" aria-modal="true" aria-label="${esc(it.title)}">
+    <div class="absolute inset-0 bg-ink-950/70 backdrop-blur-sm" data-action="close"></div>
+    <div class="drawer-panel absolute top-0 right-0 h-full w-full max-w-[760px] bg-ink-900 border-l border-ink-600 overflow-y-auto" style="padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); padding-right: env(safe-area-inset-right, 0px);">
+      ${drawerBody(it, a)}
+    </div></div>`;
+  icons();
+  requestAnimationFrame(() => $('#drawer').classList.add('drawer-open'));
+  drawChart(it);
+  document.body.style.overflow = 'hidden';
+}
+function closeDrawer() {
+  const d = $('#drawer'); if (!d) return;
+  d.classList.remove('drawer-open');
+  if (ui.chart) { ui.chart.destroy(); ui.chart = null; }
+  ui.openId = null;
+  setTimeout(() => { if (!ui.openId) $('#layer').innerHTML = ''; }, 260);
+  document.body.style.overflow = '';
+}
+function drawerBody(it, a) {
+  const ref = refPrice(it);
+  return `<div class="relative">${art(it, 'h-44 sm:h-52', true)}
+    <button data-action="close" class="absolute top-3 right-3 w-9 h-9 grid place-items-center rounded-xl bg-ink-950/70 hover:bg-ink-950" aria-label="Cerrar"><i data-lucide="x" class="w-4 h-4"></i></button>
+    <span class="absolute top-3 left-3 inline-flex items-center gap-1 rounded-md bg-ink-950/70 px-2 py-1 text-[11px]"><i data-lucide="${CAT[it.cat].icon}" class="w-3 h-3"></i>${CAT[it.cat].label}</span></div>
+  <div class="p-5 sm:p-6 flex flex-col gap-6">
+    <header class="flex flex-col gap-3">
+      <div class="flex flex-wrap items-center gap-2">${a.atlNow ? atlBadge() : ''}${verdPill(a, true)}</div>
+      <h2 class="font-display font-extrabold text-[26px] sm:text-[30px] leading-tight tracking-tight">${esc(it.title)}</h2>
+      <p class="text-mute text-[13px] -mt-1">${esc(subtitle(it))}</p>
+      <div class="flex flex-wrap items-end gap-x-6 gap-y-3">
+        <div><div class="label">Precio actual</div><div id="d-price" class="font-display font-extrabold text-[40px] leading-none tnum mt-1">${money(it)}</div></div>
+        <div class="text-[13px] tnum pb-1"><div class="text-mute">${it.cat === 'flight' ? 'Media de la ruta' : it.cat === 'game' ? 'Precio oficial' : 'PVP recomendado'} <span class="text-fg">${money(it, ref)}</span></div><div class="text-mute">Mínimo histórico <span class="text-gold" id="d-atl">${money(it, a.atl)}</span> · objetivo <span class="text-fg">${money(it, it.target)}</span></div></div>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <a href="${esc(buyUrl(it))}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 rounded-xl bg-gold text-ink-950 font-semibold px-4 py-2.5 text-[14px] hover:brightness-110"><i data-lucide="${isSearch(it) ? 'search' : 'zap'}" class="w-4 h-4"></i>${isSearch(it) ? 'Buscar en' : 'Comprar en 1 clic ·'} ${esc(buyStore(it))}</a>
+        <button data-action="ask" data-id="${it.id}" class="inline-flex items-center gap-1.5 rounded-xl border border-ai/40 text-ai px-3 py-2.5 text-[13px] hover:bg-ai/10"><i data-lucide="bot" class="w-4 h-4"></i>Preguntar</button>
+        <button data-action="compare" data-id="${it.id}" class="inline-flex items-center gap-1.5 rounded-xl border border-ink-500 px-3 py-2.5 text-[13px] hover:border-ai/60"><i data-lucide="scale" class="w-4 h-4"></i>Comparar</button>
+      </div>
+      <p class="text-[12px] text-dim -mt-1">${isSearch(it) ? 'Datos simulados: abre la búsqueda del producto en la tienda. Con el scraper de la Fase 2 este botón irá directo a la ficha exacta.' : 'Abre la oferta directamente en la tienda, sin intermediarios ni enlaces de afiliado.'}</p>
+    </header>
+
+    <section class="rounded-2xl bg-ink-800/70 border border-ink-600/80 p-4">
+      <div class="flex items-center gap-2 mb-2"><i data-lucide="history" class="w-4 h-4 text-mute"></i><h3 class="font-display font-bold text-[15px]">Histórico de 90 días</h3>
+        <span class="ml-auto flex gap-3 text-[11px] text-mute"><span class="inline-flex items-center gap-1"><span class="w-3 h-0.5 bg-gold"></span>Precio</span><span class="inline-flex items-center gap-1"><span class="w-3 border-t border-dashed border-good"></span>Objetivo</span><span class="inline-flex items-center gap-1"><span class="w-3 border-t border-dashed border-ai"></span>Mínimo</span></span></div>
+      <div class="h-[220px]"><canvas id="chart" aria-label="Gráfico del histórico de precios"></canvas></div>
+    </section>
+
+    <section id="d-ai" class="rounded-2xl border border-ai/25 bg-gradient-to-br from-ai/[.07] to-transparent p-4 sm:p-5">${aiBlock(it, a)}</section>
+
+    ${it.cat === 'flight' ? flightBlock(it) : it.cat === 'game' ? gameBlock(it) : productBlock(it)}
+    ${(it.coupons || []).length ? `<section><h3 class="font-display font-bold text-[15px] mb-2 flex items-center gap-2"><i data-lucide="ticket" class="w-4 h-4 text-gold"></i>Cupones y códigos</h3><div class="flex flex-col gap-2">${it.coupons.map(c => couponRow(c)).join('')}</div></section>` : ''}
+
+    <section class="grid sm:grid-cols-2 gap-3">
+      <div class="rounded-2xl bg-ink-800/70 border border-ink-600/80 p-4">
+        <h3 class="font-display font-bold text-[15px] mb-3">Tu alerta</h3>
+        <label class="flex items-center gap-2 text-[13px] cursor-pointer"><input id="d-alert" type="checkbox" data-action="toggle-alert" data-id="${it.id}" ${it.alert ? 'checked' : ''} class="w-4 h-4">Avisarme al llegar al objetivo</label>
+        <form data-form="target" data-id="${it.id}" class="flex gap-2 mt-3"><label class="sr-only" for="d-target">Precio objetivo</label><input id="d-target" type="number" step="${it.cat === 'flight' ? 1 : 0.01}" min="1" value="${it.target}" class="w-full min-w-0 bg-ink-850 border border-ink-600 rounded-xl px-3 py-2 tnum focus:outline-none focus:border-gold/70"><button class="rounded-xl border border-ink-500 px-3 text-[13px] hover:border-gold/60">Guardar</button></form>
+      </div>
+      <div class="rounded-2xl bg-ink-800/70 border border-ink-600/80 p-4 flex flex-col gap-2">
+        <h3 class="font-display font-bold text-[15px] mb-1">Simulación</h3>
+        <button data-action="drop" data-id="${it.id}" class="inline-flex items-center gap-1.5 rounded-xl border border-good/40 text-good px-3 py-2 text-[13px] hover:bg-good/10"><i data-lucide="trending-down" class="w-4 h-4"></i>Simular bajada hasta el objetivo</button>
+        <button data-action="scan" data-id="${it.id}" class="inline-flex items-center gap-1.5 rounded-xl border border-ink-500 px-3 py-2 text-[13px] hover:border-ai/60"><i data-lucide="refresh-cw" class="w-4 h-4"></i>Rastrear ahora</button>
+        <button data-action="delete" data-id="${it.id}" class="inline-flex items-center gap-1.5 rounded-xl border border-bad/30 text-bad px-3 py-2 text-[13px] hover:bg-bad/10"><i data-lucide="trash-2" class="w-4 h-4"></i><span>Eliminar tracker</span></button>
+      </div>
+    </section>
+
+    <details class="rounded-2xl bg-ink-800/70 border border-ink-600/80 group">
+      <summary class="cursor-pointer px-4 py-3 text-[13px] text-mute hover:text-fg flex items-center gap-2"><i data-lucide="code" class="w-4 h-4"></i>Esquema JSON del tracker (contrato con el backend)</summary>
+      <pre class="term text-[11px] text-fg/85 px-4 pb-4 overflow-x-auto">${esc(JSON.stringify(schemaOf(it), null, 2))}</pre>
+    </details>
+  </div>`;
+}
+function schemaOf(it) {
+  const { history, flash, ...rest } = it;
+  return { ...rest, history: `[${history.length} puntos diarios {t, p}]`, createdAt: new Date(it.createdAt).toISOString() };
+}
+function aiBlock(it, a) {
+  const r = it.reviews;
+  return `<div class="flex items-center gap-2 mb-4"><i data-lucide="sparkles" class="w-4 h-4 text-ai"></i><h3 class="font-display font-bold text-[15px]">Análisis de la IA</h3><span class="text-[11px] text-mute border border-ink-600 rounded px-1.5 py-0.5">simulado · Gemini en Fase 3</span><button data-action="regen" data-id="${it.id}" class="ml-auto text-[12px] text-mute hover:text-ai inline-flex items-center gap-1"><i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>Regenerar</button></div>
+  <div class="flex flex-col sm:flex-row gap-5">
+    <div class="flex sm:flex-col items-center gap-3 sm:w-28 shrink-0">${ring(a.score, 92)}<div class="sm:text-center"><div class="label">AI Deal Index</div><div class="text-[12px] text-mute mt-0.5">${a.score >= 75 ? 'Descuento real' : a.score >= 50 ? 'Descuento moderado' : 'Descuento dudoso'}</div></div></div>
+    <div class="min-w-0 flex-1">
+      <div class="flex flex-wrap items-center gap-2">${verdPill(a, true)}<span class="text-[12px] text-mute tnum">confianza ${Math.round(a.conf * 100)} %</span></div>
+      <ul class="mt-3 flex flex-col gap-2 text-[13px] leading-relaxed">${a.reasons.map(x => `<li class="flex gap-2"><i data-lucide="chevron-right" class="w-4 h-4 text-ai shrink-0 mt-0.5"></i><span>${esc(x)}</span></li>`).join('')}</ul>
+    </div>
+  </div>
+  <div class="mt-5 pt-4 border-t border-ink-600/70">
+    <div class="flex flex-wrap items-center gap-2 mb-3"><h4 class="font-medium text-[14px]">Opiniones de usuarios</h4><span class="inline-flex items-center gap-1 text-[12px] text-gold tnum"><i data-lucide="star" class="w-3.5 h-3.5"></i>${r.rating} / 5</span><span class="text-[12px] text-mute">· ${r.n.toLocaleString('es-ES')} reseñas · ${esc(r.src)}</span></div>
+    <div class="grid sm:grid-cols-2 gap-3">
+      <ul class="flex flex-col gap-1.5 text-[13px]">${r.pros.map(p => `<li class="flex gap-2"><i data-lucide="thumbs-up" class="w-4 h-4 text-good shrink-0 mt-0.5"></i><span>${esc(p)}</span></li>`).join('')}</ul>
+      <ul class="flex flex-col gap-1.5 text-[13px]">${r.cons.map(p => `<li class="flex gap-2"><i data-lucide="thumbs-down" class="w-4 h-4 text-bad shrink-0 mt-0.5"></i><span>${esc(p)}</span></li>`).join('')}</ul>
+    </div>
+  </div>`;
+}
+function flightBlock(it) {
+  const start = pd(it.depart); start.setDate(start.getDate() - ((start.getDay() + 6) % 7) - 7);
+  const r = rng(it.id + ':m'), W = [.98, .9, .92, 1.02, 1.15, 1.08, 1.12];
+  const cells = [];
+  for (let i = 0; i < 35; i++) {
+    const d = new Date(start); d.setDate(d.getDate() + i);
+    const iso = isoLocal(d);
+    const sel = iso === it.depart;
+    const p = sel ? it.current : Math.round(it.current * W[(d.getDay() + 6) % 7] * (.9 + r() * .26));
+    cells.push({ d, p, sel, past: d < dOff(0) });
+  }
+  const valid = cells.filter(c => !c.past), mn = Math.min(...valid.map(c => c.p)), mx = Math.max(...valid.map(c => c.p));
+  const col = p => { const k = (p - mn) / ((mx - mn) || 1); return `hsl(${Math.round(140 - k * 120)} 45% ${22 + (1 - k) * 6}%)`; };
+  const cal = `<div class="overflow-x-auto"><div class="grid grid-cols-7 gap-1 min-w-[350px] text-center">${['L', 'M', 'X', 'J', 'V', 'S', 'D'].map(d => `<div class="text-[11px] text-mute py-1">${d}</div>`).join('')}${cells.map(c => `<div class="rounded-lg py-1.5 ${c.sel ? 'ring-2 ring-gold' : c.p === mn && !c.past ? 'ring-1 ring-good' : ''}" style="background:${c.past ? '#151D31' : col(c.p)}" title="${fmtDateL(c.d)}"><div class="text-[10px] ${c.past ? 'text-dim' : 'text-white/70'}">${c.d.getDate()} ${c.d.getDate() === 1 || c === cells[0] ? c.d.toLocaleDateString('es-ES', { month: 'short' }) : ''}</div><div class="text-[12px] font-medium tnum ${c.past ? 'text-dim' : 'text-white'}">${c.past ? '—' : eur(c.p, 0)}</div></div>`).join('')}</div></div>`;
+  const cheapest = valid.find(c => c.p === mn);
+  const kv = (k, v) => `<div class="flex justify-between gap-3 py-2 border-b border-ink-700 last:border-0 text-[13px]"><span class="text-mute">${k}</span><span class="text-right">${v}</span></div>`;
+  return `<section class="flex flex-col gap-3">
+    <div class="rounded-2xl bg-ink-800/70 border border-ink-600/80 p-4 min-w-0"><div class="flex items-center gap-2 mb-3"><i data-lucide="calendar" class="w-4 h-4 text-mute"></i><h3 class="font-display font-bold text-[15px]">Días más económicos para salir</h3></div>${cal}
+      <p class="text-[12px] text-mute mt-3">Día más barato: <span class="text-good">${fmtDateL(cheapest.d)} · ${eur(cheapest.p, 0)}</span>. El borde dorado marca tu fecha.</p></div>
+    <div class="rounded-2xl bg-ink-800/70 border border-ink-600/80 p-4"><h3 class="font-display font-bold text-[15px] mb-1">Detalles del vuelo</h3><div class="grid sm:grid-cols-2 sm:gap-x-6">
+      ${kv('Aerolínea', esc(it.airline))}${kv('Escalas', it.stops ? `${it.stops} · ${esc(it.via)}` : 'Directo')}${kv('Máx. escalas', it.maxStops)}${kv('Duración', durTxt(it.durMin))}${kv('Ida', fmtDateL(it.depart))}${kv('Vuelta', it.ret ? fmtDateL(it.ret) : 'Solo ida')}${kv('Equipaje de mano', it.baggage.cabin ? '<span class="text-good">Incluido</span>' : 'No')}${kv('Maleta facturada', it.baggage.hold ? '<span class="text-good">Incluida</span>' : `<span class="text-warn">+${eur(it.baggage.holdFee, 0)}</span>`)}${kv('Fuentes', 'Skyscanner, Google Flights, Kayak')}</div></div>
+  </section>`;
+}
+function gameBlock(it) {
+  const o = officialStore(it), sorted = [...it.stores].sort((a, b) => a.price - b.price), best = sorted[0];
+  const T = { key: 'Tienda de keys', official: 'Tienda oficial', retail: 'Tienda física' };
+  return `<section class="rounded-2xl bg-ink-800/70 border border-ink-600/80 overflow-hidden">
+    <div class="px-4 pt-4 pb-2 flex flex-wrap items-center gap-2"><i data-lucide="key-round" class="w-4 h-4 text-mute"></i><h3 class="font-display font-bold text-[15px]">Keys frente a tienda oficial</h3>
+      <span class="ml-auto flex flex-wrap gap-1.5 text-[12px]"><span class="rounded-md border border-ink-500 px-2 py-0.5">${esc(it.platform)}</span><span class="rounded-md border border-ink-500 px-2 py-0.5">${esc(it.format)}</span>${it.deck ? `<span class="rounded-md border border-good/30 text-good px-2 py-0.5 inline-flex items-center gap-1"><i data-lucide="circle-check" class="w-3.5 h-3.5"></i>Steam Deck: ${esc(it.deck)}</span>` : ''}</span></div>
+    <div class="overflow-x-auto"><table class="w-full text-[13px] tnum min-w-[460px]"><thead><tr class="text-left text-mute border-b border-ink-600"><th class="font-medium px-4 py-2">Tienda</th><th class="font-medium px-4 py-2">Tipo</th><th class="font-medium px-4 py-2 text-right">Precio</th><th class="font-medium px-4 py-2 text-right">vs oficial</th><th class="px-4 py-2"></th></tr></thead>
+    <tbody>${sorted.map(s => `<tr class="border-b border-ink-700 last:border-0 ${s === best ? 'bg-good/[.06]' : ''}"><td class="px-4 py-2.5 font-medium">${esc(s.name)} ${s === best ? '<span class="ml-1 text-[11px] text-good">mejor precio</span>' : ''}</td><td class="px-4 py-2.5 text-mute">${T[s.type]}</td><td class="px-4 py-2.5 text-right font-medium">${eur(s.price)}</td><td class="px-4 py-2.5 text-right ${s.price < o.price ? 'text-good' : 'text-mute'}">${s === o ? '—' : pct(s.price / o.price - 1)}</td><td class="px-4 py-2.5 text-right"><a href="${esc(offerUrl(it, s))}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-[12px] text-mute hover:text-fg">Abrir<i data-lucide="external-link" class="w-3.5 h-3.5"></i></a></td></tr>`).join('')}</tbody></table></div>
+    <p class="px-4 py-3 text-[12px] text-dim">Fuentes: IsThereAnyDeal (tiendas oficiales) y CheapShark (keys). Las keys de terceros pueden tener restricción de región.</p>
+  </section>`;
+}
+function productBlock(it) {
+  const sorted = [...it.sellers].sort((a, b) => (a.price + a.ship) - (b.price + b.ship)), best = sorted[0];
+  const a = AI.analyze(it), claimed = it.sellers.find(s => s.claimed);
+  return `<section class="rounded-2xl bg-ink-800/70 border border-ink-600/80 overflow-hidden">
+    <div class="px-4 pt-4 pb-2 flex items-center gap-2"><i data-lucide="store" class="w-4 h-4 text-mute"></i><h3 class="font-display font-bold text-[15px]">Vendedores</h3><span class="ml-auto text-[12px] text-mute">${esc(it.category)}</span></div>
+    <div class="overflow-x-auto"><table class="w-full text-[13px] tnum min-w-[480px]"><thead><tr class="text-left text-mute border-b border-ink-600"><th class="font-medium px-4 py-2">Tienda</th><th class="font-medium px-4 py-2 text-right">Precio</th><th class="font-medium px-4 py-2 text-right">Envío</th><th class="font-medium px-4 py-2 text-right">Total</th><th class="px-4 py-2"></th></tr></thead>
+    <tbody>${sorted.map(s => `<tr class="border-b border-ink-700 last:border-0 ${s === best ? 'bg-good/[.06]' : ''}"><td class="px-4 py-2.5 font-medium">${esc(s.name)}${s.note ? ` <span class="text-[11px] text-mute">${esc(s.note)}</span>` : ''}${s === best ? ' <span class="ml-1 text-[11px] text-good">mejor total</span>' : ''}${s.claimed ? `<div class="text-[11px] text-bad font-normal">Anuncia «antes ${eur(s.claimed)}»</div>` : ''}</td><td class="px-4 py-2.5 text-right">${eur(s.price)}</td><td class="px-4 py-2.5 text-right ${s.ship ? 'text-warn' : 'text-good'}">${s.ship ? eur(s.ship) : 'Gratis'}</td><td class="px-4 py-2.5 text-right font-medium">${eur(s.price + s.ship)}</td><td class="px-4 py-2.5 text-right"><a href="${esc(offerUrl(it, s))}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-[12px] text-mute hover:text-fg">Abrir<i data-lucide="external-link" class="w-3.5 h-3.5"></i></a></td></tr>`).join('')}</tbody></table></div>
+    <div class="grid grid-cols-1 sm:grid-cols-3 border-t border-ink-600 text-[13px]">
+      <div class="p-4 border-b sm:border-b-0 sm:border-r border-ink-600"><div class="label">Descuento real vs PVP</div><div class="font-display font-bold text-[20px] mt-1 tnum ${a.discount > 0 ? 'text-good' : 'text-bad'}">${pct(-a.discount)}</div><div class="text-[12px] text-mute">PVP oficial ${eur(it.pvp)}</div></div>
+      <div class="p-4 border-b sm:border-b-0 sm:border-r border-ink-600"><div class="label">vs precio habitual</div><div class="font-display font-bold text-[20px] mt-1 tnum ${a.vsMedian <= 0 ? 'text-good' : 'text-bad'}">${pct(a.vsMedian)}</div><div class="text-[12px] text-mute">mediana ${eur(a.baseline)}</div></div>
+      <div class="p-4"><div class="label">Descuento anunciado</div><div class="font-display font-bold text-[20px] mt-1 tnum ${claimed ? 'text-warn' : 'text-mute'}">${claimed ? pct(it.current / claimed.claimed - 1) : '—'}</div><div class="text-[12px] text-mute">${claimed ? 'sobre un precio inflado' : 'la tienda no anuncia rebaja'}</div></div>
+    </div>
+  </section>`;
+}
+function drawChart(it) {
+  const cv = $('#chart'); if (!cv || !window.Chart) return;
+  if (ui.chart) ui.chart.destroy();
+  const ctx = cv.getContext('2d');
+  const g = ctx.createLinearGradient(0, 0, 0, 220); g.addColorStop(0, 'rgba(242,181,68,.28)'); g.addColorStop(1, 'rgba(242,181,68,0)');
+  const labels = it.history.map(h => fmtDate(h.t)), a = AI.analyze(it);
+  ui.chart = new Chart(ctx, {
+    type: 'line',
+    data: { labels, datasets: [
+      { label: 'Precio', data: it.history.map(h => h.p), borderColor: '#F2B544', backgroundColor: g, fill: true, tension: .25, borderWidth: 2, pointRadius: 0, pointHoverRadius: 4 },
+      { label: 'Objetivo', data: it.history.map(() => it.target), borderColor: '#4ADE80', borderDash: [5, 5], borderWidth: 1.25, pointRadius: 0, fill: false },
+      { label: 'Mínimo', data: it.history.map(() => a.atl), borderColor: '#7DD3FC', borderDash: [2, 4], borderWidth: 1.25, pointRadius: 0, fill: false }
+    ] },
+    options: { responsive: true, maintainAspectRatio: false, animation: { duration: 500 }, interaction: { mode: 'index', intersect: false },
+      plugins: { legend: { display: false }, tooltip: { backgroundColor: '#111829', borderColor: '#27324E', borderWidth: 1, titleColor: '#E7EAF2', bodyColor: '#E7EAF2', callbacks: { label: c => ` ${c.dataset.label}: ${money(it, c.parsed.y)}` } } },
+      scales: { x: { ticks: { color: '#8D97B0', maxTicksLimit: 6, font: { family: 'IBM Plex Sans' } }, grid: { display: false }, border: { color: '#27324E' } },
+        y: { ticks: { color: '#8D97B0', maxTicksLimit: 5, callback: v => money(it, v), font: { family: 'IBM Plex Sans' } }, grid: { color: 'rgba(39,50,78,.6)' }, border: { display: false } } } }
+  });
+}
+function updateDrawerLive() {
+  const it = state.trackers.find(t => t.id === ui.openId); if (!it) return;
+  const p = $('#d-price'); if (p) p.textContent = money(it);
+  const a = AI.analyze(it);
+  const atl = $('#d-atl'); if (atl) atl.textContent = money(it, a.atl);
+  if (ui.chart) { ui.chart.data.datasets[0].data = it.history.map(h => h.p); ui.chart.data.datasets[1].data = it.history.map(() => it.target); ui.chart.data.datasets[2].data = it.history.map(() => a.atl); ui.chart.update('none'); }
+}
+function rerenderDrawer() {
+  const it = state.trackers.find(t => t.id === ui.openId); if (!it) return;
+  const panel = $('#drawer .drawer-panel'); const st = panel.scrollTop;
+  if (ui.chart) { ui.chart.destroy(); ui.chart = null; }
+  panel.innerHTML = drawerBody(it, AI.analyze(it)); icons(); drawChart(it); panel.scrollTop = st;
+}
+
+// ---------- modal genérico ----------
+function openModal(html, label) {
+  closeDrawer();
+  setTimeout(() => {
+    $('#layer').innerHTML = `<div id="modal" class="fixed inset-0 z-[60] grid place-items-center p-4" role="dialog" aria-modal="true" aria-label="${esc(label)}"><div class="absolute inset-0 bg-ink-950/75 backdrop-blur-sm" data-action="close-modal"></div><div class="relative w-full max-w-2xl max-h-[calc(100vh-32px)] overflow-y-auto rounded-2xl bg-ink-900 border border-ink-600 shadow-2xl fade-in">${html}</div></div>`;
+    icons(); document.body.style.overflow = 'hidden';
+    const f = $('#modal input:not([type=checkbox]), #modal select'); f && f.focus();
+  }, $('#drawer') ? 270 : 0);
+}
+function closeModal() { const m = $('#modal'); if (m) { m.remove(); document.body.style.overflow = ''; } }
+
+// ---------- modal: nuevo tracker ----------
+const nt = { cat: 'product', meta: null, busy: false };
+const EXAMPLES = {
+  product: ['https://www.amazon.es/Nintendo-Switch-2-Mario-Kart-World/dp/B0F2JX6H3X', 'https://www.pccomponentes.com/apple-macbook-air-13-m3-8gb-256gb', 'https://www.elcorteingles.es/electronica/A12345678-dyson-v15-detect-absolute/'],
+  game: ['https://store.steampowered.com/app/1145350/Hades_II/', 'https://www.instant-gaming.com/es/12345-comprar-elden-ring-nightreign-pc-steam/', 'https://store.playstation.com/es-es/product/EP0700-PPSA01234_00-ASTRO-BOT']
+};
+function openNew(cat = nt.cat) {
+  nt.cat = cat; nt.meta = null;
+  openModal(newHtml(), 'Nuevo tracker');
+}
+function newHtml() {
+  const tabs = [['product', 'Producto', 'package'], ['game', 'Videojuego', 'gamepad-2'], ['flight', 'Vuelo', 'plane']];
+  return `<div class="p-5 sm:p-6 flex flex-col gap-5">
+    <div class="flex items-start gap-3"><div><h2 class="font-display font-extrabold text-[24px] leading-tight">Nuevo tracker</h2><p class="text-[13px] text-mute mt-1">${nt.cat === 'flight' ? 'Define la ruta y te avisamos cuando baje de tu precio.' : 'Pega un enlace y extraemos portada, título, precio y envío.'}</p></div><button data-action="close-modal" class="ml-auto w-9 h-9 grid place-items-center rounded-xl hover:bg-ink-700" aria-label="Cerrar"><i data-lucide="x" class="w-4 h-4"></i></button></div>
+    <div class="inline-flex self-start p-1 rounded-xl bg-ink-800 border border-ink-600" role="tablist">${tabs.map(([k, l, i]) => `<button role="tab" aria-selected="${nt.cat === k}" data-action="nt-cat" data-cat="${k}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] ${nt.cat === k ? 'bg-ink-600 text-fg' : 'text-mute hover:text-fg'}"><i data-lucide="${i}" class="w-4 h-4"></i>${l}</button>`).join('')}</div>
+    <div id="nt-body">${nt.cat === 'flight' ? flightForm() : urlForm()}</div>
+  </div>`;
+}
+function urlForm() {
+  return `<form id="nt-fetch" class="flex flex-col gap-3">
+    <label for="nt-url" class="text-[13px] text-mute">URL de ${nt.cat === 'game' ? 'la tienda (Steam, PS Store, eShop, Xbox, Eneba, Instant Gaming, CDKeys)' : 'la tienda (Amazon, PcComponentes, AliExpress, El Corte Inglés)'}</label>
+    <div class="flex gap-2"><div class="relative flex-1 min-w-0"><i data-lucide="link" class="w-4 h-4 text-mute absolute left-3 top-1/2 -translate-y-1/2"></i><input id="nt-url" type="url" inputmode="url" autocomplete="off" placeholder="https://…" class="w-full bg-ink-800 border border-ink-600 rounded-xl pl-9 pr-3 py-2.5 text-[14px] placeholder:text-dim focus:outline-none focus:border-gold/70"></div>
+    <button class="shrink-0 inline-flex items-center gap-1.5 rounded-xl bg-gold text-ink-950 font-semibold px-4 text-[13px]" ${nt.busy ? 'disabled' : ''}><i data-lucide="sparkles" class="w-4 h-4"></i>Extraer</button></div>
+    <div class="flex flex-wrap gap-1.5 items-center"><span class="text-[12px] text-dim">Prueba con:</span>${EXAMPLES[nt.cat].map(u => `<button type="button" data-action="nt-example" data-url="${esc(u)}" class="text-[12px] rounded-md border border-ink-600 px-2 py-0.5 text-mute hover:text-fg max-w-[220px] truncate">${esc(new URL(u).hostname.replace('www.', ''))}</button>`).join('')}</div>
+  </form>
+  <div id="nt-progress" class="mt-4"></div>
+  <div id="nt-preview" class="mt-4"></div>`;
+}
+function progressHtml(i, steps, err) {
+  return `<ol class="flex flex-col gap-1.5 text-[13px]">${steps.map((s, k) => `<li class="flex items-center gap-2 ${k < i ? 'text-good' : k === i ? 'text-fg' : 'text-dim'}"><i data-lucide="${k < i ? 'circle-check' : k === i ? 'loader-circle' : 'circle'}" class="w-4 h-4 ${k === i ? 'animate-spin' : ''}"></i>${esc(s)}</li>`).join('')}</ol>${err ? `<p class="mt-3 text-[13px] text-bad">${esc(err)}</p>` : ''}`;
+}
+function previewHtml(m) {
+  const fake = { id: m.url || uid('x'), cat: m.cat, title: m.title || 'Nuevo', brand: (m.title || '').split(' ')[0], icon: 'package', origin: '', dest: '' };
+  const isG = m.cat === 'game';
+  const total = round((m.price || 0) + (m.ship || 0));
+  return `<form id="nt-create" class="rounded-2xl border border-ink-600 bg-ink-800/70 overflow-hidden fade-in">
+    <div class="grid sm:grid-cols-[180px_minmax(0,1fr)]">
+      <div class="relative">${art(fake, 'h-full min-h-[140px]')}<span class="absolute bottom-2 left-2 text-[10px] rounded bg-ink-950/70 px-1.5 py-0.5 text-mute">portada${m.manual ? '' : ' (og:image)'}</span></div>
+      <div class="p-4 flex flex-col gap-3 min-w-0">
+        <label class="flex flex-col gap-1 text-[12px] text-mute">Título detectado<input id="nt-title" required value="${esc(m.title)}" class="bg-ink-850 border border-ink-600 rounded-lg px-3 py-2 text-[14px] text-fg focus:outline-none focus:border-gold/70"></label>
+        <div class="grid grid-cols-3 gap-2">
+          <label class="flex flex-col gap-1 text-[12px] text-mute">Precio<input id="nt-price" type="number" step="0.01" min="0.01" required value="${m.price || ''}" class="bg-ink-850 border border-ink-600 rounded-lg px-3 py-2 text-[14px] text-fg tnum"></label>
+          <label class="flex flex-col gap-1 text-[12px] text-mute">Envío<input id="nt-ship" type="number" step="0.01" min="0" value="${m.ship || 0}" class="bg-ink-850 border border-ink-600 rounded-lg px-3 py-2 text-[14px] text-fg tnum"></label>
+          <label class="flex flex-col gap-1 text-[12px] text-mute">Objetivo<input id="nt-target" type="number" step="0.01" min="0.01" required value="${total ? round(total * .88) : ''}" class="bg-ink-850 border border-gold/50 rounded-lg px-3 py-2 text-[14px] text-fg tnum"></label>
+        </div>
+        ${isG ? `<div class="grid grid-cols-2 gap-2">
+          <label class="flex flex-col gap-1 text-[12px] text-mute">Plataforma<select id="nt-platform" class="bg-ink-850 border border-ink-600 rounded-lg px-3 py-2 text-[14px] text-fg">${['PC · Steam', 'PS5', 'Switch', 'Xbox'].map(p => `<option ${p === m.platform ? 'selected' : ''}>${p}</option>`).join('')}</select></label>
+          <label class="flex flex-col gap-1 text-[12px] text-mute">Formato<select id="nt-format" class="bg-ink-850 border border-ink-600 rounded-lg px-3 py-2 text-[14px] text-fg"><option>Digital</option><option>Físico</option></select></label>
+        </div>` : `<label class="flex flex-col gap-1 text-[12px] text-mute">Categoría<select id="nt-category" class="bg-ink-850 border border-ink-600 rounded-lg px-3 py-2 text-[14px] text-fg">${['Tecnología', 'Consolas portátiles', 'Almacenamiento', 'Audio', 'Monitores', 'Hogar', 'Otros'].map(c => `<option>${c}</option>`).join('')}</select></label>`}
+        <fieldset><legend class="text-[12px] text-mute mb-1.5">${isG ? 'Tiendas a vigilar' : 'Vendedores a vigilar'}</legend><div class="flex flex-wrap gap-x-4 gap-y-1.5">${(isG ? [...GAME_STORES.key, ...GAME_STORES.official] : SELLERS).map(s => `<label class="inline-flex items-center gap-1.5 text-[13px]"><input type="checkbox" name="nt-store" value="${esc(s)}" ${s === m.store || (!isG && s === 'Amazon') || (isG && GAME_STORES.key.includes(s)) ? 'checked' : ''}>${esc(s)}</label>`).join('')}</div></fieldset>
+        ${m.coupon ? `<div class="flex items-center gap-2 text-[12px] rounded-lg border border-dashed border-gold/40 px-3 py-2"><i data-lucide="ticket" class="w-4 h-4 text-gold"></i>Cupón detectado: <span class="font-mono text-gold">${esc(m.coupon.code)}</span></div>` : ''}
+        <label class="inline-flex items-center gap-2 text-[13px]"><input id="nt-alert" type="checkbox" checked>Avisarme cuando el precio total baje del objetivo</label>
+        <div class="flex justify-end gap-2 pt-1"><button type="button" data-action="close-modal" class="rounded-xl border border-ink-500 px-3 py-2 text-[13px]">Cancelar</button><button class="inline-flex items-center gap-1.5 rounded-xl bg-gold text-ink-950 font-semibold px-4 py-2 text-[13px]"><i data-lucide="radar" class="w-4 h-4"></i>Crear tracker</button></div>
+      </div>
+    </div>
+    ${m.manual ? '' : `<p class="px-4 py-2.5 border-t border-ink-600 text-[11px] text-dim">Extraído de ${esc(m.store)} vía ${esc(m.src)} · simulado. En la Fase 2 el backend descarga la imagen real.</p>`}
+  </form>`;
+}
+function flightForm() {
+  const opts = sel => Object.entries(AIRPORTS).map(([k, v]) => `<option value="${k}" ${k === sel ? 'selected' : ''}>${k} · ${v}</option>`).join('');
+  const d1 = isoLocal(dOff(45)), d2 = isoLocal(dOff(52));
+  const sel = 'bg-ink-800 border border-ink-600 rounded-xl px-3 py-2.5 text-[14px] text-fg focus:outline-none focus:border-gold/70';
+  return `<form id="nt-flight" class="flex flex-col gap-4">
+    <div class="grid sm:grid-cols-2 gap-3">
+      <label class="flex flex-col gap-1.5 text-[13px] text-mute">Origen<select id="fl-o" class="${sel}">${opts('MAD')}</select></label>
+      <label class="flex flex-col gap-1.5 text-[13px] text-mute">Destino<select id="fl-d" class="${sel}">${opts('BKK')}</select></label>
+    </div>
+    <div class="flex gap-4 text-[13px]"><label class="inline-flex items-center gap-1.5"><input type="radio" name="fl-trip" value="roundtrip" checked class="accent-[#F2B544]">Ida y vuelta</label><label class="inline-flex items-center gap-1.5"><input type="radio" name="fl-trip" value="oneway" class="accent-[#F2B544]">Solo ida</label></div>
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <label class="flex flex-col gap-1.5 text-[13px] text-mute col-span-1">Ida<input id="fl-dep" type="date" value="${d1}" class="${sel}"></label>
+      <label class="flex flex-col gap-1.5 text-[13px] text-mute col-span-1">Vuelta<input id="fl-ret" type="date" value="${d2}" class="${sel}"></label>
+      <label class="flex flex-col gap-1.5 text-[13px] text-mute">Máx. escalas<select id="fl-stops" class="${sel}"><option value="0">Directo</option><option value="1" selected>1 escala</option><option value="2">2 escalas</option></select></label>
+      <label class="flex flex-col gap-1.5 text-[13px] text-mute">Precio objetivo (€)<input id="fl-target" type="number" min="1" step="1" value="550" required class="${sel} tnum border-gold/50"></label>
+    </div>
+    <label class="inline-flex items-center gap-2 text-[13px]"><input id="fl-alert" type="checkbox" checked>Activar alerta</label>
+    <div id="nt-progress"></div>
+    <div class="flex justify-end gap-2"><button type="button" data-action="close-modal" class="rounded-xl border border-ink-500 px-3 py-2 text-[13px]">Cancelar</button><button class="inline-flex items-center gap-1.5 rounded-xl bg-gold text-ink-950 font-semibold px-4 py-2 text-[13px]"><i data-lucide="search" class="w-4 h-4"></i>Buscar y crear tracker</button></div>
+  </form>`;
+}
+async function doFetch(url) {
+  if (nt.busy) return; nt.busy = true;
+  const prog = $('#nt-progress'), prev = $('#nt-preview'); prev.innerHTML = '';
+  try {
+    const m = await API.fetchMeta(url, (i, steps) => { prog.innerHTML = progressHtml(i, steps); icons(); });
+    prog.innerHTML = progressHtml(99, ['Datos extraídos']); icons();
+    if (m.cat !== nt.cat) { nt.cat = m.cat; $$('[data-action="nt-cat"]').forEach(b => { const on = b.dataset.cat === m.cat; b.setAttribute('aria-selected', on); b.className = `inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] ${on ? 'bg-ink-600 text-fg' : 'text-mute hover:text-fg'}`; }); }
+    nt.meta = m; prev.innerHTML = previewHtml(m); icons();
+    log('info', 'fetch-meta', `${new URL(m.url).hostname} → «${m.title}» ${eur(m.price)} (+${eur(m.ship)} envío)`);
+  } catch (e) {
+    prog.innerHTML = `<div class="rounded-xl border border-bad/30 bg-bad/10 p-3 text-[13px] flex flex-wrap items-center gap-3"><span class="flex-1 min-w-0">${esc(e.message)}</span><button data-action="nt-manual" class="rounded-lg border border-ink-500 px-2.5 py-1.5 text-[12px] text-fg">Rellenar a mano</button></div>`;
+  } finally { nt.busy = false; }
+}
+function createFromForm() {
+  const m = nt.meta || { cat: nt.cat, manual: true };
+  const title = $('#nt-title').value.trim(), price = +$('#nt-price').value, ship = +$('#nt-ship').value || 0, target = +$('#nt-target').value;
+  if (!title || !(price > 0) || !(target > 0)) { toast({ tone: 'bad', icon: 'circle-alert', title: 'Faltan datos', body: 'Indica título, precio y precio objetivo.' }); return; }
+  const stores = $$('input[name="nt-store"]:checked').map(i => i.value);
+  if (!stores.length) { toast({ tone: 'bad', icon: 'circle-alert', title: 'Elige al menos una tienda', body: 'Marca dónde quieres vigilar el precio.' }); return; }
+  const id = uid(m.cat === 'game' ? 'g' : 'p'), total = round(price + ship), r = rng(id);
+  const base = { id, cat: m.cat, title, target, alert: $('#nt-alert').checked, url: m.url, userUrl: !!m.url, fetchedFrom: m.store, coupons: m.coupon ? [m.coupon] : [],
+    reviews: { rating: round(3.9 + r() * 1, 1), n: Math.floor(200 + r() * 9000), src: 'pendiente de análisis IA', pros: ['Relación calidad-precio bien valorada', 'Envío y devoluciones sin problemas', 'Cumple lo que promete'], cons: ['Algunas unidades llegan con defectos', 'Precio muy variable entre tiendas', 'Pocas reseñas en español'] } };
+  let o;
+  if (m.cat === 'game') {
+    const official = ({ 'PC · Steam': 'Steam', PS5: 'PS Store', Switch: 'Nintendo eShop', Xbox: 'Xbox Store' })[$('#nt-platform').value];
+    const list = [...new Set([...stores, official])];
+    o = { ...base, platform: $('#nt-platform').value, format: $('#nt-format').value, msrp: round(Math.max(total * 1.35, total + 10)), deck: $('#nt-platform').value === 'PC · Steam' ? 'Jugable' : null,
+      stores: list.map(s => ({ name: s, type: GAME_STORES.key.includes(s) ? 'key' : 'official', price: s === m.store ? total : round(total * (1 + r() * .25)) })), specs: {},
+      gen: { base: total * 1.08, end: total, dips: 2, dipDepth: [.82, .92] } };
+  } else {
+    o = { ...base, brand: title.split(' ')[0], icon: 'package', category: $('#nt-category').value, pvp: round(total * 1.25),
+      sellers: stores.map(s => ({ name: s, price: s === (m.store || stores[0]) ? price : round(price * (1 + r() * .15)), ship: s === (m.store || stores[0]) ? ship : 0, stock: true })), specs: {},
+      gen: { base: total * 1.06, end: total, dips: 2, dipDepth: [.86, .94] } };
+  }
+  addTracker(build(o, 0));
+}
+async function createFlight() {
+  const o = $('#fl-o').value, d = $('#fl-d').value;
+  if (o === d) { toast({ tone: 'bad', icon: 'circle-alert', title: 'Origen y destino iguales', body: 'Elige dos aeropuertos distintos.' }); return; }
+  const trip = $('input[name="fl-trip"]:checked').value, dep = $('#fl-dep').value, ret = trip === 'roundtrip' ? $('#fl-ret').value : null;
+  if (!dep || (ret && ret < dep)) { toast({ tone: 'bad', icon: 'circle-alert', title: 'Revisa las fechas', body: 'La vuelta debe ser posterior a la ida.' }); return; }
+  const maxStops = +$('#fl-stops').value, target = +$('#fl-target').value, alert = $('#fl-alert').checked;
+  const steps = ['Consultando Skyscanner', 'Consultando Google Flights', 'Consultando Kayak', 'Normalizando tarifas y equipaje'];
+  for (let i = 0; i < steps.length; i++) { $('#nt-progress').innerHTML = progressHtml(i, steps); icons(); await sleep(380); }
+  const id = uid('f'), r = rng(id);
+  const long = ['HND', 'JFK', 'BKK', 'MEX', 'EZE'].includes(d) || ['HND', 'JFK', 'BKK', 'MEX', 'EZE'].includes(o);
+  const avg = Math.round((long ? 620 + r() * 380 : 90 + r() * 140) * (trip === 'oneway' ? .6 : 1));
+  const cur = Math.round(avg * (.78 + r() * .2));
+  const stops = Math.min(maxStops, long ? 1 : 0);
+  const airlines = long ? ['Iberia', 'Air Europa', 'Qatar Airways', 'Turkish Airlines', 'Lufthansa'] : ['Vueling', 'Iberia Express', 'Ryanair', 'TAP Air Portugal'];
+  addTracker(build({ id, cat: 'flight', title: `${AIRPORTS[o].split(' ')[0]} → ${AIRPORTS[d].replace(' Haneda', '').replace(' JFK', '')}`, origin: o, dest: d, depart: dep, ret, trip, maxStops, stops, via: stops ? (long ? 'IST' : 'MAD') : null,
+    airline: airlines[Math.floor(r() * airlines.length)], durMin: Math.round((long ? 600 + r() * 500 : 80 + r() * 120) + stops * 150), baggage: { cabin: true, hold: long && r() > .4, holdFee: long ? 60 : 30 }, routeAvg: avg, target, alert,
+    reviews: { rating: round(3.5 + r() * 1.2, 1), n: Math.floor(800 + r() * 8000), src: 'Skytrax, TripAdvisor', pros: ['Precio competitivo para la ruta', 'Horarios cómodos', 'Buena puntualidad media'], cons: ['Equipaje facturado con coste extra', 'Asientos justos en turista', 'Cambios de fecha caros'] },
+    gen: { base: avg * .97, end: cur, dips: 2, dipDepth: [.8, .9], dec: 0 } }, 0));
+}
+function addTracker(it) {
+  state.trackers.unshift(it); save();
+  closeModal();
+  log('ok', 'api', `POST /api/trackers → ${it.id} «${it.title}» creado (mock)`);
+  toast({ tone: 'good', icon: 'radar', title: 'Tracker creado', body: `${esc(it.title)} entra en el ciclo de rastreo.`, actionLabel: 'Ver', action: () => openDrawer(it.id) });
+  location.hash = CAT[it.cat].route; if (ui.view === CAT[it.cat].route) render();
+  setTimeout(() => engine.tick(it.id), 1200);
+}
+
+// ---------- modal: comparador 1v1 ----------
+let cmp = { a: 'p-ally', b: 'p-deck' };
+function openCompare(withId) {
+  if (withId) { const it = state.trackers.find(t => t.id === withId); const other = state.trackers.find(t => t.cat === it.cat && t.id !== it.id); cmp = { a: withId, b: other ? other.id : cmp.b }; }
+  if (!state.trackers.find(t => t.id === cmp.a)) cmp.a = state.trackers[0].id;
+  if (!state.trackers.find(t => t.id === cmp.b) || cmp.b === cmp.a) cmp.b = state.trackers.find(t => t.id !== cmp.a).id;
+  openModal(`<div id="cmp" class="p-5 sm:p-6">${compareHtml()}</div>`, 'Comparador 1v1');
+}
+function compareHtml(loading = false) {
+  const A = state.trackers.find(t => t.id === cmp.a), B = state.trackers.find(t => t.id === cmp.b);
+  const opts = sel => Object.keys(CAT).map(c => `<optgroup label="${CAT[c].plural}">${state.trackers.filter(t => t.cat === c).map(t => `<option value="${t.id}" ${t.id === sel ? 'selected' : ''}>${esc(t.title)}</option>`).join('')}</optgroup>`).join('');
+  const c = AI.compare(A, B);
+  const S = 'w-full bg-ink-800 border border-ink-600 rounded-xl px-3 py-2.5 text-[14px] text-fg focus:outline-none focus:border-ai/70';
+  return `<div class="flex items-start gap-3 mb-4"><div><h2 class="font-display font-extrabold text-[24px] leading-tight">Comparador 1v1</h2><p class="text-[13px] text-mute mt-1">La IA cruza precio, histórico y opiniones para decidir.</p></div><button data-action="close-modal" class="ml-auto w-9 h-9 grid place-items-center rounded-xl hover:bg-ink-700" aria-label="Cerrar"><i data-lucide="x" class="w-4 h-4"></i></button></div>
+  <div class="flex flex-wrap gap-1.5 mb-4"><button data-action="cmp-preset" data-a="p-ally" data-b="p-deck" class="text-[12px] rounded-md border border-ink-600 px-2 py-1 text-mute hover:text-fg">ROG Ally X vs Steam Deck OLED</button><button data-action="cmp-preset" data-a="f-jfk-d" data-b="f-jfk-s" class="text-[12px] rounded-md border border-ink-600 px-2 py-1 text-mute hover:text-fg">Nueva York: directo vs con escala</button><button data-action="cmp-preset" data-a="g-bg3" data-b="g-hades" class="text-[12px] rounded-md border border-ink-600 px-2 py-1 text-mute hover:text-fg">Baldur's Gate 3 vs Hades II</button></div>
+  <div class="grid grid-cols-[1fr_auto_1fr] items-end gap-2 mb-4">
+    <label class="flex flex-col gap-1 text-[12px] text-mute min-w-0">Opción A<select id="cmp-a" data-action="cmp-sel" class="${S}">${opts(cmp.a)}</select></label>
+    <span class="pb-3 font-display font-extrabold text-dim">vs</span>
+    <label class="flex flex-col gap-1 text-[12px] text-mute min-w-0">Opción B<select id="cmp-b" data-action="cmp-sel" class="${S}">${opts(cmp.b)}</select></label>
+  </div>
+  ${loading ? `<div class="flex flex-col gap-2">${[1, 2, 3, 4, 5].map(() => '<div class="h-8 rounded-lg shimmer"></div>').join('')}</div>` : `
+  <div class="rounded-xl border border-ink-600 overflow-x-auto"><table class="w-full text-[13px] tnum min-w-[440px]"><thead><tr class="border-b border-ink-600 text-left"><th class="px-3 py-2 text-mute font-medium w-1/4">Criterio</th><th class="px-3 py-2 font-medium">${esc(A.title)}</th><th class="px-3 py-2 font-medium">${esc(B.title)}</th></tr></thead>
+  <tbody>${c.rows.map(r => `<tr class="border-b border-ink-700 last:border-0"><td class="px-3 py-2 text-mute">${esc(r.k)}</td><td class="px-3 py-2 ${r.win === 'a' ? 'text-good font-medium' : ''}">${esc(r.a)}${r.win === 'a' ? ' ✓' : ''}</td><td class="px-3 py-2 ${r.win === 'b' ? 'text-good font-medium' : ''}">${esc(r.b)}${r.win === 'b' ? ' ✓' : ''}</td></tr>`).join('')}</tbody></table></div>
+  <div class="mt-4 rounded-xl border border-ai/25 bg-ai/[.06] p-4 flex gap-3"><i data-lucide="sparkles" class="w-5 h-5 text-ai shrink-0 mt-0.5"></i><div><div class="label !text-ai mb-1">Veredicto de la IA</div><p class="text-[14px] leading-relaxed">${esc(c.verdict)}</p></div></div>`}`;
+}
+async function refreshCompare() {
+  const box = $('#cmp'); if (!box) return;
+  box.innerHTML = compareHtml(true); icons();
+  await AI.run('compare', { a: cmp.a, b: cmp.b });
+  if ($('#cmp')) { $('#cmp').innerHTML = compareHtml(); icons(); }
+}
+
+// ---------- co-piloto ----------
+const cp = { open: false, msgs: [] };
+function renderCpCtx() {
+  const it = ui.cpCtx;
+  $('#cp-ctx').textContent = it ? `Contexto: ${it.title}` : 'Contexto: todos tus trackers';
+  $('#cp-ctx-btn').hidden = !it;
+  const sug = it ? (it.cat === 'game' ? ['¿Suele bajar en las rebajas de otoño de Steam?', '¿El descuento es real?', '¿Vale la pena pagar más?'] : it.cat === 'flight' ? ['¿Compro ya o espero?', '¿Compensa el directo?', '¿Qué incluye el equipaje?'] : ['¿Vale la pena pagar 50 € más por otro modelo?', '¿El descuento es real o está inflado?', '¿Bajará en Black Friday?'])
+    : ['¿Qué chollo compro hoy?', 'Compara Ally vs Deck', '¿Algún precio inflado?'];
+  $('#cp-sugg').innerHTML = sug.map(s => `<button data-action="cp-sugg" data-q="${esc(s)}" class="shrink-0 text-[12px] rounded-full border border-ink-600 px-2.5 py-1 text-mute hover:text-ai hover:border-ai/50">${esc(s)}</button>`).join('');
+}
+function md(s) { return esc(s).replace(/\*\*(.+?)\*\*/g, '<b class="text-fg">$1</b>').replace(/\n/g, '<br>'); }
+function renderCp() {
+  const box = $('#cp-msgs');
+  box.innerHTML = cp.msgs.map(m => m.role === 'user'
+    ? `<div class="self-end max-w-[85%] rounded-2xl rounded-br-md bg-ai text-ink-950 px-3.5 py-2 text-[14px]">${esc(m.text)}</div>`
+    : m.typing ? `<div class="self-start rounded-2xl rounded-bl-md bg-ink-700 px-3.5 py-3 typing"><span></span><span></span><span></span></div>`
+    : `<div class="self-start max-w-[92%] rounded-2xl rounded-bl-md bg-ink-700 px-3.5 py-2.5 text-[14px] leading-relaxed text-fg/90">${md(m.text)}</div>`).join('');
+  box.scrollTop = box.scrollHeight;
+}
+function toggleCp(force) {
+  cp.open = force ?? !cp.open;
+  $('#copilot').hidden = !cp.open; $('#fab').hidden = cp.open;
+  if (cp.open) {
+    if (!cp.msgs.length) cp.msgs.push({ role: 'ai', text: 'Hola, Javi. Soy tu Co-Piloto de precios. Pregúntame si algo bajará en rebajas, si un descuento es real o qué opción compensa más. Respondo con los datos de tus trackers.' });
+    renderCpCtx(); renderCp(); setTimeout(() => $('#cp-input').focus(), 50);
+  }
+}
+async function ask(q) {
+  q = q.trim(); if (!q) return;
+  cp.msgs.push({ role: 'user', text: q }, { role: 'ai', typing: true }); renderCp();
+  await AI.run('copilot', { q, ctx: ui.cpCtx && ui.cpCtx.id });
+  cp.msgs.pop(); cp.msgs.push({ role: 'ai', text: AI.chat(q, ui.cpCtx) }); renderCp();
+}
+
+// ---------- toasts ----------
+function toast({ tone = 'gold', icon = 'bell', title, body = '', actionLabel, action, ms = 6500 }) {
+  const col = { gold: 'border-gold/50', good: 'border-good/50', bad: 'border-bad/50', ai: 'border-ai/50' }[tone], ic = { gold: 'text-gold', good: 'text-good', bad: 'text-bad', ai: 'text-ai' }[tone];
+  const el = document.createElement('div');
+  el.className = `fade-in rounded-xl bg-ink-800/95 backdrop-blur border ${col} shadow-2xl p-3.5 flex gap-3 items-start`;
+  el.setAttribute('role', 'status');
+  el.innerHTML = `<i data-lucide="${icon}" class="w-5 h-5 ${ic} shrink-0 mt-0.5"></i><div class="min-w-0 flex-1"><div class="font-semibold text-[14px]">${esc(title)}</div><div class="text-[13px] text-mute mt-0.5 leading-snug">${body}</div></div>${actionLabel ? `<button class="shrink-0 rounded-lg border border-ink-500 px-2.5 py-1 text-[12px] hover:border-gold/60">${esc(actionLabel)}</button>` : ''}<button class="shrink-0 text-dim hover:text-fg" aria-label="Cerrar aviso"><i data-lucide="x" class="w-4 h-4"></i></button>`;
+  const btns = el.querySelectorAll('button');
+  if (actionLabel) btns[0].onclick = () => { action && action(); el.remove(); };
+  btns[btns.length - 1].onclick = () => el.remove();
+  $('#toasts').prepend(el); icons();
+  while ($('#toasts').children.length > 4) $('#toasts').lastElementChild.remove();
+  setTimeout(() => el.remove(), ms);
+}
+
+// ---------- eventos ----------
+document.addEventListener('click', async e => {
+  Sound.ensure(); // desbloquea el audio tras la primera interacción
+  const el = e.target.closest('[data-action]'); if (!el) return;
+  const A = el.dataset.action, id = el.dataset.id;
+  const it = id && state.trackers.find(t => t.id === id);
+  switch (A) {
+    case 'open': e.preventDefault(); openDrawer(id); break;
+    case 'close': closeDrawer(); break;
+    case 'close-modal': closeModal(); break;
+    case 'new': openNew(); break;
+    case 'compare': openCompare(id); break;
+    case 'copilot': toggleCp(); break;
+    case 'cat': ui.cat = el.dataset.cat; render(); break;
+    case 'logf': ui.logFilter = el.dataset.lv; render(); break;
+    case 'sound': state.settings.sound = !state.settings.sound; save(); renderSoundBtn(); if (state.settings.sound) Sound.coin(); break;
+    case 'engine-toggle': state.settings.engine = !engine.timer; save(); state.settings.engine ? engine.start() : engine.stop(); log('info', 'cron', state.settings.engine ? 'motor reanudado' : 'motor en pausa'); render(); break;
+    case 'engine-run': engine.tick(); break;
+    case 'scan': engine.tick(id); break;
+    case 'drop': {
+      const tgt = Math.min(it.target * .985, prevMin(it) * .995);
+      log('info', 'sim', `bajada forzada en ${it.title}`);
+      it.alert = true; it.alerted = false;
+      engine.setPrice(it, tgt); refresh(); rerenderDrawer(); break;
+    }
+    case 'toggle-alert': it.alert = el.checked; if (it.alert && it.current <= it.target) it.alerted = false; save(); refresh(); break;
+    case 'delete':
+      if (el.dataset.confirm) { state.trackers = state.trackers.filter(t => t.id !== id); save(); closeDrawer(); log('warn', 'api', `DELETE /api/trackers/${id} (mock)`); toast({ tone: 'bad', icon: 'trash-2', title: 'Tracker eliminado', body: esc(it.title) }); render(); }
+      else { el.dataset.confirm = '1'; el.querySelector('span').textContent = 'Pulsa otra vez para eliminar'; setTimeout(() => { if (el.isConnected) { delete el.dataset.confirm; el.querySelector('span').textContent = 'Eliminar tracker'; } }, 3500); }
+      break;
+    case 'regen': {
+      const box = $('#d-ai'); box.innerHTML = `<div class="flex items-center gap-2 mb-4 text-ai text-[13px]"><i data-lucide="sparkles" class="w-4 h-4"></i>Analizando histórico y reseñas…</div><div class="flex flex-col gap-2">${[1, 2, 3, 4].map(() => '<div class="h-5 rounded shimmer"></div>').join('')}</div>`; icons();
+      await AI.run('predict', { id }); log('ai', 'gemini', `predict + dealIndex + sentiment para «${it.title}» (simulado)`);
+      if ($('#d-ai')) { $('#d-ai').innerHTML = aiBlock(it, AI.analyze(it)); icons(); }
+      break;
+    }
+    case 'ask': ui.cpCtx = it; toggleCp(true); renderCpCtx(); break;
+    case 'cp-clear-ctx': ui.cpCtx = null; renderCpCtx(); break;
+    case 'cp-sugg': ask(el.dataset.q); break;
+    case 'copy': {
+      const t = el.dataset.text;
+      try { await navigator.clipboard.writeText(t); toast({ tone: 'good', icon: 'copy', title: 'Código copiado', body: `<span class="font-mono text-gold">${esc(t)}</span> está en tu portapapeles.`, ms: 3000 }); }
+      catch { const r = document.createRange(); const n = el.parentElement.querySelector('.font-mono'); r.selectNodeContents(n); const s = getSelection(); s.removeAllRanges(); s.addRange(r); toast({ tone: 'ai', icon: 'copy', title: 'Código seleccionado', body: 'Pulsa Ctrl+C o Cmd+C para copiarlo.', ms: 3500 }); }
+      break;
+    }
+    case 'nt-cat': nt.cat = el.dataset.cat; nt.meta = null; $('#modal .relative').innerHTML = newHtml(); icons(); break;
+    case 'nt-example': $('#nt-url').value = el.dataset.url; doFetch(el.dataset.url); break;
+    case 'nt-manual': nt.meta = { cat: nt.cat, manual: true, title: '', price: '', ship: 0, store: nt.cat === 'game' ? 'Steam' : 'Amazon', platform: 'PC · Steam' }; $('#nt-progress').innerHTML = ''; $('#nt-preview').innerHTML = previewHtml(nt.meta); icons(); break;
+    case 'cmp-preset': cmp = { a: el.dataset.a, b: el.dataset.b }; if (state.trackers.find(t => t.id === cmp.a) && state.trackers.find(t => t.id === cmp.b)) refreshCompare(); break;
+    case 'test-alert': {
+      const pick = state.trackers[Math.floor(Math.random() * state.trackers.length)];
+      Notify.dispatch(pick, { reason: 'test' }); render(); break;
+    }
+    case 'test-telegram': saveSettings(); log('info', 'telegram', `sendPhoto → chat ${state.settings.telegram.chatId || '(sin chat ID)'} · simulado`); toast({ tone: 'ai', icon: 'send', title: 'Prueba de Telegram simulada', body: 'El envío real llega con el backend de la Fase 2. El payload está a la derecha.' }); break;
+    case 'test-discord': saveSettings(); log('info', 'discord', 'POST webhook embed · simulado'); toast({ tone: 'ai', icon: 'message-circle', title: 'Prueba de Discord simulada', body: 'El envío real llega con el backend de la Fase 2.' }); break;
+    case 'test-email': saveSettings(); log('info', 'email', `SMTP → ${state.settings.email.to || '(sin correo)'} · simulado`); toast({ tone: 'ai', icon: 'mail', title: 'Prueba de correo simulada', body: 'El envío real llega con el servidor de la Fase 2. El contenido del correo está en la pestaña Payload.' }); break;
+    case 'snd-radar': Sound.radar(); break;
+    case 'snd-coin': Sound.coin(); break;
+    case 'payload': {
+      const sample = state.trackers.find(t => t.id === 'p-ally') || state.trackers[0], k = el.dataset.p;
+      $('#payload').textContent = JSON.stringify(k === 'tg' ? Notify.telegramPayload(sample) : k === 'dc' ? Notify.discordPayload(sample) : Notify.emailPayload(sample), null, 2);
+      ['tg', 'dc', 'em'].forEach(x => { $('#pl-' + x).className = `px-2 py-1 rounded-md ${x === k ? 'bg-ink-600' : 'text-mute'}`; }); break;
+    }
+    case 'reset':
+      if (el.dataset.confirm) { try { localStorage.removeItem(STORE_KEY); } catch {} state = load(); engine.start(); toast({ tone: 'good', icon: 'refresh-cw', title: 'Datos restablecidos', body: 'Vuelven los 15 trackers de ejemplo.' }); render(); }
+      else { el.dataset.confirm = '1'; el.textContent = 'Pulsa otra vez para confirmar'; }
+      break;
+  }
+});
+document.addEventListener('change', e => {
+  const el = e.target;
+  if (el.id === 'only-atl') { ui.onlyAtl = el.checked; render(); }
+  if (el.id === 'sort') { ui.sort = el.value; render(); }
+  if (el.id === 'cmp-a' || el.id === 'cmp-b') { cmp[el.id === 'cmp-a' ? 'a' : 'b'] = el.value; refreshCompare(); }
+  if (el.closest && el.closest('#settings-form')) saveSettings();
+});
+document.addEventListener('input', e => {
+  if (e.target.id === 'int') { $('#int-val').textContent = e.target.value + ' s'; }
+});
+document.addEventListener('submit', e => {
+  e.preventDefault();
+  const f = e.target;
+  if (f.id === 'nt-fetch') doFetch($('#nt-url').value.trim());
+  if (f.id === 'nt-create') createFromForm();
+  if (f.id === 'nt-flight') createFlight();
+  if (f.id === 'cp-form') { const i = $('#cp-input'); ask(i.value); i.value = ''; }
+  if (f.dataset.form === 'target') {
+    const it = state.trackers.find(t => t.id === f.dataset.id), v = +$('#d-target').value;
+    if (v > 0) { it.target = it.cat === 'flight' ? Math.round(v) : round(v); it.alerted = it.current <= it.target; save(); refresh(); rerenderDrawer(); toast({ tone: 'good', icon: 'target', title: 'Objetivo actualizado', body: `${esc(it.title)} · ${money(it, it.target)}`, ms: 3000 }); if (it.current <= it.target && it.alert) Notify.dispatch(it); }
+  }
+});
+function saveSettings() {
+  const s = state.settings, g = id => $('#' + id);
+  if (!g('tg-on')) return;
+  s.telegram = { enabled: g('tg-on').checked, token: g('tg-token').value.trim(), chatId: g('tg-chat').value.trim() };
+  s.discord = { enabled: g('dc-on').checked, url: g('dc-url').value.trim() };
+  s.email = { enabled: g('em-on').checked, to: g('em-to').value.trim() };
+  s.sound = g('snd-on').checked; renderSoundBtn();
+  const iv = +g('int').value; if (iv !== s.interval) { s.interval = iv; if (engine.timer) engine.start(); }
+  save();
+}
+function renderSoundBtn() {
+  const b = $('#btn-sound'); b.innerHTML = `<i data-lucide="${state.settings.sound ? 'volume-2' : 'volume-x'}" class="w-4 h-4 ${state.settings.sound ? '' : 'text-dim'}"></i>`;
+  b.setAttribute('aria-pressed', state.settings.sound); icons();
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { if ($('#modal')) closeModal(); else if ($('#drawer')) closeDrawer(); else if (cp.open) toggleCp(false); }
+  if (e.key === '/' && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) { e.preventDefault(); $('#q').focus(); }
+});
+let qT;
+$('#q').addEventListener('input', e => {
+  clearTimeout(qT); qT = setTimeout(() => {
+    ui.q = e.target.value.trim();
+    if (!['dashboard', 'vuelos', 'juegos', 'productos'].includes(ui.view)) { location.hash = 'dashboard'; return; }
+    const g = $('#grid'); if (g || ui.q !== undefined) render();
+  }, 160);
+});
+
+// ---------- rutas ----------
+function route() {
+  const h = location.hash.replace('#', '');
+  ui.view = NAV.some(n => n.id === h) ? h : 'dashboard';
+  closeModal(); if ($('#drawer')) closeDrawer();
+  render(); window.scrollTo(0, 0);
+}
+window.addEventListener('hashchange', route);
+
+// ---------- arranque ----------
+state = load();
+// logs iniciales del worker (backdated)
+(() => {
+  const now = Date.now(), seq = [
+    ['info', 'boot', 'chollogarde-worker v0.1 · modo simulado (Fase 1)'],
+    ['info', 'queue', `${state.trackers.length} trackers cargados · concurrencia 4`],
+    ['ok', 'Keepa API', 'token válido · 58/60 peticiones disponibles'],
+    ['info', 'Skyscanner', 'GET skyscanner.es 200 · 1.84 s'],
+    ['warn', 'AliExpress', 'captcha detectado · reintento con proxy residencial ES'],
+    ['ok', 'AliExpress', 'GET es.aliexpress.com 200 · 2.41 s'],
+    ['info', 'CheapShark', 'GET cheapshark.com/api 200 · 0.38 s'],
+    ['ai', 'gemini', 'Deal Index recalculado para 15 trackers (simulado)'],
+    ['ok', 'trigger', 'Valencia → Reikiavik por debajo del objetivo · alerta enviada']
+  ];
+  seq.forEach(([lv, src, msg], i) => log(lv, src, msg, now - (seq.length - i) * 4100));
+})();
+renderSoundBtn();
+if (state.settings.engine) engine.start(); else renderEngineStatus();
+setInterval(tickLive, 1000);
+route();
+
+// API pública para las fases 2 y 3
+window.CG = { api: API, ai: AI, notify: Notify, engine, state: () => state };
+})();
+</script>
