@@ -156,6 +156,7 @@ export function extract(html, url) {
   }
   title = title || meta(html, 'og:title') || decode(html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]) || null;
   image = image || meta(html, 'og:image') || null;
+  if (!price && jsonLd(html).some(isProduct)) throw new Error('la ficha no tiene precio ahora mismo (sin vendedores o sin stock)');
   if (!price) throw new Error('no encuentro el precio en la página (¿es la ficha de un producto?)');
   return { title: title ? title.slice(0, 160) : null, image, price, out };
 }
