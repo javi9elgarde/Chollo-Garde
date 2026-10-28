@@ -1,5 +1,108 @@
 {
- "trackers": [],
+ "trackers": [
+  {
+   "id": "g-9cf05a92",
+   "cat": "game",
+   "live": true,
+   "kind": "multi",
+   "source": "tiendas",
+   "title": "EA Sports FC 27",
+   "query": "EA Sports FC 27",
+   "platform": "PS5",
+   "format": "Cualquiera",
+   "shops": [
+    "Instant Gaming",
+    "Eneba",
+    "Amazon",
+    "MediaMarkt",
+    "Fnac",
+    "El Corte Inglés",
+    "GAME",
+    "Impact"
+   ],
+   "links": [],
+   "steamAppID": null,
+   "image": null,
+   "url": "https://www.amazon.es/dp/B0HHFDTZMW",
+   "deck": null,
+   "msrp": 86.13,
+   "target": 50,
+   "alert": false,
+   "alerted": false,
+   "createdAt": 1793152333341,
+   "lastCheck": 1793152333341,
+   "lastError": null,
+   "stores": [
+    {
+     "name": "Amazon",
+     "type": "retail",
+     "url": "https://www.amazon.es/dp/B0HHFDTZMW",
+     "price": 86.13,
+     "out": false,
+     "match": "EA Sports FC 27 - PS5",
+     "auto": true
+    },
+    {
+     "name": "Instant Gaming",
+     "type": "key",
+     "auto": true,
+     "error": "no encuentro «EA Sports FC 27» para PS5"
+    },
+    {
+     "name": "Eneba",
+     "type": "key",
+     "auto": true,
+     "error": "no encuentro «EA Sports FC 27» para PS5"
+    },
+    {
+     "name": "MediaMarkt",
+     "type": "retail",
+     "auto": true,
+     "error": "la tienda ha pedido un captcha; se reintentará en el próximo ciclo"
+    },
+    {
+     "name": "Fnac",
+     "type": "retail",
+     "auto": true,
+     "error": "la tienda ha pedido un captcha; se reintentará en el próximo ciclo"
+    },
+    {
+     "name": "El Corte Inglés",
+     "type": "retail",
+     "auto": true,
+     "error": "la tienda ha pedido un captcha; se reintentará en el próximo ciclo"
+    },
+    {
+     "name": "GAME",
+     "type": "retail",
+     "auto": true,
+     "error": "la tienda respondió 404"
+    },
+    {
+     "name": "Impact",
+     "type": "retail",
+     "auto": true,
+     "error": "la tienda respondió 404"
+    }
+   ],
+   "current": 86.13,
+   "history": [
+    {
+     "t": 1793152333341,
+     "p": 86.13
+    }
+   ],
+   "coupons": [],
+   "specs": {},
+   "reviews": {
+    "rating": null,
+    "n": 0,
+    "src": "sin reseñas todavía",
+    "pros": [],
+    "cons": []
+   }
+  }
+ ],
  "alerts": [],
  "settings": {
   "canales": {
@@ -12,7 +115,7 @@
  },
  "stats": {
   "cycles": 0,
-  "requests": 18
+  "requests": 27
  },
  "logs": [
   {
@@ -20,9 +123,72 @@
    "level": "info",
    "src": "cron",
    "msg": "no hay trackers con fuente real todavía"
+  },
+  {
+   "t": 1793152333334,
+   "level": "warn",
+   "src": "Instant Gaming",
+   "msg": "EA Sports FC 27 (PS5): no encuentro «EA Sports FC 27» para PS5"
+  },
+  {
+   "t": 1793152333341,
+   "level": "warn",
+   "src": "Eneba",
+   "msg": "EA Sports FC 27 (PS5): no encuentro «EA Sports FC 27» para PS5"
+  },
+  {
+   "t": 1793152333341,
+   "level": "info",
+   "src": "Amazon",
+   "msg": "EA Sports FC 27 (PS5): 86.13 € · EA Sports FC 27 - PS5"
+  },
+  {
+   "t": 1793152333341,
+   "level": "warn",
+   "src": "MediaMarkt",
+   "msg": "EA Sports FC 27 (PS5): la tienda ha pedido un captcha; se reintentará en el próximo ciclo"
+  },
+  {
+   "t": 1793152333341,
+   "level": "warn",
+   "src": "Fnac",
+   "msg": "EA Sports FC 27 (PS5): la tienda ha pedido un captcha; se reintentará en el próximo ciclo"
+  },
+  {
+   "t": 1793152333341,
+   "level": "warn",
+   "src": "El Corte Inglés",
+   "msg": "EA Sports FC 27 (PS5): la tienda ha pedido un captcha; se reintentará en el próximo ciclo"
+  },
+  {
+   "t": 1793152333341,
+   "level": "warn",
+   "src": "GAME",
+   "msg": "EA Sports FC 27 (PS5): la tienda respondió 404"
+  },
+  {
+   "t": 1793152333341,
+   "level": "warn",
+   "src": "Impact",
+   "msg": "EA Sports FC 27 (PS5): la tienda respondió 404"
+  },
+  {
+   "t": 1793152333341,
+   "level": "ok",
+   "src": "api",
+   "msg": "tracker creado: «EA Sports FC 27» · objetivo 50 €"
   }
  ],
  "acciones": [
+  {
+   "id": "claude-diag-1",
+   "accion": "crear",
+   "ok": true,
+   "error": null,
+   "at": 1793152333342,
+   "secs": 33,
+   "trackerId": "g-9cf05a92"
+  },
   {
    "id": "rmvrghf7j85pt",
    "accion": "crear",
@@ -47,8 +213,8 @@
    "covers": "Keys · búsqueda automática",
    "host": "www.instant-gaming.com",
    "ok": 100,
-   "lat": 509,
-   "last": 1793152148673,
+   "lat": 526,
+   "last": 1793152301064,
    "status": "ok",
    "runs": 1
   },
@@ -58,8 +224,8 @@
    "covers": "Keys · búsqueda automática",
    "host": "www.eneba.com",
    "ok": 100,
-   "lat": 13379,
-   "last": 1793152161571,
+   "lat": 12911,
+   "last": 1793152313490,
    "status": "ok",
    "runs": 1
   },
@@ -69,8 +235,8 @@
    "covers": "Búsqueda automática",
    "host": "www.amazon.es",
    "ok": 100,
-   "lat": 15602,
-   "last": 1793152178326,
+   "lat": 14149,
+   "last": 1793152333329,
    "status": "ok",
    "runs": 2
   },
@@ -80,8 +246,8 @@
    "covers": "Búsqueda automática",
    "host": "www.mediamarkt.es",
    "ok": 0,
-   "lat": 23293,
-   "last": 1793152171486,
+   "lat": 22805,
+   "last": 1793152323387,
    "status": "warn",
    "runs": 1
   },
@@ -91,8 +257,8 @@
    "covers": "Búsqueda automática",
    "host": "www.fnac.es",
    "ok": 0,
-   "lat": 20564,
-   "last": 1793152168758,
+   "lat": 19787,
+   "last": 1793152320369,
    "status": "warn",
    "runs": 1
   },
@@ -102,8 +268,8 @@
    "covers": "Búsqueda automática",
    "host": "www.elcorteingles.es",
    "ok": 0,
-   "lat": 23025,
-   "last": 1793152171219,
+   "lat": 19870,
+   "last": 1793152320452,
    "status": "warn",
    "runs": 1
   },
@@ -113,8 +279,8 @@
    "covers": "Búsqueda automática",
    "host": "www.game.es",
    "ok": 0,
-   "lat": 5958,
-   "last": 1793152174136,
+   "lat": 5810,
+   "last": 1793152325568,
    "status": "warn",
    "runs": 2
   },
@@ -124,8 +290,8 @@
    "covers": "Búsqueda automática",
    "host": "impactgame.es",
    "ok": 0,
-   "lat": 5947,
-   "last": 1793152174045,
+   "lat": 7999,
+   "last": 1793152323185,
    "status": "warn",
    "runs": 2
   },
@@ -146,8 +312,8 @@
   "busy": false,
   "intervalMin": 60,
   "cycles": 0,
-  "requests": 18,
-  "lastRun": 1793152178327,
+  "requests": 27,
+  "lastRun": 1793152333342,
   "lastAction": "crear"
  },
  "version": "github"
