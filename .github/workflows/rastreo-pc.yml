@@ -33,6 +33,15 @@ jobs:
       run:
         shell: bash
     steps:
+      # En Windows «bash» es el de WSL (C:\Windows\System32\bash.exe), que no entiende las rutas del runner.
+      # Se pone delante el bash de Git for Windows para todos los pasos siguientes.
+      - name: Usar el bash de Git
+        shell: powershell
+        run: |
+          $git = @("$env:ProgramFiles\Git\bin", "${env:ProgramFiles(x86)}\Git\bin", "$env:LOCALAPPDATA\Programs\Git\bin") | Where-Object { Test-Path "$_\bash.exe" } | Select-Object -First 1
+          if (-not $git) { throw 'No encuentro Git for Windows: instálalo desde https://git-scm.com/download/win' }
+          Add-Content -Path $env:GITHUB_PATH -Value $git
+
       - uses: actions/checkout@v4
 
       - name: Traer los datos (rama «datos»)
