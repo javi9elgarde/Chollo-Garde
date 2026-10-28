@@ -2,6 +2,7 @@
 // el panel publicado en GitHub Pages pide algo (crear, editar o borrar un tracker, probar alertas…).
 // Lee y guarda los datos en DATA_DIR/db.json, que el workflow sube a la rama «datos».
 //   node src/cli.js <accion> [json]     acciones: ciclo, crear, editar, borrar, escanear, probar
+//   node src/cli.js pc                  (runner del PC, CG_MODO=pc) solo guarda pc.json
 import * as store from './store.js';
 import * as games from './games.js';
 import * as actions from './actions.js';
@@ -9,6 +10,7 @@ import { engine } from './engine.js';
 import { bus } from './bus.js';
 import { dispatch, send, SAMPLE } from './notify/index.js';
 import { close as closeBrowser } from './sources/browser.js';
+import * as pc from './pcdata.js';
 
 const accion = process.argv[2] || 'ciclo';
 let datos = {};
@@ -49,6 +51,13 @@ async function run() {
       if (out[ch] !== 'ok') throw new games.UserError(String(out[ch]).replace(/^error: /, ''));
       return 'prueba enviada';
     }
+    case 'pc': {
+      if (pc.mode() !== 'pc') throw new games.UserError('La acción «pc» es para el runner de tu PC (CG_MODO=pc)');
+      const list = db.trackers.filter(t => t.cat === 'game' && t.live);
+      for (const it of list) pc.set(it.id, await games.pcQuote(it));
+      pc.save(db.trackers.map(t => t.id));
+      return `${list.length} tracker${list.length === 1 ? '' : 's'} revisados desde tu PC`;
+    }
     case 'diagnostico':
       // Solo para depurar tiendas: abre cada dirección y escribe en el registro del workflow qué ha visto.
       await diagnose(datos);
@@ -58,8 +67,9 @@ async function run() {
   }
 }
 
-async function diagnose({ urls = [], match = '', modes = ['fetch', 'headless'] }) {
+async function diagnose({ urls = [], match = '', modes = ['fetch', 'headless'], grep = '' }) {
   const re = match ? new RegExp(match, 'i') : null;
+  const gre = grep ? new RegExp(`.{0,200}(?:${grep}).{0,600}`, 'gis') : null;
   for (const mode of modes) {
     if (mode === 'visible') { await closeBrowser(); process.env.BROWSER_VISIBLE = '1'; }
     for (const url of urls.slice(0, 20)) {
@@ -81,7 +91,9 @@ async function diagnose({ urls = [], match = '', modes = ['fetch', 'headless'] }
         line += `  ld+json: ${ld.slice(0, 300)}\n  precios: ${[...html.matchAll(/.{0,60}(?:"price"|itemprop="price"|"lowPrice"|"amount"|€).{0,60}/g)].slice(0, 6).map(m => m[0].replace(/\s+/g, ' ')).join(' ‖ ').slice(0, 900)}\n`;
         const wv = web.wooVariations(html); if (wv.length || /data-product_variations/.test(html)) line += `  variantes: ${JSON.stringify(wv).slice(0, 400)} · bruto: ${(html.match(/data-product_variations=.{0,300}/)?.[0] || '').replace(/\s+/g, ' ')}\n`;
         if (/instant-gaming/.test(url)) line += `  candidatos IG: ${ks.igCandidates(html).slice(0, 8).map(c => c.label).join(' | ')}\n`;
+        if (/chollometro/.test(url)) { const cm = await import('./sources/chollometro.js'); line += `  ofertas Chollometro: ${cm.deals(html).slice(0, 8).map(d => `${d.title} · ${d.price} € · ${d.merchant} · ${d.expired ? 'caducada' : 'activa'} · ${d.publishedAt ? new Date(d.publishedAt).toISOString().slice(0, 10) : '?'}`).join(' | ')}\n`; if (match) { const [t, pl] = match.split('|'); line += `  mejor para «${t}» ${pl}: ${JSON.stringify(cm.best(cm.deals(html), t, pl))}\n`; } }
         if (/eneba/.test(url)) line += `  candidatos Eneba: ${ks.enebaCandidates(html).slice(0, 8).map(c => c.label).join(' | ')}\n`;
+        if (gre) line += [...html.matchAll(gre)].slice(0, 4).map(m => `  grep: ${m[0].replace(/\s+/g, ' ')}\n`).join('');
         line += `  ${links.length} enlaces; coinciden: ${(re ? links.filter(l => re.test(l)) : []).slice(0, 15).join(' | ')}\n`;
       } catch (e) { line += `  ERROR ${e.message.split('\n')[0]}\n`; }
       console.log(line);
@@ -95,6 +107,14 @@ db.trackers.forEach(games.migrate);
 const t0 = Date.now();
 let result, error = null;
 try { result = await run(); } catch (e) { error = e.message; console.error(e); }
+
+// El runner del PC no toca db.json (lo escribe solo GitHub): deja lo que ha visto en su registro.
+if (accion === 'pc') {
+  newLogs.forEach(l => console.log(`[${l.src}] ${l.msg}`));
+  await closeBrowser();
+  console.log(error ? `Error: ${error}` : `Hecho: ${result}`);
+  process.exit(error ? 1 : 0);
+}
 
 // Lo que el panel de GitHub necesita para mostrarse sin servidor.
 const prevSources = new Map((db.sources || []).map(s => [s.name, s]));

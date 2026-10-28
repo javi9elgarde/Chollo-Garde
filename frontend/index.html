@@ -952,7 +952,11 @@ function art(it, cls = 'h-28', big = false) {
   if (it.cat === 'flight') inner = `<div class="font-mono ${big ? 'text-4xl' : 'text-2xl'} font-medium tracking-wider text-white/95 flex items-center gap-3">${esc(it.origin)}<i data-lucide="plane" class="${big ? 'w-7 h-7' : 'w-5 h-5'} opacity-80"></i>${esc(it.dest)}</div>`;
   else if (it.cat === 'game') { const ini = it.title.replace(/[^A-Za-zÀ-ÿ0-9 ]/g, '').split(/\s+/).filter(w => w.length > 1 && !/^(the|of|de|la|el)$/i.test(w)).slice(0, 2).map(w => w[0]).join('').toUpperCase(); inner = `<div class="font-display ${big ? 'text-6xl' : 'text-4xl'} font-extrabold text-white/90 tracking-tight">${esc(ini)}</div>`; }
   else inner = `<div class="flex items-center gap-3 text-white/90"><i data-lucide="${esc(it.icon || 'package')}" class="${big ? 'w-12 h-12' : 'w-9 h-9'}"></i><span class="font-display ${big ? 'text-3xl' : 'text-xl'} font-bold tracking-tight">${esc(it.brand || it.title.split(' ')[0])}</span></div>`;
-  if (it.image) inner = `<img src="${esc(it.image)}" alt="" loading="lazy" referrerpolicy="no-referrer" class="absolute inset-0 w-full h-full object-cover" onerror="this.remove()">`;
+  // Con imagen: marco 16:9 y la portada entera (sin recortar), con la misma imagen difuminada de fondo.
+  if (it.image) {
+    cls = cls.replace(/(^|\s)(sm:)?h-\S+/g, '') + ' w-full aspect-video';
+    inner = `<img src="${esc(it.image)}" alt="" aria-hidden="true" loading="lazy" referrerpolicy="no-referrer" class="absolute inset-0 w-full h-full object-cover blur-xl scale-110 opacity-50" onerror="this.remove()"><img src="${esc(it.image)}" alt="" loading="lazy" referrerpolicy="no-referrer" class="absolute inset-0 w-full h-full object-contain" onerror="this.remove()">`;
+  }
   return `<div class="art relative ${cls} overflow-hidden grid place-items-center" style="${bg}">${inner}</div>`;
 }
 function spark(it, w = 116, h = 38) {
@@ -1500,7 +1504,7 @@ function gameBlockLive(it) {
     <div class="px-4 pt-4 pb-2 flex flex-wrap items-center gap-2"><i data-lucide="store" class="w-4 h-4 text-mute"></i><h3 class="font-display font-bold text-[15px]">Precio en cada tienda</h3>
       <span class="ml-auto flex flex-wrap gap-1.5 text-[12px]"><span class="rounded-md border border-ink-500 px-2 py-0.5">${esc(it.platform)}</span>${it.deck && it.deck !== 'No compatible' ? `<span class="rounded-md border border-good/30 text-good px-2 py-0.5 inline-flex items-center gap-1"><i data-lucide="circle-check" class="w-3.5 h-3.5"></i>Steam Deck: ${esc(it.deck)}</span>` : ''}</span></div>
     <div class="overflow-x-auto"><table class="w-full text-[13px] tnum min-w-[460px]"><thead><tr class="text-left text-mute border-b border-ink-600"><th class="font-medium px-4 py-2">Tienda</th><th class="font-medium px-4 py-2">Tipo</th><th class="font-medium px-4 py-2 text-right">Precio</th><th class="font-medium px-4 py-2 text-right">vs oficial</th><th class="px-4 py-2"></th></tr></thead>
-    <tbody>${sorted.map(s => `<tr class="border-b border-ink-700 last:border-0 ${s === best ? 'bg-good/[.06]' : ''}"><td class="px-4 py-2.5 font-medium">${esc(s.name)} ${s === best ? '<span class="ml-1 text-[11px] text-good">mejor precio</span>' : ''}${s.match && s.match.toLowerCase() !== it.title.toLowerCase() ? `<div class="text-[11px] text-dim font-normal truncate max-w-[220px]" title="${esc(s.match)}">${esc(s.match)}</div>` : ''}</td><td class="px-4 py-2.5 text-mute">${STORE_KIND[s.type] || 'Tienda'}</td><td class="px-4 py-2.5 text-right font-medium">${cell(s)}</td><td class="px-4 py-2.5 text-right ${o && okStore(s) && s.price < o.price ? 'text-good' : 'text-mute'}">${!o || s === o || !okStore(s) ? '—' : pct(s.price / o.price - 1)}</td><td class="px-4 py-2.5 text-right">${s.url ? `<a href="${esc(s.url)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-[12px] text-mute hover:text-fg">Abrir<i data-lucide="external-link" class="w-3.5 h-3.5"></i></a>` : ''}</td></tr>`).join('')}</tbody></table></div>
+    <tbody>${sorted.map(s => `<tr class="border-b border-ink-700 last:border-0 ${s === best ? 'bg-good/[.06]' : ''}"><td class="px-4 py-2.5 font-medium">${esc(s.name)} ${s === best ? '<span class="ml-1 text-[11px] text-good">mejor precio</span>' : ''}${s.via === 'pc' ? '<span class="ml-1 text-[11px] text-ai" title="Precio leído por tu PC, con la conexión de casa">desde tu PC</span>' : ''}${s.match && s.match.toLowerCase() !== it.title.toLowerCase() ? `<div class="text-[11px] text-dim font-normal truncate max-w-[220px]" title="${esc(s.match)}">${esc(s.match)}</div>` : ''}</td><td class="px-4 py-2.5 text-mute">${STORE_KIND[s.type] || 'Tienda'}</td><td class="px-4 py-2.5 text-right font-medium">${cell(s)}</td><td class="px-4 py-2.5 text-right ${o && okStore(s) && s.price < o.price ? 'text-good' : 'text-mute'}">${!o || s === o || !okStore(s) ? '—' : pct(s.price / o.price - 1)}</td><td class="px-4 py-2.5 text-right">${s.url ? `<a href="${esc(s.url)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-[12px] text-mute hover:text-fg">Abrir<i data-lucide="external-link" class="w-3.5 h-3.5"></i></a>` : ''}</td></tr>`).join('')}</tbody></table></div>
     <p class="px-4 py-3 text-[12px] text-dim">Última comprobación: ${it.lastCheck ? ago(it.lastCheck) : '—'}.${it.lastError ? ` <span class="text-bad">Tiendas con problemas: ${esc(it.lastError)}</span>` : ''}</p>
     <details class="border-t border-ink-600"><summary class="px-4 py-3 text-[13px] cursor-pointer select-none text-mute hover:text-fg">Cambiar las tiendas que vigilo</summary>
       <form data-form="sources" data-id="${it.id}" class="px-4 pb-4 flex flex-col gap-2">
@@ -1601,7 +1605,7 @@ function shopPicker(name, on) {
     <div class="flex flex-wrap gap-x-4 gap-y-1.5"><span class="text-[12px] text-dim w-full sm:w-auto">Tiendas:</span>${LIVE_SHOPS.retail.map(box).join('')}</div></fieldset>`;
 }
 const liveSpec = () => ({ title: $('#nt-url').value.trim(), platform: $('#nt-plat').value, shops: checkedShops('nt-shop'), links: $('#nt-links').value.split(/\s+/).filter(Boolean) });
-const STORE_KIND = { key: 'Tienda de keys', official: 'Tienda oficial', retail: 'Tienda' };
+const STORE_KIND = { key: 'Tienda de keys', official: 'Tienda oficial', retail: 'Tienda', deal: 'Oferta en Chollometro' };
 // Una línea por tienda en la vista previa y en la ficha: precio, agotado o el motivo del fallo.
 function storeLine(x, best) {
   const st = x.error ? `<span class="text-bad" title="${esc(x.error)}">${x.stale ? `${eur(x.price)} · antiguo` : 'sin precio'}</span>` : x.out ? '<span class="text-dim">sin stock</span>' : `<span class="${x === best ? 'text-good font-medium' : ''}">${eur(x.price)}</span>`;
@@ -1667,7 +1671,7 @@ function previewLive(m) {
   const best = m.stores.find(x => !x.error && !x.out && x.price === m.price && x.name === m.store);
   return `<form id="nt-create" class="rounded-2xl border border-ink-600 bg-ink-800/70 overflow-hidden fade-in">
     <div class="flex flex-col">
-      ${m.image ? `<img src="${esc(m.image)}" alt="" referrerpolicy="no-referrer" class="w-full aspect-[460/215] max-h-52 object-cover bg-ink-850" onerror="this.remove()">` : ''}
+      ${m.image ? `<img src="${esc(m.image)}" alt="" referrerpolicy="no-referrer" class="w-full aspect-video max-h-52 object-contain bg-ink-850" onerror="this.remove()">` : ''}
       <div class="p-4 flex flex-col gap-3 min-w-0">
         <div><div class="font-display font-bold text-[18px] leading-snug">${esc(m.title)}</div><div class="text-[13px] text-mute mt-0.5">${esc(m.platform)} · mejor precio ahora: <b class="text-fg tnum">${eur(m.price)}</b> en ${esc(m.store)}${m.msrp ? ` · PVP ${eur(m.msrp)}` : ''}</div></div>
         <ul class="text-[12px] flex flex-col gap-0.5 tnum">${m.stores.map(x => storeLine(x, best)).join('')}</ul>
@@ -2054,7 +2058,7 @@ window.addEventListener('hashchange', route);
 if (await LIVE.detect() || await GH.detect()) {
   if (!GH.on) LIVE.connect();
   $('#banner').remove();
-  $('#side-note').innerHTML = 'Precios reales de videojuegos en Instant Gaming, Eneba, Amazon, MediaMarkt, Fnac, El Corte Inglés, GAME e Impact. Productos y vuelos: próximas fases. IA con Gemini: Fase 3.';
+  $('#side-note').innerHTML = 'Precios reales de videojuegos en Instant Gaming, Eneba, Amazon, MediaMarkt, Fnac, El Corte Inglés, GAME e Impact, más las ofertas de Chollometro. Productos y vuelos: próximas fases. IA con Gemini: Fase 3.';
   nt.cat = 'game';
   renderSoundBtn();
   setInterval(tickLive, 1000);

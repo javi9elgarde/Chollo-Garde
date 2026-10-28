@@ -8,6 +8,8 @@ import * as steam from './sources/steam.js';
 import * as keyshops from './sources/keyshops.js';
 import * as web from './sources/web.js';
 import * as retail from './sources/retail.js';
+import * as chollometro from './sources/chollometro.js';
+import * as pc from './pcdata.js';
 import { shopFor, parseUrl } from './sources/shops.js';
 import { log } from './bus.js';
 
@@ -66,17 +68,29 @@ async function findIn(name, title, platform, prev) {
 }
 
 // Precios actuales en todas las tiendas configuradas. Las que fallan llevan `error`.
-export async function quote(spec, prev = []) {
+// En modo mixto (ver pcdata.js) el PC solo mira sus tiendas y GitHub reutiliza lo que el PC ha leído.
+export async function quote(spec, prev = [], { trackerId = null } = {}) {
+  const mode = pc.mode(), forPc = name => pc.PC_SHOPS.includes(name);
   const stores = [];
-  const st = await steamInfo(spec);
+  const st = mode === 'pc' ? null : await steamInfo(spec);
   const title = spec.title || st?.det?.name;
   if (!title) throw new UserError('Escribe el nombre del juego.');
   if (st?.det?.price) stores.push({ name: 'Steam', type: 'official', price: st.det.price.price, initial: st.det.price.initial, url: steam.appUrl(st.appId) });
   let image = st?.det?.image || null;
   // Un enlace pegado manda sobre la búsqueda automática en esa tienda.
   const linked = new Set(spec.links.map(l => shopFor(l).name));
-  const auto = spec.shops.filter(n => !linked.has(n));
-  const fromLinks = spec.links.map(async link => {
+  let auto = spec.shops.filter(n => !linked.has(n)), links = spec.links;
+  if (mode === 'pc') { auto = auto.filter(forPc); links = links.filter(l => forPc(shopFor(l).name)); }
+  if (mode === 'nube' && trackerId) {
+    // Lo que el PC ha leído hace poco no se vuelve a pedir desde GitHub (allí salen captchas).
+    const fromPc = (pc.fresh(trackerId) || []).filter(s => !s.error && s.price);
+    auto = auto.filter(n => !fromPc.some(s => s.auto && s.name === n));
+    links = links.filter(l => !fromPc.some(s => !s.auto && s.url === l));
+    stores.push(...fromPc.map(s => ({ ...s, via: 'pc' })));
+  }
+  // Chollometro: ofertas compartidas por la gente, si el tracker busca solo en tiendas. Si no hay ninguna activa, no aparece.
+  const deal = mode === 'pc' || !spec.shops.length ? null : chollometro.find(title, spec.platform).catch(e => (/ninguna oferta|no ha devuelto/.test(e.message) ? null : { name: 'Chollometro', type: 'deal', error: e.message }));
+  const fromLinks = links.map(async link => {
     const shop = shopFor(link);
     try {
       const p = await web.product(link);
@@ -84,6 +98,8 @@ export async function quote(spec, prev = []) {
     } catch (e) { return { name: shop.name, type: shop.type, url: link, error: e.message }; }
   });
   stores.push(...await Promise.all([...auto.map(n => findIn(n, title, spec.platform, prev)), ...fromLinks]));
+  const d = await deal;
+  if (d) stores.push(d);
   for (const s of stores) {
     image = image || s.image || null;
     delete s.image;
@@ -94,10 +110,10 @@ export async function quote(spec, prev = []) {
     }
   }
   // Una línea por tienda en el registro: así se ve qué ha encontrado cada una o por qué ha fallado.
-  for (const s of stores) log(s.error ? 'warn' : 'info', s.name, s.error ? `${title} (${spec.platform}): ${s.error}` : `${title} (${spec.platform}): ${s.out ? 'sin stock' : s.price + ' €'} · ${s.match || s.url || ''}`);
+  for (const s of stores) log(s.error ? 'warn' : 'info', s.name, s.error ? `${title} (${spec.platform}): ${s.error}` : `${title} (${spec.platform}): ${s.out ? 'sin stock' : s.price + ' €'} · ${s.match || s.url || ''}${s.via === 'pc' ? ' · leído desde tu PC' : ''}`);
   const valid = stores.filter(s => s.price && !s.error && !s.out).sort((a, b) => a.price - b.price);
   stores.sort((a, b) => (a.error ? 1 : 0) - (b.error ? 1 : 0) || (a.price || 1e9) - (b.price || 1e9));
-  const ref = stores.find(s => s.type === 'official')?.initial || Math.max(0, ...stores.filter(s => s.type !== 'key' && s.price).map(s => s.price)) || null;
+  const ref = stores.find(s => s.type === 'official')?.initial || Math.max(0, ...stores.filter(s => s.type !== 'key' && s.type !== 'deal' && s.price).map(s => s.price)) || null;
   return { title, steam: st, image, stores, best: valid[0] || null, msrp: ref };
 }
 
@@ -178,7 +194,7 @@ export const specOf = it => ({ title: it.query || it.title, platform: PLATFORMS.
 // Un ciclo de rastreo para un tracker: actualiza tiendas, precio actual e histórico diario.
 export async function refresh(it) {
   migrate(it);
-  const q = await quote(specOf(it), it.stores || []);
+  const q = await quote(specOf(it), it.stores || [], { trackerId: it.id });
   const old = it.current, now = Date.now();
   it.stores = q.stores;
   if (!q.best) {
@@ -210,5 +226,11 @@ export function updateSources(it, b) {
   if (Array.isArray(b.shops)) it.shops = cleanSpec({ title: 'x', shops: b.shops }).shops;
   // Si cambian las tiendas o los enlaces, se olvidan las fichas que ya no se usan.
   const linked = new Set(it.links.map(l => shopFor(l).name));
-  it.stores = (it.stores || []).filter(s => s.type === 'official' || (s.auto ? it.shops.includes(s.name) && !linked.has(s.name) : it.links.includes(s.url)));
+  it.stores = (it.stores || []).filter(s => s.type === 'official' || s.type === 'deal' || (s.auto ? it.shops.includes(s.name) && !linked.has(s.name) : it.links.includes(s.url)));
+}
+
+// Runner del PC: precios de Amazon, Fnac y El Corte Inglés para un tracker (los guarda pcdata.js).
+export async function pcQuote(it) {
+  migrate(it);
+  return (await quote(specOf(it), it.stores || [])).stores;
 }

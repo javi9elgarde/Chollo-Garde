@@ -74,6 +74,7 @@ export function sourceRows() {
     row('El Corte Inglés', 'navegador', 'Búsqueda automática', 'www.elcorteingles.es'),
     row('GAME', 'búsqueda', 'Búsqueda automática', 'www.game.es'),
     row('Impact', 'búsqueda', 'Búsqueda automática', 'impactgame.es'),
+    row('Chollometro', 'búsqueda', 'Ofertas de la comunidad', 'www.chollometro.com'),
     row('Steam España', 'API web', 'Precio oficial de PC, reseñas, Steam Deck', new URL(config.steamStoreBase).hostname)
   ];
   // Las tiendas de los enlaces pegados (Amazon, MediaMarkt, GAME, Impact…) aparecen según se usan.

@@ -42,3 +42,38 @@ test('crear, ciclo, error anotado y nada de secretos en los datos', () => {
   cli('borrar', JSON.stringify({ reqId: 'r4', id: db.trackers[0].id }));
   assert.equal(read().trackers.length, 0);
 });
+
+test('modo mixto: el PC solo revisa sus tiendas y GitHub usa lo que ha leído', () => {
+  const run = (modo, ...args) => execFileSync(process.execPath, ['--import', './test/gh-setup.mjs', 'src/cli.js', ...args], { env: { ...env, CG_MODO: modo }, cwd: path.resolve(import.meta.dirname, '..'), encoding: 'utf8' });
+  run('nube', 'crear', JSON.stringify({ reqId: 'm1', title: 'Hades II', platform: 'PC', target: 5 }));
+  const before = fs.readFileSync(path.join(tmp, 'db.json'), 'utf8');
+  const id = JSON.parse(before).trackers[0].id;
+
+  const out = run('pc', 'pc');
+  assert.match(out, /revisados desde tu PC/);
+  assert.equal(fs.readFileSync(path.join(tmp, 'db.json'), 'utf8'), before, 'el PC no toca db.json');
+  const pcFile = path.join(tmp, 'pc.json');
+  const pcData = JSON.parse(fs.readFileSync(pcFile, 'utf8'));
+  assert.deepEqual(pcData.trackers[id].stores.map(s => s.name).sort(), ['Amazon', 'El Corte Inglés', 'Fnac']);
+
+  // Desde casa Fnac sí responde: GitHub usa ese precio en vez de pedirlo él (y llevarse el captcha).
+  pcData.trackers[id].stores = pcData.trackers[id].stores.map(s => (s.name === 'Fnac' ? { name: 'Fnac', type: 'retail', auto: true, url: 'https://www.fnac.es/a123', price: 16.9, match: 'Hades II PC' } : s));
+  fs.writeFileSync(pcFile, JSON.stringify(pcData));
+  run('nube', 'ciclo');
+  let t = read().trackers[0];
+  const fnac = t.stores.find(s => s.name === 'Fnac');
+  assert.equal(fnac.price, 16.9);
+  assert.equal(fnac.via, 'pc');
+  assert.equal(t.current, 16.9);
+  assert.ok(t.stores.some(s => s.name === 'Chollometro'));
+
+  // Datos del PC de hace más de 3 horas: GitHub vuelve a intentarlo él.
+  pcData.trackers[id].t = Date.now() - 4 * 60 * 60e3;
+  fs.writeFileSync(pcFile, JSON.stringify(pcData));
+  run('nube', 'ciclo');
+  t = read().trackers[0];
+  assert.match(t.stores.find(s => s.name === 'Fnac').error, /captcha/);
+  assert.ok(!t.stores.some(s => s.via === 'pc'));
+
+  assert.throws(() => run('nube', 'pc'), 'la acción pc solo vale en el runner del PC');
+});
