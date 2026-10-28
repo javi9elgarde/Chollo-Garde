@@ -58,8 +58,9 @@ async function run() {
   }
 }
 
-async function diagnose({ urls = [], match = '', modes = ['fetch', 'headless'] }) {
+async function diagnose({ urls = [], match = '', modes = ['fetch', 'headless'], grep = '' }) {
   const re = match ? new RegExp(match, 'i') : null;
+  const gre = grep ? new RegExp(`.{0,200}(?:${grep}).{0,600}`, 'gis') : null;
   for (const mode of modes) {
     if (mode === 'visible') { await closeBrowser(); process.env.BROWSER_VISIBLE = '1'; }
     for (const url of urls.slice(0, 20)) {
@@ -82,6 +83,7 @@ async function diagnose({ urls = [], match = '', modes = ['fetch', 'headless'] }
         const wv = web.wooVariations(html); if (wv.length || /data-product_variations/.test(html)) line += `  variantes: ${JSON.stringify(wv).slice(0, 400)} · bruto: ${(html.match(/data-product_variations=.{0,300}/)?.[0] || '').replace(/\s+/g, ' ')}\n`;
         if (/instant-gaming/.test(url)) line += `  candidatos IG: ${ks.igCandidates(html).slice(0, 8).map(c => c.label).join(' | ')}\n`;
         if (/eneba/.test(url)) line += `  candidatos Eneba: ${ks.enebaCandidates(html).slice(0, 8).map(c => c.label).join(' | ')}\n`;
+        if (gre) line += [...html.matchAll(gre)].slice(0, 4).map(m => `  grep: ${m[0].replace(/\s+/g, ' ')}\n`).join('');
         line += `  ${links.length} enlaces; coinciden: ${(re ? links.filter(l => re.test(l)) : []).slice(0, 15).join(' | ')}\n`;
       } catch (e) { line += `  ERROR ${e.message.split('\n')[0]}\n`; }
       console.log(line);
