@@ -20,7 +20,9 @@ async function context() {
       try {
         return await pw.chromium.launchPersistentContext(dir, {
           channel, headless: process.env.BROWSER_VISIBLE !== '1', locale: 'es-ES', timezoneId: 'Europe/Madrid',
-          viewport: { width: 1366, height: 900 }, args: ['--disable-blink-features=AutomationControlled']
+          viewport: { width: 1366, height: 900 },
+          // BROWSER_OFFSCREEN: ventana de verdad (las tiendas bloquean el modo oculto), pero fuera de la pantalla.
+          args: ['--disable-blink-features=AutomationControlled', ...(process.env.BROWSER_OFFSCREEN === '1' ? ['--window-position=-32000,-32000'] : [])]
         });
       } catch (e) { lastErr = e; }
     }

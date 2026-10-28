@@ -49,8 +49,9 @@ Pasos (solo una vez, en el PC con Windows):
 3. En GitHub: *Settings → Actions → Runners → New self-hosted runner → Windows*. Copia los comandos de **Download** y **Configure** en PowerShell, dentro de una carpeta como `C:\actions-runner`. Durante la configuración:
    - nombre del runner: el que quieras;
    - **etiquetas adicionales: `chollogarde-pc`** (importante);
-   - «Would you like to run the runner as service?»: **Y** (así arranca solo con Windows).
-4. En *Actions → Rastreo desde tu PC → Run workflow* lánzalo una vez para comprobar que funciona. Después se ejecuta solo cada hora mientras el PC esté encendido.
+   - «Would you like to run the runner as service?»: **N**. Como servicio va con el usuario «Servicio de red», sin escritorio, y no puede abrir Edge bien. En Windows en español, además, la instalación del servicio falla con «Acceso denegado».
+4. Arráncalo con `.\run.cmd` (tiene que salir «Listening for Jobs») y lanza una vez *Actions → Rastreo desde tu PC → Run workflow* para comprobar que funciona.
+5. Para que arranque solo al iniciar sesión: `schtasks /Create /TN "CholloGarde runner" /TR "C:\actions-runner\run.cmd" /SC ONLOGON /F`. Se abre una ventana con el runner; minimízala, no la cierres. Después se ejecuta solo cada hora mientras el PC esté encendido.
 
 Si usas un VPN o **Cloudflare WARP / Cloudflare One** en el PC, estas tiendas ven una IP de Cloudflare y la bloquean (Fnac enseña «El acceso está restringido temporalmente»). Desconéctalo o excluye de él fnac.es, amazon.es, elcorteingles.es y store.playstation.com («túnel dividido»).
 

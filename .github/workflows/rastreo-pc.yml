@@ -29,10 +29,21 @@ jobs:
       CG_MODO: pc
       DATA_DIR: ${{ github.workspace }}/datos
       BROWSER_CHANNEL: msedge,chrome
+      # Con el navegador oculto las tiendas piden captcha casi siempre: se abre de verdad, fuera de la pantalla.
+      BROWSER_VISIBLE: '1'
+      BROWSER_OFFSCREEN: '1'
     defaults:
       run:
         shell: bash
     steps:
+      # En Windows «bash» es el de WSL (C:\Windows\System32\bash.exe), que no entiende las rutas del runner.
+      # Se pone delante el bash de Git for Windows para todos los pasos siguientes.
+      - name: Usar el bash de Git
+        # cmd y no PowerShell: Windows suele tener bloqueados los scripts de PowerShell.
+        shell: cmd
+        run: |
+          if exist "%ProgramFiles%\Git\bin\bash.exe" (echo %ProgramFiles%\Git\bin>>"%GITHUB_PATH%") else if exist "%LOCALAPPDATA%\Programs\Git\bin\bash.exe" (echo %LOCALAPPDATA%\Programs\Git\bin>>"%GITHUB_PATH%") else (echo No encuentro Git for Windows: instalalo desde https://git-scm.com/download/win & exit /b 1)
+
       - uses: actions/checkout@v4
 
       - name: Traer los datos (rama «datos»)
