@@ -23,42 +23,33 @@
    "links": [],
    "steamAppID": null,
    "image": "https://imgproxy.eneba.games/9K1VbPk_P_2KuQ0_jk4lWJxzOv87MtWtBBzDH-mUyjs/rs:fit:300/ar:1/czM6Ly9wcm9kdWN0/cy5lbmViYS5nYW1l/cy9wcm9kdWN0cy83/RGFNbEpldXA2Q0sz/QzlSTzIyZDNvRmh1/WXFIYy14ZHM4c1gw/azJ2LTI0LnBuZw",
-   "url": "https://www.amazon.es/dp/B0HHFLGFV8",
+   "url": "https://www.elcorteingles.es/videojuegos/A200949644-marvel-lobezno-playstation-5/",
    "deck": null,
    "msrp": 79.99,
    "target": 40,
    "alert": true,
    "alerted": false,
    "createdAt": 1793184187081,
-   "lastCheck": 1793201036556,
-   "lastError": "Instant Gaming: no encuentro «Marvel's Wolverine» para PS5 · MediaMarkt: no encuentro el precio en la página (¿es la ficha de un producto?) · Fnac: la tienda ha pedido un captcha; se reintentará en el próximo ciclo",
+   "lastCheck": 1793201498525,
+   "lastError": "Amazon: la tienda ha pedido un captcha; se reintentará en el próximo ciclo · Instant Gaming: no encuentro «Marvel's Wolverine» para PS5 · MediaMarkt: no encuentro el precio en la página (¿es la ficha de un producto?) · Fnac: la tienda ha pedido un captcha; se reintentará en el próximo ciclo",
    "stores": [
-    {
-     "name": "Amazon",
-     "type": "retail",
-     "url": "https://www.amazon.es/dp/B0HHFLGFV8",
-     "price": 71.63,
-     "out": false,
-     "match": "Marvel's Wolverine - PS5",
-     "auto": true
-    },
     {
      "name": "El Corte Inglés",
      "type": "retail",
+     "auto": true,
      "url": "https://www.elcorteingles.es/videojuegos/A200949644-marvel-lobezno-playstation-5/",
      "price": 74.9,
      "out": false,
-     "match": "Marvel Lobezno PlayStation 5",
-     "auto": true
+     "match": "Marvel Lobezno PlayStation 5"
     },
     {
      "name": "Impact",
      "type": "retail",
+     "auto": true,
      "url": "https://impactgame.es/producto/reserva-marvel-wolverine-lobezno-ps5/",
      "price": 74.9,
      "out": false,
-     "match": "Marvel Wolverine Lobezno PS5",
-     "auto": true
+     "match": "Marvel Wolverine Lobezno PS5"
     },
     {
      "name": "Eneba",
@@ -72,11 +63,21 @@
     {
      "name": "GAME",
      "type": "retail",
+     "auto": true,
      "url": "https://www.game.es/marvel-lobezno-ps5/253892",
      "price": 79.99,
      "out": false,
-     "match": "Marvel: Lobezno PS5",
-     "auto": true
+     "match": "Marvel: Lobezno PS5"
+    },
+    {
+     "name": "Amazon",
+     "type": "retail",
+     "auto": true,
+     "error": "la tienda ha pedido un captcha; se reintentará en el próximo ciclo",
+     "price": 71.63,
+     "url": "https://www.amazon.es/dp/B0HHFLGFV8",
+     "match": "Marvel's Wolverine - PS5",
+     "stale": true
     },
     {
      "name": "Instant Gaming",
@@ -97,22 +98,29 @@
      "error": "la tienda ha pedido un captcha; se reintentará en el próximo ciclo"
     }
    ],
-   "current": 71.63,
+   "current": 74.9,
    "history": [
     {
-     "t": 1793201036556,
-     "p": 71.63
+     "t": 1793201498525,
+     "p": 74.9
     }
    ],
    "coupons": [],
-   "specs": {},
+   "specs": {
+    "Género": "Hack and slash/Beat 'em up, Adventure, Action",
+    "Desarrolladora": "Insomniac Games",
+    "Lanzamiento": "2026-09-15"
+   },
    "reviews": {
     "rating": null,
     "n": 0,
     "src": "sin reseñas todavía",
     "pros": [],
     "cons": []
-   }
+   },
+   "artTried": 1793201438337,
+   "art": "https://images.igdb.com/igdb/image/upload/t_1080p/ar6b5e.jpg",
+   "igdb": 168667
   },
   {
    "id": "g-9cf05a92",
@@ -137,24 +145,32 @@
    "links": [],
    "steamAppID": null,
    "image": "https://media.game.es/COVERV2/3D_L/264/264870.png",
-   "url": "https://www.elcorteingles.es/videojuegos/A201431658-ea-sports-fc27-playstation-5/",
+   "url": "https://www.chollometro.com/ofertas/ps5-ea-sports-fc-27-2019234",
    "deck": null,
    "msrp": 86.13,
    "target": 50,
    "alert": false,
    "alerted": false,
    "createdAt": 1793152333341,
-   "lastCheck": 1793176403107,
-   "lastError": "Amazon: la tienda ha pedido un captcha; se reintentará en el próximo ciclo · Instant Gaming: no vende «EA Sports FC 27» para PS5, solo para otras plataformas · Eneba: la ficha no tiene precio ahora mismo (sin vendedores o sin stock) · Fnac: la tienda ha pedido un captcha; se reintentará en el próximo ciclo",
+   "lastCheck": 1793201548732,
+   "lastError": "Instant Gaming: no vende «EA Sports FC 27» para PS5, solo para otras plataformas · Eneba: la ficha no tiene precio ahora mismo (sin vendedores o sin stock) · Fnac: la tienda ha pedido un captcha; se reintentará en el próximo ciclo",
    "stores": [
+    {
+     "name": "Chollometro",
+     "type": "deal",
+     "url": "https://www.chollometro.com/ofertas/ps5-ea-sports-fc-27-2019234",
+     "price": 58.6,
+     "out": false,
+     "match": "PS5 EA SPORTS FC 27 (MediaMarkt · código descuento app · 310°)"
+    },
     {
      "name": "El Corte Inglés",
      "type": "retail",
+     "auto": true,
      "url": "https://www.elcorteingles.es/videojuegos/A201431658-ea-sports-fc27-playstation-5/",
      "price": 69.9,
      "out": false,
-     "match": "EA Sports FC27 PlayStation 5",
-     "auto": true
+     "match": "EA Sports FC27 PlayStation 5"
     },
     {
      "name": "MediaMarkt",
@@ -186,12 +202,11 @@
     {
      "name": "Amazon",
      "type": "retail",
-     "auto": true,
-     "error": "la tienda ha pedido un captcha; se reintentará en el próximo ciclo",
-     "price": 86.13,
      "url": "https://www.amazon.es/dp/B0HHFDTZMW",
+     "price": 86.13,
+     "out": false,
      "match": "EA Sports FC 27 - PS5",
-     "stale": true
+     "auto": true
     },
     {
      "name": "Instant Gaming",
@@ -212,22 +227,29 @@
      "error": "la tienda ha pedido un captcha; se reintentará en el próximo ciclo"
     }
    ],
-   "current": 69.9,
+   "current": 58.6,
    "history": [
     {
-     "t": 1793176403107,
-     "p": 69.9
+     "t": 1793201548732,
+     "p": 58.6
     }
    ],
    "coupons": [],
-   "specs": {},
+   "specs": {
+    "Género": "Simulator, Sport, Non-fiction",
+    "Desarrolladora": "EA Vancouver",
+    "Lanzamiento": "2026-09-25"
+   },
    "reviews": {
     "rating": null,
     "n": 0,
     "src": "sin reseñas todavía",
     "pros": [],
     "cons": []
-   }
+   },
+   "artTried": 1793201499726,
+   "art": "https://images.igdb.com/igdb/image/upload/t_1080p/ar6b8p.jpg",
+   "igdb": 408819
   }
  ],
  "alerts": [],
@@ -241,8 +263,8 @@
   "intervalMin": 60
  },
  "stats": {
-  "cycles": 5,
-  "requests": 126
+  "cycles": 6,
+  "requests": 157
  },
  "logs": [
   {
@@ -658,6 +680,126 @@
    "level": "ok",
    "src": "parser",
    "msg": "Marvel's Wolverine: 75,00 € → 71,63 € en Amazon · 63.67 s"
+  },
+  {
+   "t": 1793201438201,
+   "level": "info",
+   "src": "cron",
+   "msg": "ciclo #6 · 2 trackers"
+  },
+  {
+   "t": 1793201498524,
+   "level": "warn",
+   "src": "Instant Gaming",
+   "msg": "Marvel's Wolverine (PS5): no encuentro «Marvel's Wolverine» para PS5"
+  },
+  {
+   "t": 1793201498524,
+   "level": "info",
+   "src": "Eneba",
+   "msg": "Marvel's Wolverine (PS5): 75 € · Marvel’s Wolverine (PS5) PSN Key EUROPE"
+  },
+  {
+   "t": 1793201498524,
+   "level": "warn",
+   "src": "Amazon",
+   "msg": "Marvel's Wolverine (PS5): la tienda ha pedido un captcha; se reintentará en el próximo ciclo"
+  },
+  {
+   "t": 1793201498524,
+   "level": "warn",
+   "src": "MediaMarkt",
+   "msg": "Marvel's Wolverine (PS5): no encuentro el precio en la página (¿es la ficha de un producto?)"
+  },
+  {
+   "t": 1793201498525,
+   "level": "warn",
+   "src": "Fnac",
+   "msg": "Marvel's Wolverine (PS5): la tienda ha pedido un captcha; se reintentará en el próximo ciclo"
+  },
+  {
+   "t": 1793201498525,
+   "level": "info",
+   "src": "El Corte Inglés",
+   "msg": "Marvel's Wolverine (PS5): 74.9 € · Marvel Lobezno PlayStation 5"
+  },
+  {
+   "t": 1793201498525,
+   "level": "info",
+   "src": "GAME",
+   "msg": "Marvel's Wolverine (PS5): 79.99 € · Marvel: Lobezno PS5"
+  },
+  {
+   "t": 1793201498525,
+   "level": "info",
+   "src": "Impact",
+   "msg": "Marvel's Wolverine (PS5): 74.9 € · Marvel Wolverine Lobezno PS5"
+  },
+  {
+   "t": 1793201498526,
+   "level": "info",
+   "src": "parser",
+   "msg": "Marvel's Wolverine: 71,63 € → 74,90 € en El Corte Inglés · 60.19 s"
+  },
+  {
+   "t": 1793201548731,
+   "level": "warn",
+   "src": "Instant Gaming",
+   "msg": "EA Sports FC 27 (PS5): no vende «EA Sports FC 27» para PS5, solo para otras plataformas"
+  },
+  {
+   "t": 1793201548732,
+   "level": "warn",
+   "src": "Eneba",
+   "msg": "EA Sports FC 27 (PS5): la ficha no tiene precio ahora mismo (sin vendedores o sin stock)"
+  },
+  {
+   "t": 1793201548732,
+   "level": "info",
+   "src": "Amazon",
+   "msg": "EA Sports FC 27 (PS5): 86.13 € · EA Sports FC 27 - PS5"
+  },
+  {
+   "t": 1793201548732,
+   "level": "info",
+   "src": "MediaMarkt",
+   "msg": "EA Sports FC 27 (PS5): 69.99 € · PS5 EA SPORTS FC™ 27 | MediaMarkt"
+  },
+  {
+   "t": 1793201548732,
+   "level": "warn",
+   "src": "Fnac",
+   "msg": "EA Sports FC 27 (PS5): la tienda ha pedido un captcha; se reintentará en el próximo ciclo"
+  },
+  {
+   "t": 1793201548732,
+   "level": "info",
+   "src": "El Corte Inglés",
+   "msg": "EA Sports FC 27 (PS5): 69.9 € · EA Sports FC27 PlayStation 5"
+  },
+  {
+   "t": 1793201548732,
+   "level": "info",
+   "src": "GAME",
+   "msg": "EA Sports FC 27 (PS5): 79.99 € · EA Sports FC 27 PS5"
+  },
+  {
+   "t": 1793201548732,
+   "level": "info",
+   "src": "Impact",
+   "msg": "EA Sports FC 27 (PS5): 72.9 € · EA Sports FC27 – Impact Game"
+  },
+  {
+   "t": 1793201548732,
+   "level": "info",
+   "src": "Chollometro",
+   "msg": "EA Sports FC 27 (PS5): 58.6 € · PS5 EA SPORTS FC 27 (MediaMarkt · código descuento app · 310°)"
+  },
+  {
+   "t": 1793201548732,
+   "level": "ok",
+   "src": "parser",
+   "msg": "EA Sports FC 27: 69,90 € → 58,60 € en Chollometro · 49.01 s"
   }
  ],
  "acciones": [
@@ -730,10 +872,10 @@
    "covers": "Keys · búsqueda automática",
    "host": "www.instant-gaming.com",
    "ok": 100,
-   "lat": 22635,
-   "last": 1793201013184,
+   "lat": 24918,
+   "last": 1793201522636,
    "status": "ok",
-   "runs": 2
+   "runs": 4
   },
   {
    "name": "Eneba",
@@ -741,21 +883,21 @@
    "covers": "Keys · búsqueda automática",
    "host": "www.eneba.com",
    "ok": 100,
-   "lat": 17851,
-   "last": 1793200990772,
+   "lat": 23422,
+   "last": 1793201520649,
    "status": "ok",
-   "runs": 1
+   "runs": 3
   },
   {
    "name": "Amazon",
    "kind": "navegador",
    "covers": "Búsqueda automática",
    "host": "www.amazon.es",
-   "ok": 100,
-   "lat": 18356,
-   "last": 1793201010410,
+   "ok": 29,
+   "lat": 15199,
+   "last": 1793201548721,
    "status": "ok",
-   "runs": 2
+   "runs": 7
   },
   {
    "name": "MediaMarkt",
@@ -763,10 +905,10 @@
    "covers": "Búsqueda automática",
    "host": "www.mediamarkt.es",
    "ok": 100,
-   "lat": 22691,
-   "last": 1793201030391,
+   "lat": 24926,
+   "last": 1793201516711,
    "status": "ok",
-   "runs": 3
+   "runs": 4
   },
   {
    "name": "Fnac",
@@ -774,10 +916,10 @@
    "covers": "Búsqueda automática",
    "host": "www.fnac.es",
    "ok": 0,
-   "lat": 23799,
-   "last": 1793201020700,
+   "lat": 25194,
+   "last": 1793201530029,
    "status": "warn",
-   "runs": 2
+   "runs": 4
   },
   {
    "name": "El Corte Inglés",
@@ -785,10 +927,10 @@
    "covers": "Búsqueda automática",
    "host": "www.elcorteingles.es",
    "ok": 100,
-   "lat": 30490,
-   "last": 1793201036551,
+   "lat": 42480,
+   "last": 1793201520668,
    "status": "ok",
-   "runs": 3
+   "runs": 2
   },
   {
    "name": "GAME",
@@ -796,8 +938,8 @@
    "covers": "Búsqueda automática",
    "host": "www.game.es",
    "ok": 100,
-   "lat": 25759,
-   "last": 1793201005866,
+   "lat": 808,
+   "last": 1793201503355,
    "status": "ok",
    "runs": 2
   },
@@ -807,8 +949,8 @@
    "covers": "Búsqueda automática",
    "host": "impactgame.es",
    "ok": 100,
-   "lat": 1733,
-   "last": 1793200975410,
+   "lat": 1117,
+   "last": 1793201504990,
    "status": "ok",
    "runs": 2
   },
@@ -818,10 +960,10 @@
    "covers": "Ofertas de la comunidad",
    "host": "www.chollometro.com",
    "ok": 100,
-   "lat": 1111,
-   "last": 1793200974595,
+   "lat": 576,
+   "last": 1793201503060,
    "status": "ok",
-   "runs": 2
+   "runs": 3
   },
   {
    "name": "Steam España",
@@ -839,10 +981,10 @@
   "running": true,
   "busy": false,
   "intervalMin": 60,
-  "cycles": 5,
-  "requests": 126,
-  "lastRun": 1793201322208,
-  "lastAction": "diagnostico"
+  "cycles": 6,
+  "requests": 157,
+  "lastRun": 1793201548733,
+  "lastAction": "ciclo"
  },
  "version": "github"
 }
