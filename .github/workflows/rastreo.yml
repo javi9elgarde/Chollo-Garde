@@ -67,7 +67,7 @@ jobs:
 
       - name: Ejecutar
         working-directory: backend
-        run: node src/cli.js "$CG_ACCION"
+        run: xvfb-run -a node src/cli.js "$CG_ACCION"
 
       - name: Guardar los datos
         if: always()

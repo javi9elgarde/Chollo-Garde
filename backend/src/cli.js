@@ -49,8 +49,36 @@ async function run() {
       if (out[ch] !== 'ok') throw new games.UserError(String(out[ch]).replace(/^error: /, ''));
       return 'prueba enviada';
     }
+    case 'diagnostico':
+      // Solo para depurar tiendas: abre cada dirección y escribe en el registro del workflow qué ha visto.
+      await diagnose(datos);
+      return 'diagnóstico en el registro del workflow';
     default:
       throw new games.UserError(`Acción desconocida: ${accion}`);
+  }
+}
+
+async function diagnose({ urls = [], match = '', modes = ['fetch', 'headless'] }) {
+  const re = match ? new RegExp(match, 'i') : null;
+  for (const mode of modes) {
+    if (mode === 'visible') { await closeBrowser(); process.env.BROWSER_VISIBLE = '1'; }
+    for (const url of urls.slice(0, 20)) {
+      let line = `[${mode}] ${url}\n`;
+      try {
+        const r = mode === 'fetch'
+          ? await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36', 'Accept-Language': 'es-ES,es;q=0.9' }, redirect: 'follow' }).then(async x => ({ status: x.status, url: x.url, html: await x.text() }))
+          : await (await import('./sources/browser.js')).render(url);
+        const html = r.html || '';
+        const links = [...new Set([...html.matchAll(/href=["']([^"']+)["']/gi)].map(m => m[1]))];
+        line += `  status ${r.status} · final ${r.url} · ${html.length} bytes · title «${(html.match(/<title[^>]*>([^<]*)/i)?.[1] || '').trim().slice(0, 100)}» · bloqueo ${(await import('./sources/web.js')).blocked(html, r.status)}\n`;
+        for (const f of html.matchAll(/<form\b([^>]*)>([\s\S]*?)<\/form>/gi)) {
+          const names = [...f[2].matchAll(/<input\b[^>]*name=["']([^"']+)/gi)].map(m => m[1]);
+          if (names.length) line += `  form ${(f[1].match(/action=["']([^"']*)/i)?.[1] || '-')} [${names.join(',')}]\n`;
+        }
+        line += `  ${links.length} enlaces; coinciden: ${(re ? links.filter(l => re.test(l)) : []).slice(0, 15).join(' | ')}\n`;
+      } catch (e) { line += `  ERROR ${e.message.split('\n')[0]}\n`; }
+      console.log(line);
+    }
   }
 }
 
@@ -66,7 +94,7 @@ const prevSources = new Map((db.sources || []).map(s => [s.name, s]));
 db.sources = actions.sourceRows().map(s => (s.runs ? s : prevSources.get(s.name) || s));
 db.logs = [...(db.logs || []), ...newLogs].slice(-300);
 db.engine = { running: true, busy: false, intervalMin: 60, cycles: db.stats.cycles, requests: db.stats.requests, lastRun: Date.now(), lastAction: accion };
-if (datos.reqId) {
+if (datos.reqId && accion !== 'diagnostico') {
   const entry = { id: String(datos.reqId).slice(0, 40), accion, ok: !error, error, at: Date.now(), secs: Math.round((Date.now() - t0) / 1000), ...(result && typeof result === 'object' ? result : { info: result }) };
   db.acciones = [entry, ...(db.acciones || [])].slice(0, 30);
 }
