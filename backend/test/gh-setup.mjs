@@ -13,3 +13,5 @@ web._setFetchers({ fetch: serve, render: serve });
 const { up } = await import('./fixtures.mjs');
 if (process.env.MOCK_GEMINI_QUOTA) up.geminiQuota = true;
 if (process.env.MOCK_STEAM_REVIEWS) up.steamReviews = true;
+if (process.env.MOCK_SEARCH_QUOTA) up.searchQuota = true;
+if (process.env.MOCK_UNKNOWN_GAME) up.unknownGame = true;

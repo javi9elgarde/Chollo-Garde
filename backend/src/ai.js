@@ -33,7 +33,10 @@ Devuelve SOLO JSON: {"score": entero 1-100 (100 = chollo real), "inflado": bool,
   reviews: `Resume en español de España lo que opinan los jugadores del juego que se indica, a partir de las reseñas que recibes. No inventes nada que no aparezca en ellas.
 Devuelve SOLO JSON: {"pros": [3 frases cortas], "contras": [3 frases cortas], "nota": número 0-5 con un decimal}`,
   reviewsSearch: `Busca en Google reseñas de usuarios y de prensa del videojuego que se indica, en la plataforma indicada, y resume lo que se dice. No inventes nada que no encuentres.
-Responde SOLO con un objeto JSON, sin texto alrededor: {"pros": [3 frases cortas en español], "contras": [3 frases cortas en español], "nota": número 0-5 con un decimal según la media de las valoraciones}`
+Responde SOLO con un objeto JSON, sin texto alrededor: {"pros": [3 frases cortas en español], "contras": [3 frases cortas en español], "nota": número 0-5 con un decimal según la media de las valoraciones}`,
+  // Sin búsqueda de Google (su cuota gratuita es mucho menor): lo que Gemini sabe de la acogida del juego.
+  reviewsKnown: `Resume en español de España lo que opinaron jugadores y prensa del videojuego que se indica, en la plataforma indicada, según lo que sabes. Si no conoces el juego o todavía no tiene reseñas, devuelve listas vacías y "nota": null. No inventes.
+Devuelve SOLO JSON: {"pros": [3 frases cortas], "contras": [3 frases cortas], "nota": número 0-5 con un decimal o null}`
 };
 
 // ---------- cliente de Gemini ----------
@@ -78,7 +81,7 @@ export async function generate({ system, prompt, history = [], json = true, sear
     get().stats.requests++;
     let res;
     try {
-      res = await fetch(`${config.gemini.base}/models/${m}:generateContent`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': config.gemini.key }, body: JSON.stringify(body), signal: AbortSignal.timeout(90000) });
+      res = await fetch(`${config.gemini.base}/models/${m}:generateContent`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': config.gemini.key }, body: JSON.stringify(body), signal: AbortSignal.timeout(180000) });
     } catch (e) {
       if (attempt < 1) { await sleep(3000); continue; }
       throw new AiError(`Sin respuesta de Gemini: ${e.message}`);
@@ -173,12 +176,24 @@ export async function analyzeReviews(it) {
     r = await generate({ system: PROMPTS.reviews, prompt: JSON.stringify({ juego: it.title, plataforma: it.platform, resenas_de_steam: texts }) });
     src = 'Steam';
   } else {
-    r = await generate({ system: PROMPTS.reviewsSearch, prompt: `Juego: «${it.title}». Plataforma: ${it.platform}.`, search: true });
-    src = r.sources.slice(0, 3).join(', ') || 'Google';
+    const prompt = `Juego: «${it.title}». Plataforma: ${it.platform}.`, db = get();
+    if (!(db.ai?.searchOffUntil > Date.now())) {
+      try {
+        r = await generate({ system: PROMPTS.reviewsSearch, prompt, search: true });
+        src = r.sources.slice(0, 3).join(', ') || 'Google';
+      } catch (e) {
+        // La búsqueda de Google tiene su propia cuota: si se agota, un día sin ella.
+        if (!/Cuota/.test(e.message)) throw e;
+        db.ai = { ...db.ai, searchOffUntil: Date.now() + DAY };
+        log('warn', 'gemini', 'cuota de la búsqueda de Google agotada: las reseñas de consola salen de lo que sabe Gemini durante un día');
+      }
+    }
+    if (!r) { r = await generate({ system: PROMPTS.reviewsKnown, prompt }); src = 'lo que sabe Gemini'; }
   }
   const pros = strs(r.data.pros, 3, 140), cons = strs(r.data.contras, 3, 140);
-  if (!pros.length && !cons.length) throw new AiError('Gemini no ha encontrado reseñas');
   const rev = it.reviews || { rating: null, n: 0 };
+  // Sin reseñas todavía (juego recién salido): se vuelve a mirar en un día, no en cada ciclo.
+  if (!pros.length && !cons.length) { it.reviews = { ...rev, ai: { at: Date.now(), model: r.model, from: null } }; throw new AiError('Gemini no ha encontrado reseñas todavía'); }
   const nota = num(r.data.nota, 0, 5, null);
   it.reviews = {
     ...rev, pros, cons,
@@ -190,7 +205,7 @@ export async function analyzeReviews(it) {
 }
 
 const needsDeal = (it, now) => !it.ai || it.ai.v !== VERSION || it.ai.price !== it.current || now - it.ai.at > DAY;
-const needsReviews = (it, now) => !it.reviews?.ai || now - it.reviews.ai.at > 7 * DAY;
+const needsReviews = (it, now) => !it.reviews?.ai || now - it.reviews.ai.at > (it.reviews.ai.from ? 7 : 1) * DAY;
 
 // Después de cada ciclo: analiza los juegos cuyo precio ha cambiado o cuyo análisis tiene más de un día.
 // `force`: el botón «Regenerar» del panel (rehace las dos cosas de ese tracker).
@@ -201,8 +216,8 @@ export async function refresh(list, { force = false } = {}) {
   const deals = games.filter(t => force || needsDeal(t, now)).slice(0, LIMITS.deals);
   const reviews = games.filter(t => force || needsReviews(t, now)).slice(0, LIMITS.reviews);
   const res = { ok: 0, failed: 0, error: null };
-  const step = async (it, fn, what) => {
-    try { await fn(it); res.ok++; return true; } catch (e) {
+  const step = async (it, fn, what, done) => {
+    try { await fn(it); res.ok++; done(); return true; } catch (e) {
       res.failed++; res.error = e.message;
       log('warn', 'gemini', `${it.title}: ${what} · ${e.message}`);
       return !/Cuota|no es válida|Falta/.test(e.message); // sin cuota o sin clave no se sigue
@@ -210,13 +225,11 @@ export async function refresh(list, { force = false } = {}) {
   };
   let go = true;
   for (const it of deals) {
-    if (!(go = await step(it, analyzeDeal, 'Deal Index'))) break;
-    log('ai', 'gemini', `${it.title}: Deal Index ${it.ai.score}/100 · ${it.ai.recomendacion.replace('_', ' ').toLowerCase()} (${Math.round(it.ai.confianza * 100)} %)`);
+    if (!(go = await step(it, analyzeDeal, 'Deal Index', () => log('ai', 'gemini', `${it.title}: Deal Index ${it.ai.score}/100 · ${it.ai.recomendacion.replace('_', ' ').toLowerCase()} (${Math.round(it.ai.confianza * 100)} %)`)))) break;
   }
   for (const it of go ? reviews : []) {
-    if (!(go = await step(it, analyzeReviews, 'reseñas'))) break;
-    log('ai', 'gemini', `${it.title}: resumen de reseñas (${it.reviews.ai.from})`);
+    if (!(go = await step(it, analyzeReviews, 'reseñas', () => log('ai', 'gemini', `${it.title}: resumen de reseñas (${it.reviews.ai.from})`)))) break;
   }
-  db.ai = { on: true, model: modelName(), lastRun: now, ok: res.ok, failed: res.failed, error: res.error && !res.ok ? res.error : null };
+  db.ai = { on: true, model: modelName(), lastRun: now, ...(db.ai?.searchOffUntil > now && { searchOffUntil: db.ai.searchOffUntil }), ok: res.ok, failed: res.failed, error: res.error && !res.ok ? res.error : null };
   return res;
 }

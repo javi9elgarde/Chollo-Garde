@@ -80,3 +80,22 @@ test('JSON con texto alrededor e histórico de un punto por día', () => {
   assert.equal(p.tiendas.length, 1);
   assert.equal(p.minimo_registrado, 40);
 });
+
+test('sin cuota para la búsqueda de Google: reseñas con lo que sabe Gemini y un día sin búsqueda', () => {
+  const { cli, read } = setup({ MOCK_SEARCH_QUOTA: '1' });
+  cli('crear', JSON.stringify({ reqId: 'g1', title: 'Hades II', platform: 'PC', target: 10 }));
+  const db = read();
+  assert.ok(db.trackers[0].ai, 'el Deal Index sale igual');
+  assert.deepEqual(db.trackers[0].reviews.pros, ['Lo que sabe Gemini']);
+  assert.equal(db.trackers[0].reviews.ai.from, 'lo que sabe Gemini');
+  assert.ok(db.ai.searchOffUntil > Date.now());
+});
+
+test('juego sin reseñas: no se reintenta en cada ciclo', () => {
+  const { cli, read } = setup({ MOCK_SEARCH_QUOTA: '1', MOCK_UNKNOWN_GAME: '1' });
+  cli('crear', JSON.stringify({ reqId: 'u1', title: 'Hades II', platform: 'PC', target: 10 }));
+  const at = read().trackers[0].reviews.ai.at;
+  assert.equal(read().trackers[0].reviews.ai.from, null);
+  cli('ciclo');
+  assert.equal(read().trackers[0].reviews.ai.at, at);
+});

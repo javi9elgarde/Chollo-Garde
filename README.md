@@ -180,7 +180,7 @@ npm test       # pruebas de extremo a extremo con las tiendas y APIs simuladas
 - Si una tienda protegida falla a menudo, pon `BROWSER_VISIBLE=1` en `backend/.env`, reinicia y resuelve el captcha una vez en la ventana de Edge: las cookies se guardan en `data/navegador`.
 - Las keys de Instant Gaming y Eneba son de revendedores: revisa región y plataforma antes de comprar.
 - El histórico empieza el día que creas el tracker. Con pocos días, Gemini lo dice y baja la confianza de su recomendación.
-- Gemini gratis tiene un límite diario: se analiza un juego solo cuando cambia su precio o pasa un día (como mucho 12 por ciclo) y las reseñas una vez por semana. Si se agota, ese ciclo se queda con el análisis anterior.
+- Gemini gratis tiene un límite diario: se analiza un juego solo cuando cambia su precio o pasa un día (como mucho 12 por ciclo) y las reseñas una vez por semana. Si se agota, ese ciclo se queda con el análisis anterior. La búsqueda de Google (reseñas de consola) tiene una cuota gratuita menor: si se agota, durante un día las reseñas salen de lo que sabe Gemini, sin búsqueda.
 
 ## Siguientes pasos
 
