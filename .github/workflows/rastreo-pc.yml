@@ -29,6 +29,9 @@ jobs:
       CG_MODO: pc
       DATA_DIR: ${{ github.workspace }}/datos
       BROWSER_CHANNEL: msedge,chrome
+      # Con el navegador oculto las tiendas piden captcha casi siempre: se abre de verdad, fuera de la pantalla.
+      BROWSER_VISIBLE: '1'
+      BROWSER_OFFSCREEN: '1'
     defaults:
       run:
         shell: bash
