@@ -40,6 +40,12 @@ export function score(candidate, title, platform, { retail = false, loose = fals
   const sig = q.filter(t => !NEUTRAL.has(t)).length;
   if (!q.length) return null;
   if (missing.length && (!loose || missing.some(t => /\d/.test(t)) || missing.filter(t => !NEUTRAL.has(t)).length > Math.floor(sig / 4))) return null;
+  // Otro número junto a la misma palabra («Vol. 1» al buscar «Vol. 2», «FC 26» al buscar «FC 27»): es otro
+  // juego o un pack con otro juego, aunque también lleve el que se busca.
+  // Solo números cortos: los códigos de producto de las direcciones («ppsa01234», «1621005») no cuentan.
+  const numPairs = list => list.flatMap((t, i) => (/^[a-z]+$/.test(t) && /^\d{1,3}$/.test(list[i + 1] || '') ? [[t, list[i + 1]]] : /^([a-z]+)(\d{1,3})$/.test(t) ? [t.match(/^([a-z]+)(\d+)$/).slice(1)] : []));
+  const nums = new Map(numPairs(q)), pairs = numPairs(c);
+  if (pairs.some(([w, n]) => nums.has(w) && nums.get(w) !== n)) return null;
   const plat = PLATFORMS[platform] || [];
   if (plat.length && !plat.some(k => cs.includes(' ' + k + ' '))) return null;
   // «Switch» no vale para un juego de Switch 2 (y al revés ya lo filtra la lista de arriba).

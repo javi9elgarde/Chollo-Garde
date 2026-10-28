@@ -3,12 +3,14 @@
 //   El Corte Inglés, GAME e Impact. La ficha encontrada se recuerda y en cada ciclo solo se relee su precio.
 // - Enlaces opcionales: para otra tienda o para corregir la versión que haya elegido una búsqueda.
 // - Steam España (solo PC): precio oficial de referencia, reseñas y Steam Deck.
+// - PlayStation Store (PS5 y PS4): precio oficial de referencia y precio de lanzamiento.
 import crypto from 'node:crypto';
 import * as steam from './sources/steam.js';
 import * as keyshops from './sources/keyshops.js';
 import * as web from './sources/web.js';
 import * as retail from './sources/retail.js';
 import * as chollometro from './sources/chollometro.js';
+import * as psstore from './sources/psstore.js';
 import * as rawg from './sources/rawg.js';
 import * as igdb from './sources/igdb.js';
 import * as pc from './pcdata.js';
@@ -52,11 +54,16 @@ async function steamInfo(spec) {
   return { appId, det };
 }
 
+// La ficha de un ciclo anterior se reutiliza mientras su nombre siga valiendo con las reglas actuales
+// (así se corrige sola una ficha mal elegida por una versión anterior, como un pack con otro juego).
+// La plataforma ya se comprobó al buscarla: muchas fichas no la llevan en el nombre.
+const fits = (p, title) => !p.match || p.type === 'deal' || keyshops.score(p.match, title, null, { retail: p.type !== 'key', loose: true }) !== null;
+
 // Una tienda con búsqueda automática: si ya se encontró la ficha, solo se relee su precio;
 // si esa ficha ya no vale (retirada, sin precio…), se vuelve a buscar.
 async function findIn(name, title, platform, prev, reject = []) {
   const type = KEY_NAMES.includes(name) ? 'key' : 'retail';
-  const known = prev.find(p => p.name === name && p.auto && p.url && !reject.includes(p.url));
+  const known = prev.find(p => p.name === name && p.auto && p.url && !reject.includes(p.url) && fits(p, title));
   if (known) {
     try {
       const p = await web.product(known.url);
@@ -91,6 +98,10 @@ export async function quote(spec, prev = [], { trackerId = null } = {}) {
     links = links.filter(l => !fromPc.some(s => !s.auto && s.url === l));
     stores.push(...fromPc.map(s => ({ ...s, via: 'pc' })));
   }
+  // En PlayStation la tienda oficial es la PS Store (también la mira tu PC: a GitHub a veces le pide captcha).
+  // Si falla, se queda su último precio como referencia.
+  const psFromPc = stores.some(s => s.name === 'PS Store' && s.via === 'pc');
+  const official = !psstore.covers(spec.platform) || psFromPc ? null : psstore.find(title, spec.platform).catch(e => ({ name: 'PS Store', type: 'official', error: e.message }));
   // Chollometro: ofertas compartidas por la gente, si el tracker busca solo en tiendas. Si no hay ninguna activa, no aparece.
   const deal = mode === 'pc' || !spec.shops.length ? null : chollometro.find(title, spec.platform).catch(e => (/ninguna oferta|no ha devuelto/.test(e.message) ? null : { name: 'Chollometro', type: 'deal', error: e.message }));
   const fromLinks = links.map(async link => {
@@ -103,13 +114,15 @@ export async function quote(spec, prev = [], { trackerId = null } = {}) {
   stores.push(...await Promise.all([...auto.map(n => findIn(n, title, spec.platform, prev, spec.reject?.[n] || [])), ...fromLinks]));
   const d = await deal;
   if (d) stores.push(d);
+  const off = await official;
+  if (off) stores.push(off);
   for (const s of stores) {
     image = image || s.image || null;
     delete s.image;
     // Si una tienda falla, se conserva su último precio como referencia, pero no cuenta para alertas.
     if (s.error) {
-      const old = prev.find(p => p.name === s.name && (!s.url || p.url === s.url) && p.price);
-      if (old) Object.assign(s, { price: old.price, url: s.url || old.url, match: old.match, stale: true });
+      const old = prev.find(p => p.name === s.name && (!s.url || p.url === s.url) && p.price && (!p.auto || fits(p, title)));
+      if (old) Object.assign(s, { price: old.price, url: s.url || old.url, match: old.match, stale: true, ...(old.initial && { initial: old.initial }) });
     }
   }
   // Una línea por tienda en el registro: así se ve qué ha encontrado cada una o por qué ha fallado.
@@ -263,7 +276,7 @@ export function updateSources(it, b) {
   it.stores = (it.stores || []).filter(s => s.type === 'official' || s.type === 'deal' || (s.auto ? it.shops.includes(s.name) && !linked.has(s.name) && !rejected(s) : it.links.includes(s.url)));
 }
 
-// Runner del PC: precios de Amazon, Fnac y El Corte Inglés para un tracker (los guarda pcdata.js).
+// Runner del PC: precios de Amazon, Fnac, El Corte Inglés y la PS Store para un tracker (los guarda pcdata.js).
 export async function pcQuote(it) {
   migrate(it);
   return (await quote(specOf(it), it.stores || [])).stores;

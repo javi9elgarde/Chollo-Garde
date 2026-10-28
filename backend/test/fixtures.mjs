@@ -57,6 +57,11 @@ export const pages = url => {
     const t = (id, title, price, extra = {}) => `<div data-vue3='${JSON.stringify({ name: 'ThreadMainListItemNormalizer', props: { thread: { threadId: id, titleSlug: title.toLowerCase().replace(/[^a-z0-9]+/g, '-'), title, status: 'Activated', isExpired: false, temperature: 250.4, price, shipping: { isFree: 1, price: 0 }, publishedAt: Math.floor(Date.now() / 1000) - 3600, voucherCode: '', merchant: { merchantName: 'Amazon' }, ...extra } } }).replace(/'/g, '&#039;')}'></div>`;
     return t('1', 'Hades II PC por 12€', 12, { isExpired: true }) + t('2', "Hades II PS5 (edición física)", 15) + t('3', 'Hades II para PC (Steam) a su precio mínimo', 21) + t('4', 'Funda Hades II', 5);
   }
+  if (url.startsWith('https://store.playstation.com/es-es/search/')) return `<ul><li><a href="/es-es/product/EP0001-PPSA01234_00-HADES2SOUNDTRACK"><span>Hades II Soundtrack</span><span>9,99 €</span></a></li>
+    <li><a href="/es-es/product/EP0001-CUSA01234_00-HADES2000000000"><span>Hades II</span><span>29,99 €</span></a></li>
+    <li><a href="/es-es/product/EP0001-PPSA01234_00-HADES2000000000"><span>Hades II</span><span>23,99 €</span></a></li></ul>`;
+  if (url === 'https://store.playstation.com/es-es/product/EP0001-PPSA01234_00-HADES2000000000') return ld({ '@type': 'Product', name: 'Hades II', offers: { '@type': 'Offer', price: 23.99, priceCurrency: 'EUR' } })
+    + '<script id="__NEXT_DATA__">{"price":{"__typename":"Price","basePrice":"9,99 €","discountedPrice":"9,99 €","basePriceValue":999,"discountedValue":999},"price":{"__typename":"Price","basePrice":"29,99 €","discountedPrice":"23,99 €","basePriceValue":2999,"discountedValue":2399}}</script>';
   if (url.startsWith('https://www.fnac.es/')) return '<html><script src="https://ct.captcha-delivery.com/c.js"></script></html>';
   return null;
 };
