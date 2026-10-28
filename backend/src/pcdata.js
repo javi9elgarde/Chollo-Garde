@@ -1,4 +1,4 @@
-// Modo mixto (GitHub + tu PC). Amazon, Fnac y El Corte Inglés piden captcha a los servidores de GitHub,
+// Modo mixto (GitHub + tu PC). Amazon, Fnac, El Corte Inglés y a veces la PS Store piden captcha a los servidores de GitHub,
 // así que esas tres las revisa un runner de GitHub instalado en el PC de Javi, con la conexión de casa
 // (workflow rastreo-pc.yml). El PC solo escribe pc.json en la rama «datos»; el ciclo de GitHub lo lee
 // y usa esos precios mientras sean recientes. Si el PC lleva horas apagado, GitHub vuelve a probar él.
@@ -9,7 +9,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { config } from './config.js';
 
-export const PC_SHOPS = ['Amazon', 'Fnac', 'El Corte Inglés'];
+export const PC_SHOPS = ['Amazon', 'Fnac', 'El Corte Inglés', 'PS Store'];
 export const FRESH_MS = 3 * 60 * 60e3;
 export const mode = () => (['nube', 'pc'].includes(process.env.CG_MODO) ? process.env.CG_MODO : '');
 

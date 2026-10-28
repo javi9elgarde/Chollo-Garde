@@ -35,7 +35,7 @@ jobs:
       # Lo que manda el panel va siempre por variables de entorno, nunca pegado en los comandos.
       CG_ACCION: ${{ github.event.inputs.accion || 'ciclo' }}
       CG_DATOS: ${{ github.event.inputs.datos || '{}' }}
-      # Modo mixto: Amazon, Fnac y El Corte Inglés se leen de pc.json si tu PC los ha revisado hace poco.
+      # Modo mixto: Amazon, Fnac, El Corte Inglés y la PS Store se leen de pc.json si tu PC los ha revisado hace poco.
       CG_MODO: nube
       BROWSER_CHANNEL: chrome
       # Con pantalla virtual (xvfb): las tiendas bloquean mucho más al navegador oculto.

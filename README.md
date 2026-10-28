@@ -38,7 +38,7 @@ Pasos (solo una vez):
 
 Cómo funciona: `.github/workflows/rastreo.yml` ejecuta `backend/src/cli.js`, que guarda los trackers, el histórico y las alertas en `db.json`, en la rama `datos`. El panel lee ese fichero y, cuando creas o cambias algo, lanza el mismo workflow con tu token. Cada petición tarda de 2 a 5 minutos, y los precios se revisan cada hora (GitHub a veces lo retrasa unos minutos).
 
-### Modo mixto: tu PC revisa Amazon, Fnac y El Corte Inglés (sin captchas)
+### Modo mixto: tu PC revisa Amazon, Fnac, El Corte Inglés y la PS Store (sin captchas)
 
 Esas tres tiendas piden captcha a los servidores de GitHub. Desde la conexión de casa no. Con el modo mixto, un "runner" de GitHub instalado en tu PC revisa solo esas tres tiendas cada hora (workflow «Rastreo desde tu PC») y sube los precios a `pc.json`, en la rama `datos`. El ciclo de GitHub usa esos precios si son de las últimas 3 horas; con el PC apagado, GitHub lo intenta él como hasta ahora. En la ficha de cada juego verás «desde tu PC» al lado de esas tiendas.
 
@@ -51,6 +51,8 @@ Pasos (solo una vez, en el PC con Windows):
    - **etiquetas adicionales: `chollogarde-pc`** (importante);
    - «Would you like to run the runner as service?»: **Y** (así arranca solo con Windows).
 4. En *Actions → Rastreo desde tu PC → Run workflow* lánzalo una vez para comprobar que funciona. Después se ejecuta solo cada hora mientras el PC esté encendido.
+
+Si usas un VPN o **Cloudflare WARP / Cloudflare One** en el PC, estas tiendas ven una IP de Cloudflare y la bloquean (Fnac enseña «El acceso está restringido temporalmente»). Desconéctalo o excluye de él fnac.es, amazon.es, elcorteingles.es y store.playstation.com («túnel dividido»).
 
 Si el PC está apagado mucho tiempo, GitHub deja una sola ejecución esperando; si pasa más de 24 h sin poder ejecutarla, la cancela y te avisa por correo. No es un error de CholloGarde.
 
@@ -177,7 +179,7 @@ npm test       # pruebas de extremo a extremo con las tiendas y APIs simuladas
 
 ## Siguientes pasos
 
-- **PS Store, eShop y Xbox** como referencia oficial en consola.
+- **eShop y Xbox Store** como referencia oficial en Switch y Xbox (la PS Store ya está).
 - **Productos:** Keepa para Amazon (de pago) y un scraper con navegador para PcComponentes, AliExpress y El Corte Inglés.
 - **Vuelos:** conector para Skyscanner, Google Flights o Kayak.
 - **Fase 3:** Gemini detrás de `/api/ai/:task`.

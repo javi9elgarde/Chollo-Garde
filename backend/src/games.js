@@ -86,8 +86,6 @@ export async function quote(spec, prev = [], { trackerId = null } = {}) {
   const title = spec.title || st?.det?.name;
   if (!title) throw new UserError('Escribe el nombre del juego.');
   if (st?.det?.price) stores.push({ name: 'Steam', type: 'official', price: st.det.price.price, initial: st.det.price.initial, url: steam.appUrl(st.appId) });
-  // En PlayStation la tienda oficial es la PS Store. Si falla, se queda su último precio como referencia.
-  const official = mode === 'pc' || !psstore.covers(spec.platform) ? null : psstore.find(title, spec.platform).catch(e => ({ name: 'PS Store', type: 'official', error: e.message }));
   let image = st?.det?.image || null;
   // Un enlace pegado manda sobre la búsqueda automática en esa tienda.
   const linked = new Set(spec.links.map(l => shopFor(l).name));
@@ -100,6 +98,10 @@ export async function quote(spec, prev = [], { trackerId = null } = {}) {
     links = links.filter(l => !fromPc.some(s => !s.auto && s.url === l));
     stores.push(...fromPc.map(s => ({ ...s, via: 'pc' })));
   }
+  // En PlayStation la tienda oficial es la PS Store (también la mira tu PC: a GitHub a veces le pide captcha).
+  // Si falla, se queda su último precio como referencia.
+  const psFromPc = stores.some(s => s.name === 'PS Store' && s.via === 'pc');
+  const official = !psstore.covers(spec.platform) || psFromPc ? null : psstore.find(title, spec.platform).catch(e => ({ name: 'PS Store', type: 'official', error: e.message }));
   // Chollometro: ofertas compartidas por la gente, si el tracker busca solo en tiendas. Si no hay ninguna activa, no aparece.
   const deal = mode === 'pc' || !spec.shops.length ? null : chollometro.find(title, spec.platform).catch(e => (/ninguna oferta|no ha devuelto/.test(e.message) ? null : { name: 'Chollometro', type: 'deal', error: e.message }));
   const fromLinks = links.map(async link => {
@@ -274,7 +276,7 @@ export function updateSources(it, b) {
   it.stores = (it.stores || []).filter(s => s.type === 'official' || s.type === 'deal' || (s.auto ? it.shops.includes(s.name) && !linked.has(s.name) && !rejected(s) : it.links.includes(s.url)));
 }
 
-// Runner del PC: precios de Amazon, Fnac y El Corte Inglés para un tracker (los guarda pcdata.js).
+// Runner del PC: precios de Amazon, Fnac, El Corte Inglés y la PS Store para un tracker (los guarda pcdata.js).
 export async function pcQuote(it) {
   migrate(it);
   return (await quote(specOf(it), it.stores || [])).stores;
