@@ -80,7 +80,7 @@ export function igCandidates(html) {
 }
 
 export async function instantGaming(title, platform) {
-  const search = async term => igCandidates((await web.page(`https://www.instant-gaming.com/es/busquedas/?q=${encodeURIComponent(term)}`, { waitFor: '.item' })).html);
+  const search = async term => igCandidates((await web.page(`https://www.instant-gaming.com/es/busquedas/?q=${encodeURIComponent(term)}`, { forceBrowser: true, waitFor: 'a[href*="-comprar-"]' })).html);
   const best = await searchKeys(search, title, platform);
   let price = best.price, out = false, img = null;
   if (!price) ({ price, out, image: img } = await web.product(best.url));

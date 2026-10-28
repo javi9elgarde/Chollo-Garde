@@ -79,6 +79,7 @@ async function diagnose({ urls = [], match = '', modes = ['fetch', 'headless'] }
         try { const x = web.extract(html, r.url); line += `  ficha: ${x.price} € «${x.title}» agotado=${x.out}\n`; } catch (e) { line += `  ficha: ${e.message}\n`; }
         const ld = [...html.matchAll(/application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)].map(m => m[1].match(/"@type"\s*:\s*"([^"]+)"/g)?.join(',')).join(' / ');
         line += `  ld+json: ${ld.slice(0, 300)}\n  precios: ${[...html.matchAll(/.{0,60}(?:"price"|itemprop="price"|"lowPrice"|"amount"|€).{0,60}/g)].slice(0, 6).map(m => m[0].replace(/\s+/g, ' ')).join(' ‖ ').slice(0, 900)}\n`;
+        const wv = web.wooVariations(html); if (wv.length || /data-product_variations/.test(html)) line += `  variantes: ${JSON.stringify(wv).slice(0, 400)} · bruto: ${(html.match(/data-product_variations=.{0,300}/)?.[0] || '').replace(/\s+/g, ' ')}\n`;
         if (/instant-gaming/.test(url)) line += `  candidatos IG: ${ks.igCandidates(html).slice(0, 8).map(c => c.label).join(' | ')}\n`;
         if (/eneba/.test(url)) line += `  candidatos Eneba: ${ks.enebaCandidates(html).slice(0, 8).map(c => c.label).join(' | ')}\n`;
         line += `  ${links.length} enlaces; coinciden: ${(re ? links.filter(l => re.test(l)) : []).slice(0, 15).join(' | ')}\n`;
