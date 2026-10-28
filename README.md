@@ -62,6 +62,10 @@ Las tarjetas de juegos usan el arte apaisado de IGDB, la fuente por defecto del 
 
 El `schedule` de GitHub es aproximado y a veces se salta horas enteras. El workflow «Reloj (ciclo cada hora)» se queda en marcha casi 6 horas lanzando «Rastreo de precios» cada hora y, al acabar, se vuelve a lanzar solo. Para arrancarlo la primera vez: *Actions → Reloj → Run workflow*. Para pararlo: *Disable workflow*.
 
+### Tienda oficial: Steam y PS Store
+
+En PC la referencia es Steam y en PS5 y PS4 la PlayStation Store. Su precio sale en la ficha como «Tienda oficial»: la columna «vs oficial» compara cada tienda con ella, y su precio base (sin rebaja) se usa como precio de lanzamiento para calcular el descuento real.
+
 ### Chollometro
 
 Además de las tiendas, cada juego se busca en Chollometro. Si hay una oferta activa de ese juego y plataforma (de los últimos 45 días, sin caducar), aparece como una tienda más, con la tienda de la oferta, el código de descuento si lo lleva y los grados. Cuenta para el precio actual y para las alertas: si alguien publica el juego por debajo de tu objetivo, te avisa.

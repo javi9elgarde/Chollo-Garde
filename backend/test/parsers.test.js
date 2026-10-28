@@ -163,3 +163,24 @@ test('«Ninguno es»: se guardan los descartes y se olvida esa ficha', () => {
   assert.equal(it.reject.MediaMarkt.length, 2);
   assert.deepEqual(it.stores.map(s => s.name), ['GAME']);
 });
+
+test('un pack con otro número no vale («Vol. 1 + Vol. 2» al buscar el Vol. 2)', () => {
+  const t = 'Metal Gear Solid Master Collection Vol. 2';
+  assert.equal(score('Metal Gear Solid Master Collection Vol. 1 - PS5+Metal Gear Solid: Master Collection Volume 2 – Day One Edition - PS5', t, 'PS5', { retail: true }), null);
+  assert.ok(score('Metal Gear Solid: Master Collection Volume 2 – Day One Edition - PS5', t, 'PS5', { retail: true }) > 0);
+  assert.equal(score('EA SPORTS FC 26 + FC 27 PS5', 'EA Sports FC 27', 'PS5'), null);
+  assert.ok(score('EA Sports FC27 PlayStation 5', 'EA Sports FC 27', 'PS5') > 0);
+});
+
+test('PS Store: ficha de PS5 (no la de PS4 ni la banda sonora), precio actual y de lanzamiento', async () => {
+  const web = await import('../src/sources/web.js');
+  const { serve } = await import('./fixtures.mjs');
+  web._setFetchers({ fetch: serve, render: serve });
+  const ps = await import('../src/sources/psstore.js');
+  const r = await ps.find('Hades II', 'PS5');
+  assert.equal(r.url, 'https://store.playstation.com/es-es/product/EP0001-PPSA01234_00-HADES2000000000');
+  assert.equal(r.type, 'official');
+  assert.equal(r.price, 23.99);
+  assert.equal(r.initial, 29.99, 'precio base, sin la rebaja');
+  assert.equal(ps.covers('PC'), false);
+});
