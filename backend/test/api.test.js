@@ -64,7 +64,7 @@ test('vista previa: busca sola en todas las tiendas, elige la versión correcta 
   assert.equal(by.Amazon.url, 'https://www.amazon.es/dp/B0PCAAAAAA', 'ni la funda ni la de PS5');
   assert.equal(by.Amazon.price, 24.95);
   assert.equal(by.MediaMarkt.price, 26.99);
-  assert.equal(by.GAME.url, 'https://www.game.es/VIDEOJUEGOS/ROL/PC/HADES-II/231234', 'ni segunda mano ni PS5');
+  assert.equal(by.GAME.url, 'https://www.game.es/hades-ii-pc/231234', 'ni segunda mano ni PS5');
   assert.equal(by.GAME.price, 29.95);
   assert.equal(by.Impact.out, true, 'agotado: no cuenta como mejor precio');
   assert.match(by['El Corte Inglés'].error, /no ha devuelto productos/);
@@ -117,7 +117,7 @@ test('el motor actualiza el precio y dispara Telegram y Discord al llegar al obj
   assert.equal(it.history.length, 1, 'mismo día: se actualiza el punto, no se duplica');
   assert.match(it.lastError, /Fnac/);
   // Las fichas ya encontradas no se vuelven a buscar: solo se relee su precio.
-  for (const search of ['instant-gaming.com/es/busquedas', 'eneba.com/es/store', 'amazon.es/s?', 'mediamarkt.es/es/search', 'game.es/buscar', 'impactgame.es/busqueda']) assert.ok(!up.hits.some(u => u.includes(search)), search);
+  for (const search of ['instant-gaming.com/es/busquedas', 'eneba.com/es/store', 'amazon.es/s?', 'mediamarkt.es/es/search', 'game.es/resultados', 'impactgame.es/?s=']) assert.ok(!up.hits.some(u => u.includes(search)), search);
   assert.ok(up.hits.some(u => u.includes('elcorteingles.es/search')), 'la que no encontró nada se vuelve a buscar');
   assert.deepEqual(body.alerts[0].channels, { web: true, telegram: 'ok', discord: 'ok', email: 'off' });
   assert.equal(up.telegram.at(-1).method, 'sendPhoto');

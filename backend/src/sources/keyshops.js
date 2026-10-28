@@ -46,6 +46,19 @@ export function pick(cands, title, platform, opts) {
   return best;
 }
 
+// Busca primero «juego plataforma» (en consolas la primera página suele ser de otras plataformas) y luego solo el juego.
+async function searchKeys(search, title, platform) {
+  const terms = platform && platform !== 'PC' ? [`${title} ${platform}`, title] : [title];
+  let other = false;
+  for (const term of terms) {
+    const cands = await search(term);
+    const best = pick(cands, title, platform);
+    if (best) return best;
+    other ||= !!pick(cands, title, '');
+  }
+  throw new Error(other ? `no vende «${title}» para ${platform}, solo para otras plataformas` : `no encuentro «${title}» para ${platform}`);
+}
+
 // ---------- Instant Gaming ----------
 export function igCandidates(html) {
   const out = [], seen = new Set();
@@ -62,10 +75,8 @@ export function igCandidates(html) {
 }
 
 export async function instantGaming(title, platform) {
-  const url = `https://www.instant-gaming.com/es/busquedas/?q=${encodeURIComponent(title)}`;
-  const p = await web.page(url, { waitFor: '.item' });
-  const best = pick(igCandidates(p.html), title, platform);
-  if (!best) throw new Error(`no encuentro «${title}» para ${platform}`);
+  const search = async term => igCandidates((await web.page(`https://www.instant-gaming.com/es/busquedas/?q=${encodeURIComponent(term)}`, { waitFor: '.item' })).html);
+  const best = await searchKeys(search, title, platform);
   let price = best.price, out = false, img = null;
   if (!price) ({ price, out, image: img } = await web.product(best.url));
   return { name: 'Instant Gaming', type: 'key', url: best.url, price, out, match: best.title, image: img };
@@ -84,10 +95,8 @@ export function enebaCandidates(html) {
 }
 
 export async function eneba(title, platform) {
-  const url = `https://www.eneba.com/es/store/all?text=${encodeURIComponent(title)}`;
-  const p = await web.page(url, { forceBrowser: true, waitFor: 'a[href*="/es/"]' });
-  const best = pick(enebaCandidates(p.html), title, platform);
-  if (!best) throw new Error(`no encuentro «${title}» para ${platform}`);
+  const search = async term => enebaCandidates((await web.page(`https://www.eneba.com/es/store/all?text=${encodeURIComponent(term)}`, { forceBrowser: true, waitFor: 'a[href*="/es/"]' })).html);
+  const best = await searchKeys(search, title, platform);
   const prod = await web.product(best.url);
   return { name: 'Eneba', type: 'key', url: best.url, price: prod.price, out: prod.out, match: prod.title || best.title, image: prod.image };
 }

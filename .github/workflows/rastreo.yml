@@ -36,6 +36,8 @@ jobs:
       CG_ACCION: ${{ github.event.inputs.accion || 'ciclo' }}
       CG_DATOS: ${{ github.event.inputs.datos || '{}' }}
       BROWSER_CHANNEL: chrome
+      # Con pantalla virtual (xvfb): las tiendas bloquean mucho más al navegador oculto.
+      BROWSER_VISIBLE: '1'
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
       TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
       DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}

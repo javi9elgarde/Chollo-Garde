@@ -30,13 +30,14 @@ export const RETAIL = {
     browser: true, waitFor: 'a[href*="/videojuegos/A"]'
   },
   GAME: {
-    search: t => `https://www.game.es/buscar/${q(t)}`,
-    product: /\/\d{5,}\/?$/,
-    browser: false
+    search: t => `https://www.game.es/resultados?search=${q(t)}`,
+    product: /^\/[a-z0-9-]+\/\d{5,}\/?$/,
+    browser: true
   },
   Impact: {
-    search: t => `https://impactgame.es/busqueda?controller=search&s=${q(t)}`,
-    product: null,
+    // WooCommerce: si solo hay un resultado, el buscador lleva directamente a la ficha.
+    search: t => `https://impactgame.es/?s=${q(t)}&post_type=product`,
+    product: /^\/producto\/[^/]+\/?$/,
     browser: false
   }
 };
@@ -77,16 +78,28 @@ export function candidates(html, pageUrl, shop) {
   return [...out.values()].map(c => ({ ...c, label: `${c.label} ${decodeURIComponent(new URL(c.url).pathname).replace(/[-_/]+/g, ' ')}`, title: c.title.slice(0, 160) }));
 }
 
+// Si el buscador ha llevado directamente a una ficha de producto, esa ficha es el único candidato.
+function selfCandidate(p, shop) {
+  const u = new URL(p.url);
+  const isProduct = shop.product ? shop.product.test(u.pathname) : /"@type"\s*:\s*"Product"|og:type["'][^>]*content=["']product/i.test(p.html);
+  if (!isProduct) return [];
+  const t = text(p.html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i)?.[1] || p.html.match(/<title[^>]*>([^<]*)/i)?.[1] || '');
+  return [{ url: u.origin + u.pathname, label: `${t} ${decodeURIComponent(u.pathname).replace(/[-_/]+/g, ' ')}`, title: t.slice(0, 160) }];
+}
+const search = async (shop, term) => {
+  const p = await web.page(shop.search(term), { forceBrowser: shop.browser, waitFor: shop.waitFor });
+  const c = candidates(p.html, p.url, shop);
+  return c.length ? c : selfCandidate(p, shop);
+};
+
 // Busca el juego en una tienda y lee el precio de la mejor ficha. Lanza un error explicando qué ha fallado.
 export async function find(name, title, platform) {
   const shop = RETAIL[name];
-  const p = await web.page(shop.search(`${title} ${platform}`), { forceBrowser: shop.browser, waitFor: shop.waitFor });
-  let cands = candidates(p.html, p.url, shop);
+  let cands = await search(shop, `${title} ${platform}`);
   let best = pick(cands, title, platform, { retail: true });
   if (!best) {
     // Algunas tiendas no encuentran nada si se añade la plataforma: se repite solo con el nombre.
-    const p2 = await web.page(shop.search(title), { forceBrowser: shop.browser, waitFor: shop.waitFor });
-    cands = candidates(p2.html, p2.url, shop);
+    cands = await search(shop, title);
     best = pick(cands, title, platform, { retail: true });
   }
   if (!best) throw new Error(cands.length ? `no encuentro «${title}» para ${platform} entre ${cands.length} resultados` : 'el buscador de la tienda no ha devuelto productos');
