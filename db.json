@@ -26,7 +26,7 @@
    "url": "https://www.mediamarkt.es/es/product/_ps5-metal-gear-solid-master-collection-volume-2-1621005.html",
    "deck": null,
    "msrp": 49.99,
-   "target": 40,
+   "target": 41,
    "alert": true,
    "alerted": false,
    "createdAt": 1793201960375,
@@ -1669,6 +1669,15 @@
  ],
  "acciones": [
   {
+   "id": "rmvsbkq1tzkzo",
+   "accion": "editar",
+   "ok": true,
+   "error": null,
+   "at": 1793204371681,
+   "secs": 0,
+   "trackerId": "g-e0948d2d"
+  },
+  {
    "id": "rmvsa3f14doj9",
    "accion": "crear",
    "ok": true,
@@ -1857,8 +1866,8 @@
   "intervalMin": 60,
   "cycles": 10,
   "requests": 344,
-  "lastRun": 1793203727076,
-  "lastAction": "ciclo"
+  "lastRun": 1793204371681,
+  "lastAction": "editar"
  },
  "version": "github"
 }
