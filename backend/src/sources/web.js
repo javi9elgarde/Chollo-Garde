@@ -20,7 +20,9 @@ export function _setFetchers({ fetch: f, render: r } = {}) { if (f) fetcher = f;
 
 export function blocked(html = '', status = 200) {
   if (status === 403 || status === 429 || status === 503) return true;
-  return /captcha-delivery\.com|validateCaptcha|\/errors\/validateCaptcha|cf-chl-|Just a moment\.\.\.|Attention Required! \| Cloudflare|px-captcha|Access Denied<\/title>/i.test(html);
+  // «Access Denied» solo cuenta en una página corta de bloqueo (Akamai): la PS Store lleva ese texto dentro de un
+  // SVG de su propia ficha (una imagen que le falta), y la página es buena.
+  return /captcha-delivery\.com|validateCaptcha|\/errors\/validateCaptcha|cf-chl-|Just a moment\.\.\.|Attention Required! \| Cloudflare|px-captcha/i.test(html) || (html.length < 20000 && /Access Denied<\/title>/i.test(html));
 }
 
 // Descarga la página. `forceBrowser` para tiendas que siempre bloquean las descargas simples.

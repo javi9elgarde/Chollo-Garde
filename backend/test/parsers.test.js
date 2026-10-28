@@ -184,3 +184,8 @@ test('PS Store: ficha de PS5 (no la de PS4 ni la banda sonora), precio actual y 
   assert.equal(r.initial, 29.99, 'precio base, sin la rebaja');
   assert.equal(ps.covers('PC'), false);
 });
+
+test('bloqueos: «Access Denied» dentro de una ficha grande no es un bloqueo', () => {
+  assert.equal(blocked('<html><title>Access Denied</title><h1>Access Denied</h1>Reference #18.30c83017</html>'), true);
+  assert.equal(blocked('<html>' + 'x'.repeat(30000) + '<svg><title>Access Denied</title></svg><script type="application/ld+json">{}</script></html>'), false);
+});
