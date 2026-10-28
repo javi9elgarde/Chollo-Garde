@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       accion:
-        description: 'ciclo, crear, editar, borrar, escanear, analizar o probar'
+        description: 'ciclo, crear, editar, borrar, escanear, analizar, probar o probar-vuelo'
         default: ciclo
         required: true
       datos:
