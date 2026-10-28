@@ -77,7 +77,8 @@ export function publicSettings() {
     email: { enabled: s.email.enabled, to: s.email.to, host: s.email.host, port: s.email.port, user: s.email.user, from: s.email.from, passSet: !!s.email.pass },
     sound: s.sound,
     engine: s.engine,
-    intervalMin: s.intervalMin
+    intervalMin: s.intervalMin,
+    ai: { on: !!config.gemini.key, model: db.ai?.model || config.gemini.model || null }
   };
 }
 

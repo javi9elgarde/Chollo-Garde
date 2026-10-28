@@ -198,3 +198,10 @@ test('rechaza peticiones de otras webs (CSRF / DNS rebinding)', async () => {
   const own = await fetch(base + '/api/alerts/read', { method: 'POST', headers: { Origin: base } });
   assert.equal(own.status, 200);
 });
+
+test('IA sin GEMINI_API_KEY: 501 y el panel sigue con la heurística', async () => {
+  const r = await call('POST', '/api/ai/chat', { system: 'x', prompt: 'hola' });
+  assert.equal(r.status, 501);
+  assert.match(r.body.error, /GEMINI_API_KEY/);
+  assert.equal((await call('GET', '/api/state')).body.settings.ai.on, false);
+});

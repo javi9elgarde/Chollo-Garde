@@ -9,6 +9,7 @@ import { bus, log, recentLogs } from './bus.js';
 import { engine } from './engine.js';
 import * as games from './games.js';
 import * as actions from './actions.js';
+import * as ai from './ai.js';
 import { close as closeBrowser } from './sources/browser.js';
 import { dispatch, send, SAMPLE } from './notify/index.js';
 
@@ -150,8 +151,26 @@ export function createApp() {
     res.json({ ok: true });
   });
 
-  // Fase 3: aquí se conectará Gemini. Mientras tanto el dashboard usa sus heurísticas locales.
-  app.post('/api/ai/:task', (req, res) => res.status(501).json({ error: 'La IA con Gemini llega en la Fase 3.' }));
+  // Fase 3 · Gemini. «analizar» rehace el análisis de un tracker; «chat» (Co-Piloto y comparador) reenvía
+  // a Gemini el prompt y los datos que manda el panel. Sin GEMINI_API_KEY responde 501 y el panel usa su heurística.
+  app.post('/api/ai/:task', wrap(async (req, res) => {
+    if (!ai.enabled()) return res.status(501).json({ error: 'Pon GEMINI_API_KEY en backend/.env y reinicia para usar Gemini.' });
+    const b = req.body || {};
+    if (req.params.task === 'analizar') {
+      const it = find(b.id);
+      if (!it) return res.status(404).json({ error: 'Ese tracker no existe' });
+      const r = await ai.refresh([it], { force: true });
+      store.save();
+      bus.emit('event', 'tracker', it);
+      if (r && !r.ok) throw new games.UserError(r.error);
+      return res.json(it);
+    }
+    if (req.params.task === 'chat') {
+      try { return res.json(await ai.chat({ system: String(b.system || ''), prompt: String(b.prompt || ''), history: Array.isArray(b.history) ? b.history : [], json: !!b.json })); }
+      catch (e) { throw e instanceof ai.AiError ? new games.UserError(e.message) : e; }
+    }
+    throw new games.UserError('Tarea de IA desconocida');
+  }));
 
   app.use('/api', (req, res) => res.status(404).json({ error: 'Ruta no encontrada' }));
   app.use(express.static(config.frontendDir, { index: 'index.html', maxAge: 0 }));

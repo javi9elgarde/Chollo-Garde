@@ -36,6 +36,9 @@ export const config = {
   // URLs base de las APIs externas (se pueden cambiar en los tests).
   steamStoreBase: env.STEAM_STORE_BASE || 'https://store.steampowered.com',
   telegramBase: env.TELEGRAM_API_BASE || 'https://api.telegram.org',
+  // Gemini (Fase 3): clave gratuita de Google AI Studio. Sin clave, la IA sigue con la heurística local.
+  // Sin GEMINI_MODEL se usa el Flash estable más reciente que ofrezca Google.
+  gemini: { key: env.GEMINI_API_KEY || '', model: env.GEMINI_MODEL || '', base: env.GEMINI_API_BASE || 'https://generativelanguage.googleapis.com/v1beta' },
   // Valores iniciales de los canales. Lo que guardes desde el dashboard tiene prioridad.
   telegram: { token: env.TELEGRAM_BOT_TOKEN || '', chatId: env.TELEGRAM_CHAT_ID || '' },
   discord: { url: env.DISCORD_WEBHOOK_URL || '' },

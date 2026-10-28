@@ -4,6 +4,7 @@ import * as games from './games.js';
 import { get, save } from './store.js';
 import { log, emit } from './bus.js';
 import { dispatch, isAtl } from './notify/index.js';
+import * as ai from './ai.js';
 
 const EUR = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' });
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -60,6 +61,9 @@ export const engine = {
         if (i) await sleep(1200); // sin prisas: las APIs son gratuitas y conviene no saturarlas
         res[(await this.check(it)) ? 'ok' : 'failed']++;
       }
+      // Fase 3: Gemini analiza los que han cambiado de precio (o llevan un día sin análisis).
+      const r = await ai.refresh(list).catch(e => { log('warn', 'gemini', e.message); return null; });
+      if (r?.ok) list.forEach(it => emit('tracker', it));
       return res;
     } finally {
       this.busy = false;

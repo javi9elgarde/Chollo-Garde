@@ -8,7 +8,7 @@ Rastreador de precios de vuelos, videojuegos y productos con análisis de IA y a
 |---|---|---|
 | 1 · Frontend | Dashboard SPA (Tailwind, Lucide, Chart.js) | Hecha |
 | 2 · Backend | Servidor en tu PC, precios reales de videojuegos, tiempo real y alertas por Telegram, Discord y correo | Hecha (videojuegos) |
-| 3 · IA | Gemini para Deal Index, predicción de compra, reseñas, comparador y copiloto | Pendiente |
+| 3 · IA | Gemini para Deal Index, predicción de compra, reseñas, comparador y copiloto | Hecha (con tu clave de Gemini) |
 
 **Qué es real y qué no, ahora mismo:**
 
@@ -18,7 +18,7 @@ Rastreador de precios de vuelos, videojuegos y productos con análisis de IA y a
   - **Steam España** (solo PC): precio oficial de referencia, reseñas y compatibilidad con Steam Deck.
   - Las tiendas con protección anti-bots (Amazon, MediaMarkt, Fnac, El Corte Inglés, Eneba) se abren con el **Edge** que ya tienes en Windows, en segundo plano. No hay que instalar nada más.
 - **Productos y vuelos:** todavía sin fuente real. En el panel aparecen como «próximamente».
-- **IA:** el Deal Index y la recomendación usan una heurística local sobre el histórico real. Gemini llega en la Fase 3.
+- **IA con Gemini** (si pones la clave, ver abajo): después de cada revisión de precios, Gemini calcula el Deal Index de cada juego, dice si comprar ya, esperar o si el precio está inflado (con el histórico propio y el precio de cada tienda), y resume los pros y contras de las reseñas (las de Steam en PC; en consola las busca con Google). El Co-Piloto y el comparador 1v1 también responden con Gemini. Sin clave, todo eso sigue funcionando con una heurística local.
 - **Demo:** si abres `frontend/index.html` directamente (sin servidor) ves la demo con 15 trackers de ejemplo y precios simulados.
 
 ## Usarlo en GitHub, sin el PC (recomendado)
@@ -32,9 +32,11 @@ Pasos (solo una vez):
    - `TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID`
    - `DISCORD_WEBHOOK_URL`
    - `SMTP_USER`, `SMTP_PASS` y `ALERT_EMAIL_TO`; opcionalmente `SMTP_HOST` y `SMTP_PORT` (por defecto, Gmail)
+   - `GEMINI_API_KEY` para la IA: créala gratis en [Google AI Studio](https://aistudio.google.com/apikey). Se usa el modelo Flash estable más reciente; para fijar otro, crea la *variable* (no secreto) `GEMINI_MODEL`, por ejemplo `gemini-2.5-flash`.
 3. **Activar Pages**: *Settings → Pages → Build and deployment → Source: GitHub Actions*. Después, en la pestaña *Actions*, abre «Publicar panel» y pulsa *Run workflow*.
 4. **Primera revisión**: en *Actions*, abre «Rastreo de precios» y pulsa *Run workflow*. A partir de ahí se ejecuta solo cada hora.
-5. **Token para el panel**: la primera vez que añadas un juego desde el panel te pedirá un token de GitHub, con instrucciones. Se guarda solo en ese navegador. Para solo mirar no hace falta.
+5. **Gemini en el chat** (opcional): en el panel, *Notificaciones → IA con Gemini*, pega la misma clave para que el Co-Piloto y el comparador respondan al momento. Se guarda solo en ese navegador y va directa a Google.
+6. **Token para el panel**: la primera vez que añadas un juego desde el panel te pedirá un token de GitHub, con instrucciones. Se guarda solo en ese navegador. Para solo mirar no hace falta.
 
 Cómo funciona: `.github/workflows/rastreo.yml` ejecuta `backend/src/cli.js`, que guarda los trackers, el histórico y las alertas en `db.json`, en la rama `datos`. El panel lee ese fichero y, cuando creas o cambias algo, lanza el mismo workflow con tu token. Cada petición tarda de 2 a 5 minutos, y los precios se revisan cada hora (GitHub a veces lo retrasa unos minutos).
 
@@ -160,7 +162,8 @@ La alerta salta cuando `Precio_Actual <= Precio_Objetivo` y la alerta del tracke
 | POST | `/api/engine` | `{ action: "start" \| "stop" \| "run" }` |
 | GET/PUT | `/api/settings` | Ajustes. Un secreto vacío significa «no lo cambies» |
 | POST | `/api/notify/test` | `{ channel: "telegram" \| "discord" \| "email" \| "all" }` |
-| POST | `/api/ai/:task` | Reservado para Gemini (Fase 3); hoy responde 501 |
+| POST | `/api/ai/analizar` | `{ id }` → Gemini rehace el análisis y el resumen de reseñas de ese tracker |
+| POST | `/api/ai/chat` | `{ system, prompt, history, json }` → respuesta de Gemini (Co-Piloto y comparador). Sin `GEMINI_API_KEY` responde 501 |
 
 ### Desarrollo
 
@@ -176,12 +179,12 @@ npm test       # pruebas de extremo a extremo con las tiendas y APIs simuladas
 - Las tiendas no tienen API: se leen sus páginas. Si una tienda cambia su web o pide un captcha, esa tienda sale como «sin precio» con el motivo, se conserva su último precio marcado como antiguo y el resto sigue funcionando. Se reintenta en el siguiente ciclo.
 - Si una tienda protegida falla a menudo, pon `BROWSER_VISIBLE=1` en `backend/.env`, reinicia y resuelve el captcha una vez en la ventana de Edge: las cookies se guardan en `data/navegador`.
 - Las keys de Instant Gaming y Eneba son de revendedores: revisa región y plataforma antes de comprar.
-- El histórico empieza el día que creas el tracker.
+- El histórico empieza el día que creas el tracker. Con pocos días, Gemini lo dice y baja la confianza de su recomendación.
+- Gemini gratis tiene un límite diario: se analiza un juego solo cuando cambia su precio o pasa un día (como mucho 12 por ciclo) y las reseñas una vez por semana. Si se agota, ese ciclo se queda con el análisis anterior.
 
 ## Siguientes pasos
 
 - **eShop y Xbox Store** como referencia oficial en Switch y Xbox (la PS Store ya está).
 - **Productos:** Keepa para Amazon (de pago) y un scraper con navegador para PcComponentes, AliExpress y El Corte Inglés.
 - **Vuelos:** conector para Skyscanner, Google Flights o Kayak.
-- **Fase 3:** Gemini detrás de `/api/ai/:task`.
 - **Acceso desde fuera de tu PC** (por ejemplo, para tu hermano): túnel de Cloudflare con contraseña (`DASHBOARD_PASSWORD`), o un VPS/Raspberry con el `docker-compose.yml` incluido.
