@@ -725,10 +725,161 @@ const engine = { timer: null, cycles: 0, requests: 0, nextAt: 0,
    Abriendo el .html directamente sigue funcionando la demo simulada.
    ===================================================================== */
 async function api(method, path, body) {
+  if (GH.on) return GH.api(method, path, body);
   const r = await fetch(path, { method, headers: body ? { 'Content-Type': 'application/json' } : {}, body: body ? JSON.stringify(body) : undefined });
   const j = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error(j.error || `El servidor respondió ${r.status}`);
   return j;
+}
+/* =====================================================================
+   Versión de GitHub. Publicado en GitHub Pages no hay servidor: GitHub
+   Actions revisa los precios cada hora y guarda los datos en la rama
+   «datos» del repositorio. Este panel los lee de ahí y, para crear o
+   cambiar trackers, lanza el workflow con tu token de GitHub.
+   ===================================================================== */
+const GH = { on: false, owner: null, repo: null, pending: new Map(), seenAlerts: new Set(), timer: null, lastRun: 0,
+  WORKFLOW: 'rastreo.yml',
+  where() {
+    const q = new URLSearchParams(location.search).get('repo');
+    if (q && /^[\w.-]+\/[\w.-]+$/.test(q)) { const [owner, repo] = q.split('/'); return { owner, repo }; }
+    const m = location.hostname.match(/^([\w-]+)\.github\.io$/i), seg = location.pathname.split('/').filter(Boolean)[0];
+    return m && seg ? { owner: m[1], repo: seg } : null;
+  },
+  get token() { try { return localStorage.getItem('cg.ghToken') || ''; } catch { return ''; } },
+  set token(v) { try { v ? localStorage.setItem('cg.ghToken', v) : localStorage.removeItem('cg.ghToken'); } catch {} },
+  local(k, d) { try { return JSON.parse(localStorage.getItem('cg.' + k)) ?? d; } catch { return d; } },
+  setLocal(k, v) { try { localStorage.setItem('cg.' + k, JSON.stringify(v)); } catch {} },
+  get repoUrl() { return `https://github.com/${this.owner}/${this.repo}`; },
+  // Lee db.json de la rama «datos». Con token se usa la API (al día); sin token, raw (puede ir ~5 min por detrás).
+  async load() {
+    const url = this.token ? `https://api.github.com/repos/${this.owner}/${this.repo}/contents/db.json?ref=datos&t=${Date.now()}` : `https://raw.githubusercontent.com/${this.owner}/${this.repo}/datos/db.json?t=${Date.now()}`;
+    const r = await fetch(url, { cache: 'no-store', headers: this.token ? { Authorization: `Bearer ${this.token}`, Accept: 'application/vnd.github.raw+json' } : {} });
+    if (r.status === 404) return { trackers: [], alerts: [], logs: [], acciones: [] };
+    if (r.status === 401) { this.token = ''; throw new Error('Tu token de GitHub ya no vale. Vuelve a pegarlo en Notificaciones.'); }
+    if (!r.ok) throw new Error(`GitHub respondió ${r.status}`);
+    return r.json();
+  },
+  nextRun() { const d = new Date(); d.setMinutes(17, 0, 0); if (d <= Date.now()) d.setHours(d.getHours() + 1); return +d; },
+  stateOf(db) {
+    const read = new Set(this.local('readAlerts', []));
+    const alerts = (db.alerts || []).map(a => ({ ...a, read: a.read || read.has(a.id) }));
+    const e = db.engine || {};
+    this.lastRun = e.lastRun || 0;
+    return {
+      trackers: db.trackers || [], alerts,
+      settings: { sound: this.local('sound', true), engine: true, intervalMin: 60, canales: (db.settings && db.settings.canales) || {}, telegram: {}, discord: {}, email: {} },
+      logs: db.logs || [], sources: db.sources && db.sources.length ? db.sources : SOURCES,
+      engine: { running: true, busy: this.pending.size > 0, nextAt: this.nextRun(), intervalMin: 60, cycles: e.cycles || 0, requests: e.requests || 0 }
+    };
+  },
+  async detect() {
+    const w = this.where();
+    if (!w) return false;
+    Object.assign(this, w);
+    let db;
+    try { db = await this.load(); } catch (e) { db = { trackers: [], alerts: [] }; setTimeout(() => toast({ tone: 'bad', icon: 'circle-alert', title: 'No se pudieron leer los datos', body: esc(e.message), ms: 9000 }), 500); }
+    (db.alerts || []).forEach(a => this.seenAlerts.add(a.id));
+    this.on = true; LIVE.connected = true;
+    LIVE.apply(this.stateOf(db));
+    this.timer = setInterval(() => this.poll(), 5 * 60e3);
+    return true;
+  },
+  // Recarga los datos y aplica solo lo que ha cambiado (avisando de alertas nuevas y de peticiones terminadas).
+  async poll() {
+    let db;
+    try { db = await this.load(); } catch { return; }
+    const s = this.stateOf(db);
+    const ids = new Set(s.trackers.map(t => t.id));
+    const removed = state.trackers.filter(t => !ids.has(t.id));
+    if (removed.length) { state.trackers = state.trackers.filter(t => ids.has(t.id)); if (removed.some(t => t.id === ui.openId)) closeDrawer(); render(); }
+    s.trackers.forEach(t => { const old = state.trackers.find(x => x.id === t.id); if (!old || old.lastCheck !== t.lastCheck || old.target !== t.target || old.alert !== t.alert || JSON.stringify(old.links) !== JSON.stringify(t.links) || JSON.stringify(old.shops) !== JSON.stringify(t.shops)) LIVE.upsert(t); });
+    logs.length = 0; s.logs.forEach(l => logs.push(l));
+    LIVE.sources(s.sources);
+    s.alerts.slice().reverse().forEach(a => { if (!this.seenAlerts.has(a.id)) { this.seenAlerts.add(a.id); LIVE.alert(a); } });
+    state.alerts = s.alerts;
+    for (const a of db.acciones || []) {
+      const p = this.pending.get(a.id);
+      if (!p) continue;
+      this.pending.delete(a.id);
+      if (a.ok) toast({ tone: 'good', icon: 'circle-check', title: p.okTitle || 'Hecho', body: p.okBody ? p.okBody(db, a) : '', ms: 6000, ...(a.trackerId && state.trackers.some(t => t.id === a.trackerId) ? { actionLabel: 'Ver', action: () => openDrawer(a.trackerId) } : {}) });
+      else toast({ tone: 'bad', icon: 'circle-alert', title: p.errTitle || 'GitHub no pudo hacerlo', body: esc(a.error || 'error desconocido'), ms: 12000 });
+    }
+    s.engine.busy = this.pending.size > 0;
+    engine.apply(s.engine);
+    state.settings.canales = s.settings.canales;
+    renderBadge();
+    if (['dashboard', 'juegos', 'ajustes'].includes(ui.view)) render();
+    if (this.pending.size) this.schedule(20e3);
+  },
+  schedule(ms) { clearTimeout(this.soon); this.soon = setTimeout(() => this.poll(), ms); },
+  // Lanza el workflow de GitHub Actions con una acción del panel.
+  async dispatch(accion, datos = {}, meta = {}) {
+    if (!this.token) { askToken(); throw new Error('Para cambiar cosas desde aquí necesito tu token de GitHub (solo la primera vez).'); }
+    const reqId = 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    const r = await fetch(`https://api.github.com/repos/${this.owner}/${this.repo}/actions/workflows/${this.WORKFLOW}/dispatches`, {
+      method: 'POST', headers: { Authorization: `Bearer ${this.token}`, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ref: 'main', inputs: { accion, datos: JSON.stringify({ ...datos, reqId }) } })
+    });
+    if (r.status === 401 || r.status === 403) throw new Error('GitHub no acepta tu token. Comprueba que tiene permiso «Actions: Read and write» en este repositorio.');
+    if (r.status === 404) throw new Error('No encuentro el workflow «Rastreo de precios». ¿Está activado en la pestaña Actions?');
+    if (!r.ok) throw new Error(`GitHub respondió ${r.status}`);
+    this.pending.set(reqId, { accion, ...meta });
+    engine.busy = true; renderEngineStatus(); tickLive();
+    if (['dashboard', 'juegos'].includes(ui.view)) render();
+    this.schedule(45e3);
+    return reqId;
+  },
+  // Sustituye a las llamadas al servidor del PC.
+  async api(method, path, body = {}) {
+    const m = path.match(/^\/api\/trackers\/([^/]+)(\/scan)?$/), it = m && state.trackers.find(t => t.id === m[1]);
+    if (method === 'GET' && path === '/api/state') return this.stateOf(await this.load());
+    if (method === 'GET' && path === '/api/sources') return SOURCES;
+    if (path === '/api/alerts/read') { this.setLocal('readAlerts', state.alerts.map(a => a.id).slice(0, 300)); return { ok: true }; }
+    if (method === 'PUT' && path === '/api/settings') {
+      if (typeof body.sound === 'boolean') { this.setLocal('sound', body.sound); state.settings.sound = body.sound; }
+      return state.settings;
+    }
+    if (path === '/api/engine') {
+      if (body.action === 'run') { await this.dispatch('ciclo', {}, { label: 'Revisando todos los precios', okTitle: 'Ciclo terminado', okBody: () => 'Precios actualizados.' }); toast({ tone: 'ai', icon: 'github', title: 'Ciclo enviado a GitHub', body: 'Tarda 2–5 minutos. Los precios se actualizan aquí solos.' }); return { running: true, busy: true, nextAt: this.nextRun(), intervalMin: 60, cycles: engine.cycles, requests: engine.requests }; }
+      throw new Error('En GitHub el motor no se pausa: funciona cada hora con GitHub Actions.');
+    }
+    if (path === '/api/notify/test') {
+      await this.dispatch('probar', { channel: body.channel || 'all' }, { label: 'Enviando una alerta de prueba', okTitle: 'Prueba enviada', okBody: () => 'Revisa que te ha llegado.', errTitle: 'La prueba falló' });
+      return { ok: true };
+    }
+    if (m && m[2]) {
+      await this.dispatch('escanear', { id: m[1] }, { label: `Revisando «${it ? it.title : ''}»`, okTitle: 'Rastreo terminado', okBody: () => esc(it ? it.title : '') });
+      toast({ tone: 'ai', icon: 'github', title: 'Rastreo enviado a GitHub', body: 'Tarda 2–5 minutos.' });
+      return { ok: true };
+    }
+    if (m && method === 'PATCH') {
+      await this.dispatch('editar', { id: m[1], ...body }, { label: `Guardando cambios de «${it ? it.title : ''}»`, okTitle: 'Cambios aplicados', okBody: () => esc(it ? it.title : '') });
+      const t = { ...it, ...body };
+      if (body.target !== undefined) t.alerted = false;
+      return t;
+    }
+    if (m && method === 'DELETE') { await this.dispatch('borrar', { id: m[1] }, { label: `Borrando «${it ? it.title : ''}»`, okTitle: 'Tracker eliminado', okBody: () => esc(it ? it.title : '') }); return { ok: true }; }
+    throw new Error('Esto no está disponible en la versión de GitHub.');
+  },
+  // Nuevo tracker: GitHub lo busca en las tiendas y aparece aquí en unos minutos.
+  async create(spec) {
+    await this.dispatch('crear', { cat: 'game', ...spec }, { label: `Buscando «${spec.title}» (${spec.platform}) en las tiendas`, okTitle: 'Tracker creado', okBody: (db, a) => { const t = (db.trackers || []).find(x => x.id === a.trackerId); return t ? `${esc(t.title)} · ${eur(t.current)} en ${esc(bestStore(t).name)}` : ''; }, errTitle: `No se pudo crear «${spec.title}»` });
+  }
+};
+function askToken() {
+  openModal(`<form id="gh-token-form" class="p-5 sm:p-6 flex flex-col gap-4">
+    <div class="flex items-start gap-3"><div><h2 class="font-display font-extrabold text-[22px] leading-tight">Conectar con GitHub</h2><p class="text-[13px] text-mute mt-1">Para añadir o cambiar trackers desde aquí, el panel lanza el rastreo en GitHub Actions con un token tuyo. Solo hace falta una vez por navegador y se guarda solo en este navegador.</p></div><button type="button" data-action="close-modal" class="ml-auto w-9 h-9 grid place-items-center rounded-xl hover:bg-ink-700" aria-label="Cerrar"><i data-lucide="x" class="w-4 h-4"></i></button></div>
+    <ol class="text-[13px] text-mute list-decimal pl-5 flex flex-col gap-1">
+      <li>Abre <a class="text-gold underline" href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener noreferrer">crear token de GitHub</a> (fine-grained).</li>
+      <li>Nombre: CholloGarde. Caducidad: la que quieras (por ejemplo, 1 año).</li>
+      <li>Repository access → <b class="text-fg">Only select repositories</b> → ${esc(GH.repo || 'tu repositorio')}.</li>
+      <li>Permissions → Repository permissions → <b class="text-fg">Actions: Read and write</b> y <b class="text-fg">Contents: Read-only</b>.</li>
+      <li>Generate token, cópialo y pégalo aquí.</li>
+    </ol>
+    <input id="gh-token" type="password" autocomplete="off" placeholder="github_pat_…" class="bg-ink-800 border border-ink-600 rounded-xl px-3 py-2.5 text-[14px] font-mono focus:outline-none focus:border-gold/70">
+    <p class="text-[12px] text-dim">Quien solo quiera mirar (tu hermano, por ejemplo) no necesita token.</p>
+    <div class="flex justify-end gap-2"><button type="button" data-action="close-modal" class="rounded-xl border border-ink-500 px-3 py-2 text-[13px]">Cancelar</button><button class="inline-flex items-center gap-1.5 rounded-xl bg-gold text-ink-950 font-semibold px-4 py-2 text-[13px]"><i data-lucide="key-round" class="w-4 h-4"></i>Guardar token</button></div>
+  </form>`, 'Conectar con GitHub');
 }
 const LIVE = { on: false, es: null, connected: false,
   async detect() {
@@ -890,7 +1041,7 @@ function renderBadge() {
 function renderEngineStatus() {
   const on = !!engine.timer, lost = LIVE.on && LIVE.connected === 'lost';
   $('#side-dot').className = `w-2 h-2 rounded-full ${lost ? 'bg-bad' : on ? 'bg-good live-dot' : 'bg-dim'}`;
-  $('#side-engine').textContent = lost ? 'Sin conexión con el servidor' : engine.busy ? 'Rastreando ahora…' : on ? (LIVE.on ? 'Motor activo en tu PC' : 'Motor 24/7 activo') : 'Motor en pausa';
+  $('#side-engine').textContent = lost ? 'Sin conexión con el servidor' : engine.busy ? (GH.on ? 'GitHub trabajando…' : 'Rastreando ahora…') : on ? (GH.on ? 'Motor en GitHub · cada hora' : LIVE.on ? 'Motor activo en tu PC' : 'Motor 24/7 activo') : 'Motor en pausa';
 }
 
 function filtered(catOverride) {
@@ -913,7 +1064,7 @@ function toolbar(showCats) {
   </div>`;
 }
 function grid(list) {
-  if (!state.trackers.length) return `<div class="rounded-2xl border border-dashed border-ink-500 p-10 text-center text-mute"><i data-lucide="radar" class="w-8 h-8 mx-auto mb-3 text-gold"></i><p class="text-fg font-medium">Aún no sigues ningún precio.</p><p class="text-[13px] mt-1 max-w-md mx-auto">Pulsa «Nuevo tracker», escribe el nombre de un juego de PC o pega su enlace de Steam, y pon tu precio objetivo. El motor lo revisará solo y te avisará por Telegram, Discord o correo.</p><button data-action="new" class="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-gold text-ink-950 font-semibold px-4 py-2 text-[13px]"><i data-lucide="plus" class="w-4 h-4"></i>Nuevo tracker</button></div>`;
+  if (!state.trackers.length) return `<div class="rounded-2xl border border-dashed border-ink-500 p-10 text-center text-mute"><i data-lucide="radar" class="w-8 h-8 mx-auto mb-3 text-gold"></i><p class="text-fg font-medium">Aún no sigues ningún precio.</p><p class="text-[13px] mt-1 max-w-md mx-auto">Pulsa «Nuevo tracker», escribe el nombre de un juego y su plataforma, y pon tu precio objetivo. El motor lo revisará solo y te avisará por Telegram, Discord o correo.</p><button data-action="new" class="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-gold text-ink-950 font-semibold px-4 py-2 text-[13px]"><i data-lucide="plus" class="w-4 h-4"></i>Nuevo tracker</button></div>`;
   if (!list.length) return `<div class="rounded-2xl border border-dashed border-ink-500 p-10 text-center text-mute"><i data-lucide="search-x" class="w-8 h-8 mx-auto mb-3 text-dim"></i><p class="text-fg font-medium">No hay trackers con estos filtros.</p><p class="text-[13px] mt-1">Cambia la búsqueda o crea uno nuevo con «Nuevo tracker».</p></div>`;
   return `<div id="grid" class="grid gap-4 grid-cols-1 sm:grid-cols-2 2xl:grid-cols-3">${list.map(card).join('')}</div>`;
 }
@@ -967,6 +1118,12 @@ function appendLogLine(l) {
   if (r) { r.insertAdjacentHTML('afterbegin', logLine(l)); while (r.children.length > 9) r.lastElementChild.remove(); }
 }
 
+// Versión de GitHub: lo que se ha pedido y GitHub aún está procesando.
+function ghPendingHtml() {
+  const p = [...GH.pending.values()];
+  if (!p.length) return '';
+  return `<section class="rounded-2xl border border-ai/25 bg-ai/[.05] p-4 flex gap-3 text-[13px]"><i data-lucide="loader-circle" class="w-5 h-5 text-ai shrink-0 animate-spin"></i><div class="min-w-0"><div class="font-medium text-fg">GitHub está trabajando</div><ul class="text-mute mt-1 flex flex-col gap-0.5">${p.map(x => `<li>${esc(x.label || x.accion)}</li>`).join('')}</ul><p class="text-dim text-[12px] mt-1">Tarda de 2 a 5 minutos. Esta página se actualiza sola.</p></div></section>`;
+}
 function viewGrid(catKey) {
   const n = NAV.find(x => x.id === ui.view);
   const isDash = ui.view === 'dashboard';
@@ -984,6 +1141,7 @@ function viewGrid(catKey) {
         ${LIVE.on ? '<span class="inline-flex items-center gap-1.5 text-[12px] text-good border border-good/30 rounded-lg px-2.5 py-1"><i data-lucide="radio" class="w-3.5 h-3.5"></i>Precios reales · 8 tiendas</span>' : '<span class="inline-flex items-center gap-1.5 text-[12px] text-mute border border-ink-600 rounded-lg px-2.5 py-1"><i data-lucide="flask-conical" class="w-3.5 h-3.5"></i>Datos simulados · demo</span>'}
       </div>
       ${isDash ? kpis() + featured() : ''}
+      ${GH.on ? ghPendingHtml() : ''}
       ${extra}
       ${toolbar(isDash)}
       ${grid(list)}
@@ -1043,7 +1201,7 @@ function viewEngine() {
   return `<div class="flex flex-col gap-5">
     <div class="flex flex-wrap items-end gap-3 justify-between"><div><p class="label">Scraper Backend & Bot Service</p><h1 class="font-display font-extrabold text-[30px] sm:text-[34px] leading-tight tracking-tight mt-1">Motor de scraping</h1></div>
       <div class="flex flex-wrap gap-2">
-        <button data-action="engine-toggle" class="inline-flex items-center gap-1.5 rounded-xl border border-ink-500 px-3 py-2 text-[13px] hover:border-gold/60"><i data-lucide="${engine.timer ? 'pause' : 'play'}" class="w-4 h-4"></i>${engine.timer ? 'Pausar motor' : 'Reanudar motor'}</button>
+        ${GH.on ? `<a href="${GH.repoUrl}/actions" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 rounded-xl border border-ink-500 px-3 py-2 text-[13px] hover:border-gold/60"><i data-lucide="github" class="w-4 h-4"></i>Ver ejecuciones en GitHub</a>` : `<button data-action="engine-toggle" class="inline-flex items-center gap-1.5 rounded-xl border border-ink-500 px-3 py-2 text-[13px] hover:border-gold/60"><i data-lucide="${engine.timer ? 'pause' : 'play'}" class="w-4 h-4"></i>${engine.timer ? 'Pausar motor' : 'Reanudar motor'}</button>`}
         <button data-action="engine-run" class="inline-flex items-center gap-1.5 rounded-xl bg-fg text-ink-950 font-semibold px-3 py-2 text-[13px] hover:bg-gold"><i data-lucide="refresh-cw" class="w-4 h-4"></i>Ejecutar ciclo ahora</button>
       </div></div>
     <div class="grid gap-3 grid-cols-2 lg:grid-cols-4">
@@ -1051,7 +1209,7 @@ function viewEngine() {
     </div>
     <div class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
       <section class="rounded-2xl bg-ink-950 border border-ink-600/80 overflow-hidden flex flex-col min-w-0">
-        <div class="px-4 py-2.5 border-b border-ink-600 flex items-center gap-2 flex-wrap"><i data-lucide="terminal" class="w-4 h-4 text-mute"></i><span class="font-mono text-[12px] text-mute">chollogarde-worker · logs${LIVE.on ? ' · en directo desde tu PC' : ' · simulados'}</span>
+        <div class="px-4 py-2.5 border-b border-ink-600 flex items-center gap-2 flex-wrap"><i data-lucide="terminal" class="w-4 h-4 text-mute"></i><span class="font-mono text-[12px] text-mute">chollogarde-worker · logs${GH.on ? ' · GitHub Actions' + (GH.lastRun ? ' · última ejecución ' + ago(GH.lastRun) : '') : LIVE.on ? ' · en directo desde tu PC' : ' · simulados'}</span>
           <div class="ml-auto flex gap-1">${lv.map(([k, l]) => `<button data-action="logf" data-lv="${k}" class="px-2 py-1 rounded-md text-[12px] ${ui.logFilter === k ? 'bg-ink-700 text-fg' : 'text-mute hover:text-fg'}">${l}</button>`).join('')}</div></div>
         <div class="p-4 h-[440px] overflow-y-auto"><ol id="term" class="term flex flex-col gap-0.5">${logs.filter(l => ui.logFilter === 'all' || l.level === ui.logFilter).slice(-400).map(logLine).join('')}</ol></div>
       </section>
@@ -1069,7 +1227,7 @@ function viewEngine() {
             <li><span class="text-ai">SSE</span> /api/stream <span class="text-dim">· logs, precios y alertas</span></li>
             <li><span class="text-ai">POST</span> /api/ai/:task <span class="text-dim">· Gemini (Fase 3)</span></li>
           </ul>
-          <p class="text-[12px] text-mute mt-3 leading-relaxed">${LIVE.on ? 'Conectado al servidor de tu PC: todo lo de esta pantalla es real. La IA sigue siendo una heurística local hasta la Fase 3.' : 'Estás en la demo (abriste el archivo directamente). Arranca el servidor con <span class="font-mono text-fg">npm start</span> en <span class="font-mono text-fg">backend/</span> y abre <span class="font-mono text-fg">http://localhost:8787</span> para usar datos reales.'}</p>
+          <p class="text-[12px] text-mute mt-3 leading-relaxed">${GH.on ? 'Versión de GitHub: GitHub Actions revisa los precios cada hora (a veces con unos minutos de retraso) y guarda los datos en la rama «datos». Este panel se actualiza solo cada 5 minutos.' : LIVE.on ? 'Conectado al servidor de tu PC: todo lo de esta pantalla es real. La IA sigue siendo una heurística local hasta la Fase 3.' : 'Estás en la demo (abriste el archivo directamente). Arranca el servidor con <span class="font-mono text-fg">npm start</span> en <span class="font-mono text-fg">backend/</span> y abre <span class="font-mono text-fg">http://localhost:8787</span> para usar datos reales.'}</p>
         </section>
       </div>
     </div>
@@ -1080,6 +1238,7 @@ const srcRows = () => SOURCES.map(s => `<tr class="border-b border-ink-700 last:
 // Tracker de muestra para las vistas previas (uno de ejemplo si aún no tienes ninguno).
 const sampleTracker = () => state.trackers.find(t => t.id === 'p-ally') || state.trackers[0] || seedTrackers().find(t => t.id === 'g-hades');
 function viewSettings() {
+  if (GH.on) return viewSettingsGh();
   const s = state.settings, sample = sampleTracker(), a = AI.analyze(sample), L = LIVE.on;
   const saved = (set, ph) => set ? '•••••• guardado (escribe para cambiarlo)' : ph;
   const field = (id, label, val, ph, type = 'text') => `<label class="flex flex-col gap-1.5 text-[13px]"><span class="text-mute">${label}</span><input id="${id}" type="${type}" value="${esc(val)}" placeholder="${esc(ph)}" autocomplete="off" class="bg-ink-850 border border-ink-600 rounded-xl px-3 py-2 placeholder:text-dim focus:outline-none focus:border-gold/70"></label>`;
@@ -1140,6 +1299,32 @@ function viewSettings() {
   </div>`;
 }
 
+// Versión de GitHub: las claves viven en los secretos del repositorio, no en el panel.
+function viewSettingsGh() {
+  const c = state.settings.canales || {}, sec = `${GH.repoUrl}/settings/secrets/actions`;
+  const card = (ch, icon, title, names, help) => `<section class="rounded-2xl bg-ink-800/70 border border-ink-600/80 p-4 flex flex-col gap-3">
+    <div class="flex items-center gap-2"><i data-lucide="${icon}" class="w-4 h-4 text-ai"></i><h2 class="font-display font-bold text-[15px]">${title}</h2><span class="ml-auto text-[12px] ${c[ch] ? 'text-good' : 'text-dim'}">${c[ch] ? 'Configurado' : 'Sin configurar'}</span></div>
+    <p class="text-[12px] text-mute">Secretos: ${names.map(n => `<span class="font-mono text-fg">${n}</span>`).join(', ')}. ${help}</p>
+    <button type="button" data-action="test-${ch === 'email' ? 'email' : ch}" class="self-start inline-flex items-center gap-1.5 rounded-xl border border-ink-500 px-3 py-2 text-[13px] hover:border-ai/60"><i data-lucide="${icon}" class="w-4 h-4"></i>Enviar prueba</button></section>`;
+  return `<div class="flex flex-col gap-5 max-w-3xl">
+    <div><p class="label">Canales de salida</p><h1 class="font-display font-extrabold text-[30px] sm:text-[34px] leading-tight tracking-tight mt-1">Notificaciones</h1></div>
+    <section class="rounded-2xl border border-ai/25 bg-ai/[.05] p-4 text-[13px] flex gap-3"><i data-lucide="github" class="w-5 h-5 text-ai shrink-0"></i><div><div class="font-medium text-fg">Las claves se guardan en GitHub, no aquí</div><p class="text-mute mt-1">Este panel es público, así que el token del bot, el webhook y la contraseña del correo van en <a class="text-gold underline" href="${sec}" target="_blank" rel="noopener noreferrer">Settings → Secrets and variables → Actions</a> del repositorio (botón «New repository secret»). El estado de cada canal se actualiza tras la siguiente ejecución.</p></div></section>
+    ${card('telegram', 'send', 'Bot de Telegram', ['TELEGRAM_BOT_TOKEN', 'TELEGRAM_CHAT_ID'], 'Crea el bot con @BotFather, escríbele un mensaje y saca tu chat ID con @userinfobot.')}
+    ${card('discord', 'message-circle', 'Webhook de Discord', ['DISCORD_WEBHOOK_URL'], 'En Discord: Ajustes del canal → Integraciones → Webhooks → Nuevo webhook → Copiar URL.')}
+    ${card('email', 'mail', 'Correo electrónico', ['SMTP_USER', 'SMTP_PASS', 'ALERT_EMAIL_TO'], 'Con Gmail: verificación en 2 pasos y una «contraseña de aplicación» (myaccount.google.com/apppasswords). Opcionales: SMTP_HOST y SMTP_PORT.')}
+    <section class="rounded-2xl bg-ink-800/70 border border-ink-600/80 p-4 flex flex-col gap-3">
+      <div class="flex items-center gap-2"><i data-lucide="key-round" class="w-4 h-4 text-gold"></i><h2 class="font-display font-bold text-[15px]">Tu token de GitHub</h2><span class="ml-auto text-[12px] ${GH.token ? 'text-good' : 'text-dim'}">${GH.token ? 'Conectado en este navegador' : 'No conectado'}</span></div>
+      <p class="text-[12px] text-mute">Hace falta para añadir, cambiar o borrar trackers y para las pruebas. Para solo mirar no hace falta.</p>
+      <div class="flex gap-2"><button type="button" data-action="gh-token" class="rounded-xl border border-ink-500 px-3 py-2 text-[13px] hover:border-gold/60">${GH.token ? 'Cambiar token' : 'Conectar'}</button>${GH.token ? '<button type="button" data-action="gh-logout" class="rounded-xl border border-bad/40 text-bad px-3 py-2 text-[13px] hover:bg-bad/10">Desconectar</button>' : ''}</div>
+    </section>
+    <section class="rounded-2xl bg-ink-800/70 border border-ink-600/80 p-4 flex flex-col gap-3">
+      <div class="flex items-center gap-2"><i data-lucide="volume-2" class="w-4 h-4 text-gold"></i><h2 class="font-display font-bold text-[15px]">Panel abierto</h2></div>
+      <label class="inline-flex items-center gap-2 text-[13px] cursor-pointer"><input id="snd-on-gh" type="checkbox" ${state.settings.sound ? 'checked' : ''} class="w-4 h-4">Alertas sonoras (radar + moneda)</label>
+      <p class="text-[12px] text-dim">Los precios se revisan cada hora con GitHub Actions.</p>
+    </section>
+  </div>`;
+}
+
 // ---------- render principal ----------
 function render() {
   const v = ui.view;
@@ -1178,7 +1363,7 @@ function openDrawer(id) {
   const a = AI.analyze(it);
   const layer = $('#layer');
   layer.innerHTML = `<div id="drawer" class="fixed inset-0 z-[60]" role="dialog" aria-modal="true" aria-label="${esc(it.title)}">
-    <div class="absolute inset-0 bg-ink-950/70 backdrop-blur-sm" data-action="close"></div>
+    <div class="absolute inset-0 bg-ink-950/80" data-action="close"></div>
     <div class="drawer-panel absolute top-0 right-0 h-full w-full max-w-[760px] bg-ink-900 border-l border-ink-600 overflow-y-auto" style="padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); padding-right: env(safe-area-inset-right, 0px);">
       ${drawerBody(it, a)}
     </div></div>`;
@@ -1376,7 +1561,7 @@ function rerenderDrawer() {
 function openModal(html, label) {
   closeDrawer();
   setTimeout(() => {
-    $('#layer').innerHTML = `<div id="modal" class="fixed inset-0 z-[60] grid place-items-center p-4" role="dialog" aria-modal="true" aria-label="${esc(label)}"><div class="absolute inset-0 bg-ink-950/75 backdrop-blur-sm" data-action="close-modal"></div><div class="relative w-full max-w-2xl max-h-[calc(100vh-32px)] overflow-y-auto rounded-2xl bg-ink-900 border border-ink-600 shadow-2xl fade-in">${html}</div></div>`;
+    $('#layer').innerHTML = `<div id="modal" class="fixed inset-0 z-[60] grid place-items-center p-4" role="dialog" aria-modal="true" aria-label="${esc(label)}"><div class="absolute inset-0 bg-ink-950/85" data-action="close-modal"></div><div class="relative w-full max-w-2xl max-h-[calc(100vh-32px)] overflow-y-auto rounded-2xl bg-ink-900 border border-ink-600 shadow-2xl fade-in">${html}</div></div>`;
     icons(); document.body.style.overflow = 'hidden';
     const f = $('#modal input:not([type=checkbox]), #modal select'); f && f.focus();
   }, $('#drawer') ? 270 : 0);
@@ -1432,8 +1617,9 @@ function urlForm() {
     <details><summary class="text-[13px] text-mute cursor-pointer select-none hover:text-fg">Añadir enlaces a mano (opcional)</summary>
     <label class="flex flex-col gap-1 mt-2 text-[12px] text-dim">Para otra tienda, o si una búsqueda coge una versión que no es: el enlace manda sobre la búsqueda. Uno por línea.
       <textarea id="nt-links" rows="3" placeholder="https://www.amazon.es/dp/…&#10;https://www.game.es/…" class="bg-ink-800 border border-ink-600 rounded-xl px-3 py-2 text-[13px] text-fg font-mono placeholder:text-dim focus:outline-none focus:border-gold/70"></textarea></label></details>
-    <div class="flex flex-wrap gap-2 items-center"><button class="inline-flex items-center gap-1.5 rounded-xl bg-gold text-ink-950 font-semibold px-4 py-2 text-[13px]" ${nt.busy ? 'disabled' : ''}><i data-lucide="search" class="w-4 h-4"></i>Buscar precios</button>
-    <span class="text-[12px] text-dim">Prueba con:</span>${LIVE_EXAMPLES.map(u => `<button type="button" data-action="nt-example" data-url="${esc(u)}" class="text-[12px] rounded-md border border-ink-600 px-2 py-0.5 text-mute hover:text-fg max-w-[220px] truncate">${esc(u)}</button>`).join('')}</div>
+    ${GH.on ? `<div class="grid grid-cols-[160px_minmax(0,1fr)] gap-3 items-end"><label class="flex flex-col gap-1 text-[13px] text-mute">Avísame si baja de (€)<input id="nt-target" type="number" step="0.01" min="0.01" required placeholder="20" class="bg-ink-800 border border-gold/50 rounded-xl px-3 py-2.5 text-[14px] text-fg tnum focus:outline-none"></label><label class="inline-flex items-center gap-2 text-[13px] pb-2.5"><input id="nt-alert" type="checkbox" checked>Enviar alerta por mis canales</label></div>` : ''}
+    <div class="flex flex-wrap gap-2 items-center"><button class="inline-flex items-center gap-1.5 rounded-xl bg-gold text-ink-950 font-semibold px-4 py-2 text-[13px]" ${nt.busy ? 'disabled' : ''}><i data-lucide="${GH.on ? 'radar' : 'search'}" class="w-4 h-4"></i>${GH.on ? 'Crear tracker' : 'Buscar precios'}</button>
+    ${GH.on ? '<span class="text-[12px] text-dim">GitHub lo busca en las tiendas en 2–5 minutos.</span>' : `<span class="text-[12px] text-dim">Prueba con:</span>${LIVE_EXAMPLES.map(u => `<button type="button" data-action="nt-example" data-url="${esc(u)}" class="text-[12px] rounded-md border border-ink-600 px-2 py-0.5 text-mute hover:text-fg max-w-[220px] truncate">${esc(u)}</button>`).join('')}`}</div>
   </form>
   <div id="nt-progress" class="mt-4"></div>
   <div id="nt-preview" class="mt-4"></div>`;
@@ -1492,6 +1678,31 @@ function previewLive(m) {
     </div>
     <p class="px-4 py-2.5 border-t border-ink-600 text-[11px] text-dim">Debajo de cada tienda ves el producto que ha encontrado: comprueba que es la versión que quieres. Si alguna no lo es, después lo corriges desde la ficha pegando su enlace. Las keys de Instant Gaming y Eneba son de la región España/Europa o global.</p>
   </form>`;
+}
+// Versión de GitHub: sin vista previa (cada búsqueda tarda unos minutos); se crea directamente.
+async function ghCreate() {
+  const spec = { ...liveSpec(), target: +$('#nt-target').value, alert: $('#nt-alert').checked };
+  if (!spec.title) { toast({ tone: 'bad', icon: 'circle-alert', title: 'Falta el nombre', body: 'Escribe el nombre del juego.' }); return; }
+  if (!(spec.target > 0)) { toast({ tone: 'bad', icon: 'circle-alert', title: 'Falta el objetivo', body: 'Indica a qué precio quieres que te avise.' }); return; }
+  if (!spec.shops.length && !spec.links.length && spec.platform !== 'PC') { toast({ tone: 'bad', icon: 'circle-alert', title: 'Sin tiendas', body: 'Marca al menos una tienda o pega un enlace.' }); return; }
+  const btn = $('#nt-fetch button:not([type=button])'); if (btn) btn.disabled = true;
+  try {
+    await GH.create(spec);
+    closeModal();
+    toast({ tone: 'ai', icon: 'github', title: 'Enviado a GitHub', body: `Buscando «${esc(spec.title)}» en las tiendas. Tarda 2–5 minutos y aparecerá aquí solo.`, ms: 8000 });
+    if (location.hash === '#juegos') render(); else location.hash = 'juegos';
+  } catch (e) { if (btn) btn.disabled = false; toast({ tone: 'bad', icon: 'circle-alert', title: 'No se pudo enviar', body: esc(e.message), ms: 9000 }); }
+}
+async function saveGhToken() {
+  const v = $('#gh-token').value.trim();
+  if (!v) return;
+  try {
+    const r = await fetch(`https://api.github.com/repos/${GH.owner}/${GH.repo}`, { headers: { Authorization: `Bearer ${v}`, Accept: 'application/vnd.github+json' } });
+    if (!r.ok) throw new Error(r.status === 401 ? 'GitHub dice que el token no es válido.' : r.status === 404 ? 'Ese token no tiene acceso a este repositorio.' : `GitHub respondió ${r.status}`);
+    GH.token = v; closeModal();
+    toast({ tone: 'good', icon: 'circle-check', title: 'Conectado con GitHub', body: 'Ya puedes añadir y cambiar trackers desde aquí.' });
+    if (ui.view === 'ajustes') render();
+  } catch (e) { toast({ tone: 'bad', icon: 'circle-alert', title: 'Token no válido', body: esc(e.message), ms: 9000 }); }
 }
 async function createLive() {
   const m = nt.meta, target = +$('#nt-target').value, btn = $('#nt-submit');
@@ -1730,6 +1941,8 @@ document.addEventListener('click', async e => {
       const pick = state.trackers[Math.floor(Math.random() * state.trackers.length)];
       Notify.dispatch(pick, { reason: 'test' }); render(); break;
     }
+    case 'gh-token': askToken(); break;
+    case 'gh-logout': GH.token = ''; render(); break;
     case 'test-telegram': if (LIVE.on) { testChannel('telegram'); break; } saveSettings(); log('info', 'telegram', `sendPhoto → chat ${state.settings.telegram.chatId || '(sin chat ID)'} · simulado`); toast({ tone: 'ai', icon: 'send', title: 'Prueba de Telegram simulada', body: 'El envío real llega con el backend de la Fase 2. El payload está a la derecha.' }); break;
     case 'test-discord': if (LIVE.on) { testChannel('discord'); break; } saveSettings(); log('info', 'discord', 'POST webhook embed · simulado'); toast({ tone: 'ai', icon: 'message-circle', title: 'Prueba de Discord simulada', body: 'El envío real llega con el backend de la Fase 2.' }); break;
     case 'test-email': if (LIVE.on) { testChannel('email'); break; } saveSettings(); log('info', 'email', `SMTP → ${state.settings.email.to || '(sin correo)'} · simulado`); toast({ tone: 'ai', icon: 'mail', title: 'Prueba de correo simulada', body: 'El envío real llega con el servidor de la Fase 2. El contenido del correo está en la pestaña Payload.' }); break;
@@ -1752,6 +1965,7 @@ document.addEventListener('change', e => {
   if (el.id === 'sort') { ui.sort = el.value; render(); }
   if (el.id === 'cmp-a' || el.id === 'cmp-b') { cmp[el.id === 'cmp-a' ? 'a' : 'b'] = el.value; refreshCompare(); }
   if (el.closest && el.closest('#settings-form')) saveSettings();
+  if (el.id === 'snd-on-gh') { api('PUT', '/api/settings', { sound: el.checked }); renderSoundBtn(); }
 });
 document.addEventListener('input', e => {
   if (e.target.id === 'int' && $('#int-val')) { $('#int-val').textContent = e.target.value + ' s'; }
@@ -1759,7 +1973,8 @@ document.addEventListener('input', e => {
 document.addEventListener('submit', e => {
   e.preventDefault();
   const f = e.target;
-  if (f.id === 'nt-fetch') doFetch(LIVE.on ? liveSpec() : $('#nt-url').value.trim());
+  if (f.id === 'nt-fetch') GH.on ? ghCreate() : doFetch(LIVE.on ? liveSpec() : $('#nt-url').value.trim());
+  if (f.id === 'gh-token-form') saveGhToken();
   if (f.id === 'nt-create') LIVE.on ? createLive() : createFromForm();
   if (f.id === 'nt-flight') createFlight();
   if (f.id === 'cp-form') { const i = $('#cp-input'); ask(i.value); i.value = ''; }
@@ -1793,7 +2008,7 @@ async function testChannel(ch) {
   await saveSettingsLive();
   try {
     await api('POST', '/api/notify/test', { channel: ch });
-    toast({ tone: 'good', icon: 'circle-check', title: `${CH_LABEL[ch]}: prueba enviada`, body: 'Revisa que te ha llegado el mensaje.' });
+    toast(GH.on ? { tone: 'ai', icon: 'github', title: `${CH_LABEL[ch]}: prueba enviada a GitHub`, body: 'Llegará en 2–5 minutos. Si falla, te lo digo aquí.' } : { tone: 'good', icon: 'circle-check', title: `${CH_LABEL[ch]}: prueba enviada`, body: 'Revisa que te ha llegado el mensaje.' });
   } catch (e) { toast({ tone: 'bad', icon: 'circle-alert', title: `${CH_LABEL[ch]}: no se pudo enviar`, body: esc(e.message), ms: 9000 }); }
 }
 function saveSettings() {
@@ -1836,15 +2051,15 @@ window.addEventListener('hashchange', route);
 
 // ---------- arranque ----------
 (async () => {
-if (await LIVE.detect()) {
-  LIVE.connect();
+if (await LIVE.detect() || await GH.detect()) {
+  if (!GH.on) LIVE.connect();
   $('#banner').remove();
   $('#side-note').innerHTML = 'Precios reales de videojuegos en Instant Gaming, Eneba, Amazon, MediaMarkt, Fnac, El Corte Inglés, GAME e Impact. Productos y vuelos: próximas fases. IA con Gemini: Fase 3.';
   nt.cat = 'game';
   renderSoundBtn();
   setInterval(tickLive, 1000);
   route();
-  window.CG = { api: API, ai: AI, notify: Notify, engine, live: LIVE, state: () => state };
+  window.CG = { api: API, ai: AI, notify: Notify, engine, live: LIVE, gh: GH, state: () => state };
   return;
 }
 state = load();
@@ -1869,7 +2084,7 @@ setInterval(tickLive, 1000);
 route();
 
 // API pública para las fases 2 y 3
-window.CG = { api: API, ai: AI, notify: Notify, engine, live: LIVE, state: () => state };
+window.CG = { api: API, ai: AI, notify: Notify, engine, live: LIVE, gh: GH, state: () => state };
 })();
 })();
 </script>

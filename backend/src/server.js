@@ -6,11 +6,9 @@ import crypto from 'node:crypto';
 import { config } from './config.js';
 import * as store from './store.js';
 import { bus, log, recentLogs } from './bus.js';
-import { hostStats } from './http.js';
 import { engine } from './engine.js';
 import * as games from './games.js';
-import { parseUrl, shopFor } from './sources/shops.js';
-import { norm } from './sources/keyshops.js';
+import * as actions from './actions.js';
 import { close as closeBrowser } from './sources/browser.js';
 import { dispatch, send, SAMPLE } from './notify/index.js';
 
@@ -53,36 +51,10 @@ export function createApp() {
   const wrap = fn => (req, res) => Promise.resolve(fn(req, res)).catch(e => {
     const user = e instanceof games.UserError;
     if (!user) log('err', 'api', `${req.method} ${req.path}: ${e.message}`);
-    res.status(user ? 400 : 502).json({ error: user ? e.message : `No se pudo completar: ${e.message}` });
+    res.status(e instanceof actions.NotFound ? 404 : user ? 400 : 502).json({ error: user ? e.message : `No se pudo completar: ${e.message}` });
   });
 
-  const sources = () => {
-    const stats = new Map(hostStats().map(s => [s.host, s]));
-    const row = (name, kind, covers, host) => {
-      const s = stats.get(host) || {};
-      return { name, kind, covers, host, ok: s.runs ? Math.round((1 - s.fails / s.runs) * 100) : null, lat: s.lat || null, last: s.last || null, status: s.runs ? s.status : 'idle', runs: s.runs || 0 };
-    };
-    const base = [
-      row('Instant Gaming', 'búsqueda', 'Keys · búsqueda automática', 'www.instant-gaming.com'),
-      row('Eneba', 'navegador', 'Keys · búsqueda automática', 'www.eneba.com'),
-      row('Amazon', 'navegador', 'Búsqueda automática', 'www.amazon.es'),
-      row('MediaMarkt', 'navegador', 'Búsqueda automática', 'www.mediamarkt.es'),
-      row('Fnac', 'navegador', 'Búsqueda automática', 'www.fnac.es'),
-      row('El Corte Inglés', 'navegador', 'Búsqueda automática', 'www.elcorteingles.es'),
-      row('GAME', 'búsqueda', 'Búsqueda automática', 'www.game.es'),
-      row('Impact', 'búsqueda', 'Búsqueda automática', 'impactgame.es'),
-      row('Steam España', 'API web', 'Precio oficial de PC, reseñas, Steam Deck', new URL(config.steamStoreBase).hostname)
-    ];
-    // Las tiendas de los enlaces pegados (Amazon, MediaMarkt, GAME, Impact…) aparecen según se usan.
-    const known = new Set(base.map(b => b.host));
-    const linked = new Map();
-    for (const t of db().trackers) for (const l of t.links || []) {
-      const u = parseUrl(l); if (!u || known.has(u.hostname) || linked.has(u.hostname)) continue;
-      const sh = shopFor(u);
-      linked.set(u.hostname, row(sh.name, sh.browser ? 'navegador' : 'ficha web', 'Enlaces de producto', u.hostname));
-    }
-    return [...base, ...linked.values()];
-  };
+  const sources = actions.sourceRows;
 
   app.get('/api/health', (req, res) => res.json({ ok: true, version: VERSION, mode: 'live' }));
   app.get('/api/shops', (req, res) => res.json({ keys: games.KEY_NAMES, retail: games.SHOP_NAMES.filter(n => !games.KEY_NAMES.includes(n)), platforms: games.PLATFORMS }));
@@ -116,51 +88,22 @@ export function createApp() {
   }));
 
   app.post('/api/trackers', wrap(async (req, res) => {
-    const b = req.body || {};
-    if (b.cat && b.cat !== 'game') throw new games.UserError('De momento solo hay fuente real para videojuegos. Productos y vuelos llegarán en las próximas fases.');
-    const it = await games.createTracker(b);
-    const key = t => `${norm(t.title)}|${t.platform || 'PC'}`;
-    const dup = db().trackers.find(t => t.cat === 'game' && t.live && key(t) === key(it));
-    if (dup) throw new games.UserError(`Ya sigues «${dup.title}». Cambia su objetivo desde su ficha.`);
-    db().trackers.unshift(it);
-    store.save();
-    log('ok', 'api', `tracker creado: «${it.title}» · objetivo ${it.target} €`);
-    bus.emit('event', 'tracker', it);
+    const { it, notify } = await actions.addTracker(req.body || {});
     res.status(201).json(it);
-    // Si ya está por debajo del objetivo, avisa ya.
-    if (it.alert && it.current <= it.target) { it.alerted = true; store.save(); dispatch(it); }
+    notify();
   }));
 
   app.patch('/api/trackers/:id', wrap(async (req, res) => {
-    const it = find(req.params.id);
-    if (!it) return res.status(404).json({ error: 'Ese tracker no existe' });
-    const b = req.body || {};
-    let fire = false;
-    if (b.target !== undefined) {
-      if (!(+b.target > 0)) throw new games.UserError('El objetivo tiene que ser mayor que 0.');
-      it.target = Math.round(+b.target * 100) / 100;
-      it.alerted = false;
-      fire = true;
-    }
-    if (b.alert !== undefined) { it.alert = !!b.alert; if (it.alert) { it.alerted = false; fire = true; } }
-    const rescan = it.cat === 'game' && it.live && (b.links !== undefined || b.shops !== undefined);
-    if (rescan) games.updateSources(it, b);
-    store.save();
-    bus.emit('event', 'tracker', it);
+    const { it, rescan, notify } = actions.editTracker(req.params.id, req.body || {});
     res.json(it);
-    if (rescan) { log('info', 'api', `«${it.title}»: tiendas actualizadas, comprobando precios`); engine.cycle(it.id).catch(() => {}); return; }
-    if (fire && it.alert && it.current <= it.target) { it.alerted = true; store.save(); dispatch(it); }
+    if (rescan) engine.cycle(it.id).catch(() => {});
+    else notify();
   }));
 
-  app.delete('/api/trackers/:id', (req, res) => {
-    const it = find(req.params.id);
-    if (!it) return res.status(404).json({ error: 'Ese tracker no existe' });
-    db().trackers = db().trackers.filter(t => t.id !== it.id);
-    store.save();
-    log('warn', 'api', `tracker eliminado: «${it.title}»`);
-    bus.emit('event', 'tracker-removed', { id: it.id });
+  app.delete('/api/trackers/:id', wrap(async (req, res) => {
+    actions.removeTracker(req.params.id);
     res.json({ ok: true });
-  });
+  }));
 
   app.post('/api/trackers/:id/scan', wrap(async (req, res) => {
     if (!find(req.params.id)) return res.status(404).json({ error: 'Ese tracker no existe' });

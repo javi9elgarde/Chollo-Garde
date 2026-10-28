@@ -29,7 +29,8 @@ export function load() {
     }
   }
   const d = defaultSettings();
-  const s = raw?.settings || {};
+  // Con datos públicos (GitHub), los canales salen siempre de los secretos, nunca del fichero.
+  const s = config.publicData ? { sound: raw?.settings?.sound } : raw?.settings || {};
   db = {
     trackers: raw?.trackers || [],
     alerts: raw?.alerts || [],
@@ -41,6 +42,8 @@ export function load() {
     },
     stats: { cycles: 0, requests: 0, ...raw?.stats }
   };
+  // Lo que solo usa la versión de GitHub (registro, peticiones del panel…) se conserva tal cual.
+  for (const k of ['logs', 'acciones', 'sources', 'engine', 'version']) if (raw?.[k] !== undefined) db[k] = raw[k];
   return db;
 }
 
@@ -52,13 +55,20 @@ export function save({ now = false } = {}) {
   const write = () => {
     fs.mkdirSync(config.dataDir, { recursive: true });
     const tmp = FILE() + '.tmp';
-    fs.writeFileSync(tmp, JSON.stringify(db, null, 1));
+    const out = config.publicData ? { ...db, settings: publicDataSettings() } : db;
+    fs.writeFileSync(tmp, JSON.stringify(out, null, 1));
     fs.renameSync(tmp, FILE());
   };
   if (now) write(); else timer = setTimeout(write, 300);
 }
 
 // Secretos que nunca salen del servidor: el dashboard solo sabe si están configurados.
+// Ajustes que se pueden publicar: solo si cada canal está configurado, sin claves, chat ni correo.
+function publicDataSettings() {
+  const s = db.settings;
+  return { canales: { telegram: !!s.telegram.enabled, discord: !!s.discord.enabled, email: !!s.email.enabled }, sound: s.sound, engine: true, intervalMin: 60 };
+}
+
 export function publicSettings() {
   const s = get().settings;
   return {
