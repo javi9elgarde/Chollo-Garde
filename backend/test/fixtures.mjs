@@ -31,10 +31,11 @@ export const handler = (req, res) => {
     if (p.startsWith('/gemini/models/')) {
       const b = JSON.parse(body || '{}'), sys = b.systemInstruction?.parts?.[0]?.text || '';
       up.gemini.push({ model: p.split('/')[3].split(':')[0], sys, body: b, key: req.headers['x-goog-api-key'] });
-      if (up.geminiQuota) return json({ error: { code: 429, message: 'Resource exhausted', details: [{ retryDelay: '120s' }] } }, 429);
+      if (up.geminiQuota || (up.searchQuota && b.tools)) return json({ error: { code: 429, message: 'Resource exhausted', details: [{ retryDelay: '120s' }] } }, 429);
       const out = text => json({ candidates: [{ content: { parts: [{ text: 'pensando…', thought: true }, { text }] }, ...(b.tools && { groundingMetadata: { groundingChunks: [{ web: { title: 'vandal.net' } }, { web: { title: 'ign.com' } }] } }) }] });
       if (/auditor de precios/.test(sys)) return out(JSON.stringify({ score: 140, inflado: false, descuento_real: 0.38, recomendacion: 'COMPRAR_AHORA', confianza: 0.81, motivos: ['Está a 18,20 €, el mínimo registrado.', 'Un 38 % por debajo del precio oficial (29,50 €).'], proxima_bajada: null }));
       if (/Busca en Google/.test(sys)) return out('Aquí tienes:\n```json\n' + JSON.stringify({ pros: ['Combate profundo'], contras: ['Empieza lento'], nota: 4.6 }) + '\n```');
+      if (/según lo que sabes/.test(sys)) return out(JSON.stringify(up.unknownGame ? { pros: [], contras: [], nota: null } : { pros: ['Lo que sabe Gemini'], contras: ['Algo'], nota: 4.2 }));
       if (/reseñas que recibes/.test(sys)) return out(JSON.stringify({ pros: ['Combate adictivo', 'Gran música', 'Muy rejugable'], contras: ['Cuesta al principio', 'x', 'y'], nota: 4.7 }));
       return out('**Hades II** está a 18,20 € en Eneba.');
     }
