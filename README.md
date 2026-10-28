@@ -54,9 +54,9 @@ Pasos (solo una vez, en el PC con Windows):
 
 Si el PC está apagado mucho tiempo, GitHub deja una sola ejecución esperando; si pasa más de 24 h sin poder ejecutarla, la cancela y te avisa por correo. No es un error de CholloGarde.
 
-### Arte de los juegos (RAWG, como el Refugio 111)
+### Arte de los juegos (IGDB y RAWG, como el Refugio 111)
 
-Las tarjetas de juegos usan la imagen apaisada de RAWG, la misma base de datos del Refugio 111. Añade la clave en *Settings → Secrets and variables → Actions → New repository secret* con el nombre `RAWG_API_KEY`. Vale la misma clave que usa el Refugio, o una nueva gratis en <https://rawg.io/apidocs>. Sin la clave se sigue viendo la carátula de la tienda.
+Las tarjetas de juegos usan el arte apaisado de IGDB, la fuente por defecto del Refugio 111, a través de su mismo proxy de Cloudflare: no hace falta ninguna clave. Si IGDB no encuentra un juego, se prueba con RAWG. RAWG es opcional; para activarlo añade la clave en *Settings → Secrets and variables → Actions → New repository secret* con el nombre `RAWG_API_KEY`. Vale la misma clave que usa el Refugio, o una nueva gratis en <https://rawg.io/apidocs>. Sin la clave se sigue viendo la carátula de la tienda.
 
 ### Reloj: un ciclo cada hora de verdad
 

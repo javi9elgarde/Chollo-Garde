@@ -987,7 +987,7 @@ function ring(score, size = 76) {
   return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" role="img" aria-label="Deal Index ${score} de 100"><circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="#27324E" stroke-width="6"/><circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="${col}" stroke-width="6" stroke-linecap="round" stroke-dasharray="${c * score / 100} ${c}" transform="rotate(-90 ${size / 2} ${size / 2})"/><text x="50%" y="50%" dy=".35em" text-anchor="middle" fill="#E7EAF2" font-family="Bricolage Grotesque, sans-serif" font-weight="800" font-size="${size * .3}">${score}</text></svg>`;
 }
 
-// Videojuegos: tarjeta tipo biblioteca (como el Refugio 111). Arte apaisado de RAWG a sangre, lo
+// Videojuegos: tarjeta tipo biblioteca (como el Refugio 111). Arte apaisado de IGDB/RAWG a sangre, lo
 // importante encima (precio, objetivo, tienda) y el resto en la ficha que se abre al pinchar.
 function gameCard(it) {
   const a = AI.analyze(it);

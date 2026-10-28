@@ -18,6 +18,9 @@ export const handler = (req, res) => {
     if (p === '/rawg/games') return json({ results: [
       { name: 'Hades II: Soundtrack', slug: 'hades-ii-ost', background_image: 'https://media.rawg/ost.jpg' },
       { name: 'Hades II', slug: 'hades-2', background_image: 'https://media.rawg/hades2.jpg', released: '2025-09-25', metacritic: 95, genres: [{ name: 'Action' }, { name: 'Roguelike' }] }] });
+    if (p === '/igdb/search') return up.igdbDown ? json({ error: 'caído' }, 500) : json(/hades/i.test(u.searchParams.get('q')) ? [
+      { id: 1, name: 'Hades II Original Soundtrack', image: 'https://images.igdb.com/igdb/image/upload/t_screenshot_big/ost.jpg' },
+      { id: 2, name: 'Hades II', released: '2025-09-25', developer: 'Supergiant Games', genres: ['Roguelike', 'Action'], image: 'https://images.igdb.com/igdb/image/upload/t_screenshot_big/h2.jpg', cover: 'https://images.igdb.com/igdb/image/upload/t_cover_big/c2.jpg' }] : []);
     if (p.startsWith('/tg/bot')) { up.telegram.push({ method: p.split('/').pop(), body: JSON.parse(body) }); return json({ ok: true }); }
     if (p === '/discord') { up.discord.push(JSON.parse(body)); res.writeHead(204); return res.end(); }
     json({ error: 'no mock ' + p }, 404);

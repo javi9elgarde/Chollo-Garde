@@ -19,8 +19,9 @@ test('crear, ciclo, error anotado y nada de secretos en los datos', () => {
   assert.equal(db.acciones[0].id, 'r1');
   assert.equal(db.acciones[0].ok, true);
   assert.equal(db.alerts.length, 1, 'ya estaba por debajo del objetivo: avisa');
-  assert.equal(db.trackers[0].art, 'https://media.rawg/hades2.jpg', 'arte de RAWG, no el de la banda sonora');
-  assert.equal(db.trackers[0].rawg, 'hades-2');
+  assert.equal(db.trackers[0].art, 'https://images.igdb.com/igdb/image/upload/t_1080p/h2.jpg', 'arte grande de IGDB, no el de la banda sonora');
+  assert.equal(db.trackers[0].igdb, 2);
+  assert.equal(db.trackers[0].specs.Desarrolladora, 'Supergiant Games');
   assert.equal(db.alerts[0].channels.telegram, 'ok');
   assert.ok(db.sources.find(s => s.name === 'Amazon').runs > 0);
 

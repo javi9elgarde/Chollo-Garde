@@ -5,7 +5,9 @@ import { parsePrice, extract, blocked } from '../src/sources/web.js';
 import { score } from '../src/sources/keyshops.js';
 import { candidates, RETAIL } from '../src/sources/retail.js';
 import { shopFor } from '../src/sources/shops.js';
-import { migrate } from '../src/games.js';
+import { migrate, addArt } from '../src/games.js';
+import http from 'node:http';
+import { handler, up } from './fixtures.mjs';
 
 test('precios en formato español e inglés', () => {
   assert.equal(parsePrice('59,99 €'), 59.99);
@@ -101,4 +103,21 @@ test('GAME: resultados en la lista JSON-LD y nombres en castellano («Lobezno»)
   const cands = itemList(html, 'https://www.game.es/resultados?search=x', RETAIL.GAME);
   assert.equal(cands.length, 2);
   assert.equal(pick(cands, "Marvel's Wolverine", 'PS5', { retail: true }).url, 'https://www.game.es/marvel-lobezno-ps5/266999');
+});
+
+test('arte: IGDB primero y RAWG si IGDB falla', async () => {
+  const server = http.createServer(handler);
+  await new Promise(r => server.listen(0, '127.0.0.1', r));
+  const base = `http://127.0.0.1:${server.address().port}`;
+  Object.assign(process.env, { IGDB_PROXY: base + '/igdb', RAWG_API_BASE: base + '/rawg', RAWG_API_KEY: 'prueba' });
+  try {
+    const a = { title: 'Hades II' };
+    await addArt(a);
+    assert.equal(a.art, 'https://images.igdb.com/igdb/image/upload/t_1080p/h2.jpg');
+    up.igdbDown = true;
+    const b = { title: 'Hades II' };
+    await addArt(b);
+    assert.equal(b.art, 'https://media.rawg/hades2.jpg');
+    assert.equal(b.rawg, 'hades-2');
+  } finally { up.igdbDown = false; server.close(); }
 });

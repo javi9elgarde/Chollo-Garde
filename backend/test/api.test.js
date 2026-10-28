@@ -18,7 +18,7 @@ before(async () => {
   tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'cg-'));
   Object.assign(process.env, {
     DATA_DIR: tmp, STEAM_STORE_BASE: ub + '/steam', TELEGRAM_API_BASE: ub + '/tg',
-    TELEGRAM_BOT_TOKEN: 'tok', TELEGRAM_CHAT_ID: '42', DISCORD_WEBHOOK_URL: ub + '/discord', SMTP_USER: '', SMTP_PASS: ''
+    TELEGRAM_BOT_TOKEN: 'tok', TELEGRAM_CHAT_ID: '42', DISCORD_WEBHOOK_URL: ub + '/discord', IGDB_PROXY: ub + '/igdb', SMTP_USER: '', SMTP_PASS: ''
   });
   const web = await import('../src/sources/web.js');
   web._setFetchers({ fetch: serve, render: serve });
