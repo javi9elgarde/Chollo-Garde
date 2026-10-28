@@ -23,16 +23,27 @@
    "links": [],
    "steamAppID": null,
    "image": "https://dam.elcorteingles.es/producto/www-001097581512924-00.jpg",
-   "url": "https://www.mediamarkt.es/es/product/_ps5-metal-gear-solid-master-collection-volume-2-1621005.html",
+   "url": "https://www.amazon.es/dp/B0GNKRMWMS",
    "deck": null,
    "msrp": 49.99,
    "target": 41,
    "alert": true,
-   "alerted": false,
+   "alerted": true,
    "createdAt": 1793201960375,
-   "lastCheck": 1793205418819,
-   "lastError": "Amazon: la tienda ha pedido un captcha; se reintentará en el próximo ciclo · Instant Gaming: no encuentro «Metal Gear Solid Master Collection Vol. 2» para PS5 · Eneba: la ficha no tiene precio ahora mismo (sin vendedores o sin stock) · Fnac: la tienda ha pedido un captcha; se reintentará en el próximo ciclo · Impact: no encuentro «Metal Gear Solid Master Collection Vol. 2» para PS5 entre 1 resultados",
+   "lastCheck": 1793206086819,
+   "lastError": "Instant Gaming: no encuentro «Metal Gear Solid Master Collection Vol. 2» para PS5 · Eneba: la ficha no tiene precio ahora mismo (sin vendedores o sin stock) · Impact: no encuentro «Metal Gear Solid Master Collection Vol. 2» para PS5 entre 1 resultados",
    "stores": [
+    {
+     "name": "Amazon",
+     "type": "retail",
+     "auto": true,
+     "url": "https://www.amazon.es/dp/B0GNKRMWMS",
+     "price": 40.99,
+     "out": false,
+     "pre": false,
+     "match": "Metal Gear Solid: Master Collection Volume 2 – Day One Edition - PS5",
+     "via": "pc"
+    },
     {
      "name": "MediaMarkt",
      "type": "retail",
@@ -44,6 +55,17 @@
      "match": "PS5 Metal Gear Solid: Master Collection Volume 2 | MediaMarkt"
     },
     {
+     "name": "Fnac",
+     "type": "retail",
+     "url": "https://www.fnac.es/Metal-Gear-Solid-Master-Collection-Vol-2-Day-One-Edition-PS5-Videojuego-PS5/a12881390",
+     "price": 46.9,
+     "out": false,
+     "pre": false,
+     "match": "Metal Gear Solid: Master Collection Vol. 2 Day One Edition PS5",
+     "auto": true,
+     "via": "pc"
+    },
+    {
      "name": "El Corte Inglés",
      "type": "retail",
      "auto": true,
@@ -51,7 +73,19 @@
      "price": 49.9,
      "out": false,
      "pre": false,
-     "match": "Metal Gear Solid: Master Collection Vol.2 Day 1 Edition PlayStation 5"
+     "match": "Metal Gear Solid: Master Collection Vol.2 Day 1 Edition PlayStation 5",
+     "via": "pc"
+    },
+    {
+     "name": "PS Store",
+     "type": "official",
+     "url": "https://store.playstation.com/es-es/product/UP0101-PPSA18194_00-MGSCOLLECTION002",
+     "price": 49.99,
+     "initial": 49.99,
+     "out": false,
+     "pre": false,
+     "match": "METAL GEAR SOLID: MASTER COLLECTION Vol.2",
+     "via": "pc"
     },
     {
      "name": "GAME",
@@ -62,26 +96,6 @@
      "out": false,
      "pre": false,
      "match": "Metal Gear Solid Master Collection Vol. 2 PS5"
-    },
-    {
-     "name": "PS Store",
-     "type": "official",
-     "url": "https://store.playstation.com/es-es/product/UP0101-PPSA18194_00-MGSCOLLECTION002",
-     "price": 49.99,
-     "initial": 49.99,
-     "out": false,
-     "pre": false,
-     "match": "METAL GEAR SOLID: MASTER COLLECTION Vol.2"
-    },
-    {
-     "name": "Amazon",
-     "type": "retail",
-     "auto": true,
-     "error": "la tienda ha pedido un captcha; se reintentará en el próximo ciclo",
-     "price": 33.88,
-     "url": "https://www.amazon.es/dp/B0GNKRMWMS",
-     "match": "Metal Gear Solid: Master Collection Volume 2 – Day One Edition - PS5",
-     "stale": true
     },
     {
      "name": "Instant Gaming",
@@ -96,23 +110,17 @@
      "error": "la ficha no tiene precio ahora mismo (sin vendedores o sin stock)"
     },
     {
-     "name": "Fnac",
-     "type": "retail",
-     "auto": true,
-     "error": "la tienda ha pedido un captcha; se reintentará en el próximo ciclo"
-    },
-    {
      "name": "Impact",
      "type": "retail",
      "auto": true,
      "error": "no encuentro «Metal Gear Solid Master Collection Vol. 2» para PS5 entre 1 resultados"
     }
    ],
-   "current": 44.99,
+   "current": 40.99,
    "history": [
     {
-     "t": 1793205418819,
-     "p": 44.99
+     "t": 1793206086819,
+     "p": 40.99
     }
    ],
    "coupons": [],
@@ -162,18 +170,30 @@
    "alert": true,
    "alerted": false,
    "createdAt": 1793184187081,
-   "lastCheck": 1793205459532,
-   "lastError": "Fnac: la tienda ha pedido un captcha; se reintentará en el próximo ciclo · Instant Gaming: no encuentro «Marvel's Wolverine» para PS5 · MediaMarkt: no encuentro el precio en la página (¿es la ficha de un producto?) · PS Store: la tienda ha pedido un captcha; se reintentará en el próximo ciclo",
+   "lastCheck": 1793206121800,
+   "lastError": "Instant Gaming: no encuentro «Marvel's Wolverine» para PS5 · MediaMarkt: no encuentro el precio en la página (¿es la ficha de un producto?)",
    "stores": [
     {
      "name": "Amazon",
      "type": "retail",
      "auto": true,
      "url": "https://www.amazon.es/dp/B0HHFLGFV8",
-     "price": 71.63,
+     "price": 67.99,
      "out": false,
      "pre": false,
-     "match": "Marvel's Wolverine - PS5"
+     "match": "Marvel's Wolverine - PS5",
+     "via": "pc"
+    },
+    {
+     "name": "Fnac",
+     "type": "retail",
+     "auto": true,
+     "url": "https://www.fnac.es/Marvel-Lobezno-PS5-Videojuego-PS5/a12684310",
+     "price": 73.5,
+     "out": false,
+     "pre": false,
+     "match": "Marvel: Lobezno PS5",
+     "via": "pc"
     },
     {
      "name": "El Corte Inglés",
@@ -183,7 +203,8 @@
      "price": 74.9,
      "out": false,
      "pre": false,
-     "match": "Marvel Lobezno PlayStation 5"
+     "match": "Marvel Lobezno PlayStation 5",
+     "via": "pc"
     },
     {
      "name": "Impact",
@@ -216,14 +237,14 @@
      "match": "Marvel: Lobezno PS5"
     },
     {
-     "name": "Fnac",
-     "type": "retail",
-     "auto": true,
-     "error": "la tienda ha pedido un captcha; se reintentará en el próximo ciclo",
-     "price": 73.5,
-     "url": "https://www.fnac.es/Marvel-Lobezno-PS5-Videojuego-PS5/a12684310",
-     "match": "Marvel: Lobezno PS5",
-     "stale": true
+     "name": "PS Store",
+     "type": "official",
+     "url": "https://store.playstation.com/es-es/product/UP9000-PPSA03671_00-MARVELSWOLVERINE",
+     "price": 79.99,
+     "initial": 79.99,
+     "out": false,
+     "pre": false,
+     "match": "Marvel: Lobezno"
     },
     {
      "name": "Instant Gaming",
@@ -236,18 +257,13 @@
      "type": "retail",
      "auto": true,
      "error": "no encuentro el precio en la página (¿es la ficha de un producto?)"
-    },
-    {
-     "name": "PS Store",
-     "type": "official",
-     "error": "la tienda ha pedido un captcha; se reintentará en el próximo ciclo"
     }
    ],
-   "current": 71.63,
+   "current": 67.99,
    "history": [
     {
-     "t": 1793205459532,
-     "p": 71.63
+     "t": 1793206121800,
+     "p": 67.99
     }
    ],
    "coupons": [],
@@ -292,13 +308,13 @@
    "image": "https://media.game.es/COVERV2/3D_L/264/264870.png",
    "url": "https://www.chollometro.com/ofertas/ps5-ea-sports-fc-27-2019234",
    "deck": null,
-   "msrp": 87.04,
+   "msrp": 79.99,
    "target": 50,
    "alert": false,
    "alerted": false,
    "createdAt": 1793152333341,
-   "lastCheck": 1793205490513,
-   "lastError": "Instant Gaming: no vende «EA Sports FC 27» para PS5, solo para otras plataformas · Eneba: la ficha no tiene precio ahora mismo (sin vendedores o sin stock) · Fnac: la tienda ha pedido un captcha; se reintentará en el próximo ciclo · PS Store: la tienda ha pedido un captcha; se reintentará en el próximo ciclo",
+   "lastCheck": 1793206143818,
+   "lastError": "Instant Gaming: no vende «EA Sports FC 27» para PS5, solo para otras plataformas · Eneba: la ficha no tiene precio ahora mismo (sin vendedores o sin stock)",
    "stores": [
     {
      "name": "Chollometro",
@@ -316,7 +332,8 @@
      "price": 69.9,
      "out": false,
      "pre": false,
-     "match": "EA Sports FC27 PlayStation 5"
+     "match": "EA Sports FC27 PlayStation 5",
+     "via": "pc"
     },
     {
      "name": "MediaMarkt",
@@ -327,6 +344,17 @@
      "out": false,
      "pre": false,
      "match": "PS5 EA SPORTS FC™ 27 | MediaMarkt"
+    },
+    {
+     "name": "Fnac",
+     "type": "retail",
+     "url": "https://www.fnac.es/EA-Sports-FC-27-PS5-Videojuego-PS5/a13332466",
+     "price": 71.5,
+     "out": false,
+     "pre": false,
+     "match": "EA Sports FC 27 PS5",
+     "auto": true,
+     "via": "pc"
     },
     {
      "name": "Impact",
@@ -349,6 +377,16 @@
      "match": "EA Sports FC 27 PS5"
     },
     {
+     "name": "PS Store",
+     "type": "official",
+     "url": "https://store.playstation.com/es-es/product/UP0006-PPSA34015_00-27STANDARDBUNDLE",
+     "price": 79.99,
+     "initial": 79.99,
+     "out": false,
+     "pre": false,
+     "match": "EA SPORTS FC™ 27 Standard Edition para PS4 y PS5"
+    },
+    {
      "name": "Amazon",
      "type": "retail",
      "auto": true,
@@ -356,7 +394,8 @@
      "price": 87.04,
      "out": false,
      "pre": false,
-     "match": "EA Sports FC 27 - PS5"
+     "match": "EA Sports FC 27 - PS5",
+     "via": "pc"
     },
     {
      "name": "Instant Gaming",
@@ -369,23 +408,12 @@
      "type": "key",
      "auto": true,
      "error": "la ficha no tiene precio ahora mismo (sin vendedores o sin stock)"
-    },
-    {
-     "name": "Fnac",
-     "type": "retail",
-     "auto": true,
-     "error": "la tienda ha pedido un captcha; se reintentará en el próximo ciclo"
-    },
-    {
-     "name": "PS Store",
-     "type": "official",
-     "error": "la tienda ha pedido un captcha; se reintentará en el próximo ciclo"
     }
    ],
    "current": 58.6,
    "history": [
     {
-     "t": 1793205490513,
+     "t": 1793206143818,
      "p": 58.6
     }
    ],
@@ -408,6 +436,24 @@
   }
  ],
  "alerts": [
+  {
+   "id": "al-69b1cfb1",
+   "itemId": "g-e0948d2d",
+   "title": "Metal Gear Solid Master Collection Vol. 2",
+   "cat": "game",
+   "t": 1793206086953,
+   "price": 40.99,
+   "target": 41,
+   "atl": false,
+   "reason": "target",
+   "read": false,
+   "channels": {
+    "web": true,
+    "telegram": "off",
+    "email": "off",
+    "discord": "error: HTTP 400"
+   }
+  },
   {
    "id": "al-2545a3d1",
    "itemId": "g-e0948d2d",
@@ -437,8 +483,8 @@
   "intervalMin": 60
  },
  "stats": {
-  "cycles": 13,
-  "requests": 428
+  "cycles": 14,
+  "requests": 460
  },
  "logs": [
   {
@@ -2024,6 +2070,210 @@
    "level": "info",
    "src": "parser",
    "msg": "EA Sports FC 27: sin cambios (58,60 € en Chollometro) · 29.78 s"
+  },
+  {
+   "t": 1793206057626,
+   "level": "info",
+   "src": "cron",
+   "msg": "ciclo #14 · 3 trackers"
+  },
+  {
+   "t": 1793206086819,
+   "level": "info",
+   "src": "Amazon",
+   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): 40.99 € · Metal Gear Solid: Master Collection Volume 2 – Day One Edition - PS5 · leído desde tu PC"
+  },
+  {
+   "t": 1793206086819,
+   "level": "info",
+   "src": "Fnac",
+   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): 46.9 € · Metal Gear Solid: Master Collection Vol. 2 Day One Edition PS5 · leído desde tu PC"
+  },
+  {
+   "t": 1793206086819,
+   "level": "info",
+   "src": "El Corte Inglés",
+   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): 49.9 € · Metal Gear Solid: Master Collection Vol.2 Day 1 Edition PlayStation 5 · leído desde tu PC"
+  },
+  {
+   "t": 1793206086819,
+   "level": "info",
+   "src": "PS Store",
+   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): 49.99 € · METAL GEAR SOLID: MASTER COLLECTION Vol.2 · leído desde tu PC"
+  },
+  {
+   "t": 1793206086819,
+   "level": "warn",
+   "src": "Instant Gaming",
+   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): no encuentro «Metal Gear Solid Master Collection Vol. 2» para PS5"
+  },
+  {
+   "t": 1793206086819,
+   "level": "warn",
+   "src": "Eneba",
+   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): la ficha no tiene precio ahora mismo (sin vendedores o sin stock)"
+  },
+  {
+   "t": 1793206086819,
+   "level": "info",
+   "src": "MediaMarkt",
+   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): 44.99 € · PS5 Metal Gear Solid: Master Collection Volume 2 | MediaMarkt"
+  },
+  {
+   "t": 1793206086819,
+   "level": "info",
+   "src": "GAME",
+   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): 49.99 € · Metal Gear Solid Master Collection Vol. 2 PS5"
+  },
+  {
+   "t": 1793206086819,
+   "level": "warn",
+   "src": "Impact",
+   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): no encuentro «Metal Gear Solid Master Collection Vol. 2» para PS5 entre 1 resultados"
+  },
+  {
+   "t": 1793206086821,
+   "level": "ok",
+   "src": "parser",
+   "msg": "Metal Gear Solid Master Collection Vol. 2: 44,99 € → 40,99 € en Amazon · 29.18 s"
+  },
+  {
+   "t": 1793206086822,
+   "level": "ok",
+   "src": "trigger",
+   "msg": "Precio_Actual 40,99 € <= Precio_Objetivo 41,00 € · Metal Gear Solid Master Collection Vol. 2"
+  },
+  {
+   "t": 1793206086953,
+   "level": "err",
+   "src": "discord",
+   "msg": "Discord falló: HTTP 400"
+  },
+  {
+   "t": 1793206121800,
+   "level": "info",
+   "src": "Amazon",
+   "msg": "Marvel's Wolverine (PS5): 67.99 € · Marvel's Wolverine - PS5 · leído desde tu PC"
+  },
+  {
+   "t": 1793206121800,
+   "level": "info",
+   "src": "Fnac",
+   "msg": "Marvel's Wolverine (PS5): 73.5 € · Marvel: Lobezno PS5 · leído desde tu PC"
+  },
+  {
+   "t": 1793206121800,
+   "level": "info",
+   "src": "El Corte Inglés",
+   "msg": "Marvel's Wolverine (PS5): 74.9 € · Marvel Lobezno PlayStation 5 · leído desde tu PC"
+  },
+  {
+   "t": 1793206121800,
+   "level": "warn",
+   "src": "Instant Gaming",
+   "msg": "Marvel's Wolverine (PS5): no encuentro «Marvel's Wolverine» para PS5"
+  },
+  {
+   "t": 1793206121800,
+   "level": "info",
+   "src": "Eneba",
+   "msg": "Marvel's Wolverine (PS5): 75 € · Marvel’s Wolverine (PS5) PSN Key EUROPE"
+  },
+  {
+   "t": 1793206121800,
+   "level": "warn",
+   "src": "MediaMarkt",
+   "msg": "Marvel's Wolverine (PS5): no encuentro el precio en la página (¿es la ficha de un producto?)"
+  },
+  {
+   "t": 1793206121800,
+   "level": "info",
+   "src": "GAME",
+   "msg": "Marvel's Wolverine (PS5): 79.99 € · Marvel: Lobezno PS5"
+  },
+  {
+   "t": 1793206121800,
+   "level": "info",
+   "src": "Impact",
+   "msg": "Marvel's Wolverine (PS5): 74.9 € · Marvel Wolverine Lobezno PS5"
+  },
+  {
+   "t": 1793206121800,
+   "level": "info",
+   "src": "PS Store",
+   "msg": "Marvel's Wolverine (PS5): 79.99 € · Marvel: Lobezno"
+  },
+  {
+   "t": 1793206121801,
+   "level": "ok",
+   "src": "parser",
+   "msg": "Marvel's Wolverine: 71,63 € → 67,99 € en Amazon · 33.65 s"
+  },
+  {
+   "t": 1793206143817,
+   "level": "info",
+   "src": "El Corte Inglés",
+   "msg": "EA Sports FC 27 (PS5): 69.9 € · EA Sports FC27 PlayStation 5 · leído desde tu PC"
+  },
+  {
+   "t": 1793206143817,
+   "level": "info",
+   "src": "Fnac",
+   "msg": "EA Sports FC 27 (PS5): 71.5 € · EA Sports FC 27 PS5 · leído desde tu PC"
+  },
+  {
+   "t": 1793206143817,
+   "level": "info",
+   "src": "Amazon",
+   "msg": "EA Sports FC 27 (PS5): 87.04 € · EA Sports FC 27 - PS5 · leído desde tu PC"
+  },
+  {
+   "t": 1793206143818,
+   "level": "warn",
+   "src": "Instant Gaming",
+   "msg": "EA Sports FC 27 (PS5): no vende «EA Sports FC 27» para PS5, solo para otras plataformas"
+  },
+  {
+   "t": 1793206143818,
+   "level": "warn",
+   "src": "Eneba",
+   "msg": "EA Sports FC 27 (PS5): la ficha no tiene precio ahora mismo (sin vendedores o sin stock)"
+  },
+  {
+   "t": 1793206143818,
+   "level": "info",
+   "src": "MediaMarkt",
+   "msg": "EA Sports FC 27 (PS5): 69.99 € · PS5 EA SPORTS FC™ 27 | MediaMarkt"
+  },
+  {
+   "t": 1793206143818,
+   "level": "info",
+   "src": "GAME",
+   "msg": "EA Sports FC 27 (PS5): 79.99 € · EA Sports FC 27 PS5"
+  },
+  {
+   "t": 1793206143818,
+   "level": "info",
+   "src": "Impact",
+   "msg": "EA Sports FC 27 (PS5): 72.9 € · EA Sports FC27 – Impact Game"
+  },
+  {
+   "t": 1793206143818,
+   "level": "info",
+   "src": "Chollometro",
+   "msg": "EA Sports FC 27 (PS5): 58.6 € · PS5 EA SPORTS FC 27 (MediaMarkt · código descuento app · 310°)"
+  },
+  {
+   "t": 1793206143818,
+   "level": "info",
+   "src": "PS Store",
+   "msg": "EA Sports FC 27 (PS5): 79.99 € · EA SPORTS FC™ 27 Standard Edition para PS4 y PS5"
+  },
+  {
+   "t": 1793206143819,
+   "level": "info",
+   "src": "parser",
+   "msg": "EA Sports FC 27: sin cambios (58,60 € en Chollometro) · 20.82 s"
   }
  ],
  "acciones": [
@@ -2132,8 +2382,8 @@
    "covers": "Keys · búsqueda automática",
    "host": "www.instant-gaming.com",
    "ok": 100,
-   "lat": 13793,
-   "last": 1793205480851,
+   "lat": 11414,
+   "last": 1793206135626,
    "status": "ok",
    "runs": 6
   },
@@ -2143,8 +2393,8 @@
    "covers": "Keys · búsqueda automática",
    "host": "www.eneba.com",
    "ok": 100,
-   "lat": 12882,
-   "last": 1793205480624,
+   "lat": 9242,
+   "last": 1793206134826,
    "status": "ok",
    "runs": 5
   },
@@ -2165,8 +2415,8 @@
    "covers": "Búsqueda automática",
    "host": "www.mediamarkt.es",
    "ok": 100,
-   "lat": 19400,
-   "last": 1793205478007,
+   "lat": 11554,
+   "last": 1793206135178,
    "status": "ok",
    "runs": 5
   },
@@ -2198,8 +2448,8 @@
    "covers": "Búsqueda automática",
    "host": "www.game.es",
    "ok": 100,
-   "lat": 1142,
-   "last": 1793205461721,
+   "lat": 703,
+   "last": 1793206123619,
    "status": "ok",
    "runs": 3
   },
@@ -2209,8 +2459,8 @@
    "covers": "Búsqueda automática",
    "host": "impactgame.es",
    "ok": 100,
-   "lat": 2926,
-   "last": 1793205463136,
+   "lat": 2336,
+   "last": 1793206125257,
    "status": "ok",
    "runs": 4
   },
@@ -2220,8 +2470,8 @@
    "covers": "Ofertas de la comunidad",
    "host": "www.chollometro.com",
    "ok": 100,
-   "lat": 777,
-   "last": 1793205461236,
+   "lat": 540,
+   "last": 1793206123415,
    "status": "ok",
    "runs": 5
   },
@@ -2241,10 +2491,10 @@
   "running": true,
   "busy": false,
   "intervalMin": 60,
-  "cycles": 13,
-  "requests": 428,
-  "lastRun": 1793205999258,
-  "lastAction": "diagnostico"
+  "cycles": 14,
+  "requests": 460,
+  "lastRun": 1793206143819,
+  "lastAction": "ciclo"
  },
  "version": "github"
 }
