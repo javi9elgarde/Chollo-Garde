@@ -12,7 +12,7 @@
  },
  "stats": {
   "cycles": 0,
-  "requests": 9
+  "requests": 18
  },
  "logs": [
   {
@@ -22,6 +22,24 @@
    "msg": "no hay trackers con fuente real todavía"
   }
  ],
+ "acciones": [
+  {
+   "id": "rmvrghf7j85pt",
+   "accion": "crear",
+   "ok": false,
+   "error": "No hay ningún precio válido para este juego ahora mismo.",
+   "at": 1793152178327,
+   "secs": 30
+  },
+  {
+   "id": "rmvrgdxwrpua7",
+   "accion": "crear",
+   "ok": false,
+   "error": "No hay ningún precio válido para este juego ahora mismo.",
+   "at": 1793152019609,
+   "secs": 31
+  }
+ ],
  "sources": [
   {
    "name": "Instant Gaming",
@@ -29,8 +47,8 @@
    "covers": "Keys · búsqueda automática",
    "host": "www.instant-gaming.com",
    "ok": 100,
-   "lat": 1118,
-   "last": 1793151989894,
+   "lat": 509,
+   "last": 1793152148673,
    "status": "ok",
    "runs": 1
   },
@@ -40,8 +58,8 @@
    "covers": "Keys · búsqueda automática",
    "host": "www.eneba.com",
    "ok": 100,
-   "lat": 16560,
-   "last": 1793152005416,
+   "lat": 13379,
+   "last": 1793152161571,
    "status": "ok",
    "runs": 1
   },
@@ -50,10 +68,10 @@
    "kind": "navegador",
    "covers": "Búsqueda automática",
    "host": "www.amazon.es",
-   "ok": 50,
-   "lat": 16125,
-   "last": 1793152019608,
-   "status": "warn",
+   "ok": 100,
+   "lat": 15602,
+   "last": 1793152178326,
+   "status": "ok",
    "runs": 2
   },
   {
@@ -62,8 +80,8 @@
    "covers": "Búsqueda automática",
    "host": "www.mediamarkt.es",
    "ok": 0,
-   "lat": 23361,
-   "last": 1793152012219,
+   "lat": 23293,
+   "last": 1793152171486,
    "status": "warn",
    "runs": 1
   },
@@ -73,8 +91,8 @@
    "covers": "Búsqueda automática",
    "host": "www.fnac.es",
    "ok": 0,
-   "lat": 23490,
-   "last": 1793152012347,
+   "lat": 20564,
+   "last": 1793152168758,
    "status": "warn",
    "runs": 1
   },
@@ -84,8 +102,8 @@
    "covers": "Búsqueda automática",
    "host": "www.elcorteingles.es",
    "ok": 0,
-   "lat": 23524,
-   "last": 1793152012381,
+   "lat": 23025,
+   "last": 1793152171219,
    "status": "warn",
    "runs": 1
   },
@@ -95,8 +113,8 @@
    "covers": "Búsqueda automática",
    "host": "www.game.es",
    "ok": 0,
-   "lat": 6370,
-   "last": 1793152016392,
+   "lat": 5958,
+   "last": 1793152174136,
    "status": "warn",
    "runs": 2
   },
@@ -106,8 +124,8 @@
    "covers": "Búsqueda automática",
    "host": "impactgame.es",
    "ok": 0,
-   "lat": 6091,
-   "last": 1793152015189,
+   "lat": 5947,
+   "last": 1793152174045,
    "status": "warn",
    "runs": 2
   },
@@ -128,19 +146,9 @@
   "busy": false,
   "intervalMin": 60,
   "cycles": 0,
-  "requests": 9,
-  "lastRun": 1793152019609,
+  "requests": 18,
+  "lastRun": 1793152178327,
   "lastAction": "crear"
  },
- "version": "github",
- "acciones": [
-  {
-   "id": "rmvrgdxwrpua7",
-   "accion": "crear",
-   "ok": false,
-   "error": "No hay ningún precio válido para este juego ahora mismo.",
-   "at": 1793152019609,
-   "secs": 31
-  }
- ]
+ "version": "github"
 }
