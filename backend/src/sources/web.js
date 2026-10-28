@@ -163,7 +163,7 @@ export function extract(html, url) {
   if (!price && jsonLd(html).some(isProduct)) throw new Error('la ficha no tiene precio ahora mismo (sin vendedores o sin stock)');
   if (!price) throw new Error('no encuentro el precio en la página (¿es la ficha de un producto?)');
   // Tiendas que no lo dicen en los datos, pero sí en el nombre («Reserva Marvel Wolverine…»).
-  pre ||= /^\s*(reserva|pre-?order|preventa)\b/i.test(title || '');
+  pre ||= /^\s*(reserva|pre-?order|preventa)\b/i.test(title || '') || /\/reserva-/i.test(u?.pathname || '');
   return { title: title ? title.slice(0, 160) : null, image, price, out, pre };
 }
 
