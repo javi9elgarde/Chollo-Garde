@@ -1,135 +1,172 @@
-// Vertical de videojuegos con datos reales: CheapShark (tiendas de PC) + Steam España (precio en EUR).
+// Vertical de videojuegos con precios reales en las tiendas que usa Javi:
+// - Instant Gaming y Eneba: búsqueda automática por nombre y plataforma.
+// - Amazon, MediaMarkt, Fnac, El Corte Inglés, GAME, Impact o cualquier otra: enlace del producto.
+// - Steam España (solo PC): precio oficial de referencia, reseñas y Steam Deck.
 import crypto from 'node:crypto';
-import * as cs from './sources/cheapshark.js';
 import * as steam from './sources/steam.js';
-import { usdToEur } from './sources/fx.js';
+import * as keyshops from './sources/keyshops.js';
+import * as web from './sources/web.js';
+import { shopFor, parseUrl } from './sources/shops.js';
 
 const round = (v, d = 2) => Math.round(v * 10 ** d) / 10 ** d;
 const dayKey = t => new Date(t).toLocaleDateString('sv-SE'); // AAAA-MM-DD en hora local
+export const PLATFORMS = ['PC', 'PS5', 'PS4', 'Switch', 'Xbox'];
+const PLATFORM_LABEL = { PC: 'PC', PS5: 'PS5', PS4: 'PS4', Switch: 'Switch', Xbox: 'Xbox' };
 
 export class UserError extends Error {}
 
-// Precios actuales de todas las tiendas, en euros.
-export async function quote({ gameID, steamAppID }) {
-  const [rate, storeMap, g, steamPrice] = await Promise.all([
-    usdToEur(),
-    gameID ? cs.stores() : null,
-    gameID ? cs.game(gameID) : null,
-    steamAppID ? steam.priceEs(steamAppID).catch(() => null) : null
-  ]);
-  const byName = new Map();
-  const put = s => { const o = byName.get(s.name); if (!o || s.price < o.price) byName.set(s.name, s); };
-  for (const d of g?.deals || []) {
-    const st = storeMap.get(String(d.storeID));
-    if (!st || !st.active) continue;
-    // El precio de Steam en CheapShark es el de EE. UU.; si tenemos el de España, manda ese.
-    if (st.name === 'Steam' && steamPrice) continue;
-    put({ name: st.name, type: cs.storeType(st.name), price: round(+d.price * rate), usd: +d.price, retailUsd: +d.retailPrice, url: cs.dealUrl(d.dealID), approx: true });
+// Normaliza lo que llega del panel: título, plataforma, si buscar en tiendas de keys y los enlaces.
+function cleanSpec(b = {}) {
+  const platform = PLATFORMS.includes(b.platform) ? b.platform : 'PC';
+  const links = [...new Set((Array.isArray(b.links) ? b.links : String(b.links || '').split(/\s+/))
+    .map(l => parseUrl(l)?.href).filter(Boolean))].slice(0, 12);
+  let title = String(b.title ?? b.q ?? '').trim();
+  let steamAppID = b.steamAppID ? String(b.steamAppID) : null;
+  // Si en el nombre pegan un enlace de Steam, sirve igual.
+  const fromUrl = steam.appIdFromUrl(title) || steam.appIdFromUrl(b.url || '');
+  if (fromUrl) { steamAppID = fromUrl; if (/^https?:|steampowered/i.test(title)) title = ''; }
+  return { title, platform, keys: b.keys !== false, links, steamAppID };
+}
+
+async function steamInfo(spec) {
+  if (spec.platform !== 'PC') return null;
+  let appId = spec.steamAppID;
+  if (!appId && spec.title) {
+    const hits = await steam.search(spec.title).catch(() => []);
+    const best = hits.map(h => ({ h, s: keyshops.score(h.name, spec.title, null) })).filter(x => x.s !== null).sort((a, b) => b.s - a.s)[0];
+    appId = best?.h.id || null;
   }
-  if (steamPrice) put({ name: 'Steam', type: 'official', price: steamPrice.price, initial: steamPrice.initial, url: steam.appUrl(steamAppID), approx: false });
-  const stores = [...byName.values()].sort((a, b) => a.price - b.price);
-  const retail = Math.max(0, ...stores.map(s => s.initial || (s.retailUsd ? round(s.retailUsd * rate) : 0)));
-  const ever = g?.cheapestPriceEver;
-  return {
-    title: g?.info?.title || null,
-    thumb: g?.info?.thumb || null,
-    steamAppID: steamAppID || g?.info?.steamAppID || null,
-    stores,
-    best: stores[0] || null,
-    msrp: steamPrice?.initial || retail || null,
-    atlEver: ever && +ever.price > 0 ? { p: round(+ever.price * rate), t: (+ever.date || 0) * 1000, usd: +ever.price, src: 'CheapShark' } : null,
-    rate
-  };
+  if (!appId) return null;
+  const det = await steam.details(appId).catch(() => null);
+  if (!det) return null;
+  return { appId, det };
 }
 
-// Auto-fetch del modal «Nuevo tracker»: acepta un enlace de Steam o el nombre del juego.
-export async function lookup({ url, q }) {
-  let candidates = [], appId = null;
-  if (url) {
-    appId = steam.appIdFromUrl(url);
-    if (!appId) {
-      let host = url;
-      try { host = new URL(/^https?:/i.test(url) ? url : 'https://' + url).hostname; } catch {}
-      throw new UserError(`Por ahora los juegos se buscan con un enlace de Steam o por su nombre (fuente: CheapShark). ${host} todavía no tiene conector.`);
+// Precios actuales en todas las tiendas configuradas. Las que fallan llevan `error`.
+export async function quote(spec, prev = []) {
+  const stores = [];
+  const st = await steamInfo(spec);
+  const title = spec.title || st?.det?.name;
+  if (!title) throw new UserError('Escribe el nombre del juego.');
+  if (st?.det?.price) stores.push({ name: 'Steam', type: 'official', price: st.det.price.price, initial: st.det.price.initial, url: steam.appUrl(st.appId) });
+  if (spec.keys) stores.push(...await keyshops.search(title, spec.platform));
+  let image = st?.det?.image || null;
+  for (const link of spec.links) {
+    const shop = shopFor(link);
+    try {
+      const p = await web.product(link);
+      image = image || p.image;
+      stores.push({ name: shop.name, type: shop.type, price: p.price, out: p.out, url: link, match: p.title });
+    } catch (e) { stores.push({ name: shop.name, type: shop.type, url: link, error: e.message }); }
+  }
+  for (const s of stores) {
+    image = image || s.image || null;
+    delete s.image;
+    // Si una tienda falla, se conserva su último precio como referencia, pero no cuenta para alertas.
+    if (s.error) {
+      const old = prev.find(p => p.name === s.name && (!s.url || p.url === s.url) && p.price);
+      if (old) Object.assign(s, { price: old.price, url: s.url || old.url, match: old.match, stale: true });
     }
-    candidates = await cs.byAppId(appId);
-  } else if (q && q.trim()) {
-    candidates = await cs.search(q.trim(), 8);
-  } else throw new UserError('Escribe el nombre del juego o pega su enlace de Steam.');
-
-  const pick = candidates[0];
-  if (!pick && !appId) throw new UserError(`CheapShark no encuentra «${q}». Prueba con el nombre en inglés o pega el enlace de Steam.`);
-  return describe({ gameID: pick?.gameID || null, steamAppID: appId || pick?.steamAppID || null, url, candidates });
+  }
+  const valid = stores.filter(s => s.price && !s.error && !s.out).sort((a, b) => a.price - b.price);
+  stores.sort((a, b) => (a.error ? 1 : 0) - (b.error ? 1 : 0) || (a.price || 1e9) - (b.price || 1e9));
+  const ref = stores.find(s => s.type === 'official')?.initial || Math.max(0, ...stores.filter(s => s.type !== 'key' && s.price).map(s => s.price)) || null;
+  return { title, steam: st, image, stores, best: valid[0] || null, msrp: ref };
 }
 
-// Datos para la vista previa de un juego concreto (también al elegir otro candidato).
-export async function describe({ gameID, steamAppID, url, candidates = [] }) {
-  const [qt, det] = await Promise.all([
-    quote({ gameID, steamAppID }),
-    steamAppID ? steam.details(steamAppID).catch(() => null) : null
-  ]);
-  if (det?.free && !qt.best) throw new UserError(`${det.name} es gratis en Steam: no hace falta vigilar su precio.`);
-  if (!qt.best) throw new UserError('No hay ninguna tienda vendiendo este juego ahora mismo, así que no hay precio que vigilar.');
-  const appId = qt.steamAppID;
+// Vista previa del modal «Nuevo tracker». Se guarda unos minutos para no repetir la búsqueda al crear.
+const previews = new Map();
+export async function preview(body) {
+  const spec = cleanSpec(body);
+  if (!spec.title && !spec.steamAppID) throw new UserError('Escribe el nombre del juego.');
+  if (!spec.keys && !spec.links.length && spec.platform !== 'PC') throw new UserError('Activa la búsqueda en Instant Gaming y Eneba o pega al menos un enlace de tienda.');
+  const q = await quote(spec);
+  if (!q.best) {
+    const why = q.stores.map(s => `${s.name}: ${s.error || (s.out ? 'sin stock' : 'sin precio')}`).join(' · ');
+    throw new UserError(`No he encontrado ningún precio válido para «${q.title}» en ${PLATFORM_LABEL[spec.platform]}.${why ? ' ' + why : ''}`);
+  }
+  const id = crypto.randomBytes(6).toString('hex');
+  previews.set(id, { spec: { ...spec, title: q.title, steamAppID: q.steam?.appId || null }, q, at: Date.now() });
+  for (const [k, v] of previews) if (Date.now() - v.at > 15 * 60e3) previews.delete(k);
   return {
-    cat: 'game', live: true,
-    title: det?.name || qt.title || 'Juego',
-    image: det?.image || (appId ? `https://cdn.cloudflare.steamstatic.com/steam/apps/${appId}/header.jpg` : qt.thumb),
-    price: qt.best.price, ship: 0, approx: qt.best.approx,
-    store: qt.best.name, src: 'CheapShark + Steam ES', platform: 'PC · Steam',
-    url: url || (appId ? steam.appUrl(appId) : qt.best.url),
-    gameID, steamAppID: appId,
-    stores: qt.stores.map(({ name, price, approx, type }) => ({ name, price, approx, type })),
-    msrp: qt.msrp, atlEver: qt.atlEver,
-    candidates: candidates.slice(0, 6).map(c => ({ gameID: c.gameID, steamAppID: c.steamAppID || null, title: c.external, thumb: c.thumb }))
+    previewId: id, cat: 'game', live: true,
+    title: q.title, platform: spec.platform, image: q.image,
+    price: q.best.price, ship: 0, store: q.best.name, src: 'tiendas',
+    url: q.best.url, steamAppID: q.steam?.appId || null,
+    stores: q.stores.map(({ name, type, price, url, error, out, match, stale }) => ({ name, type, price, url, error, out, match, stale })),
+    msrp: q.msrp
   };
 }
 
-export async function createTracker({ gameID, steamAppID, target, alert = true, url }) {
-  if (!gameID && !steamAppID) throw new UserError('Falta el juego: búscalo primero.');
-  if (!(+target > 0)) throw new UserError('Indica un precio objetivo mayor que 0.');
-  const [qt, det, rev, dk] = await Promise.all([
-    quote({ gameID, steamAppID }),
-    steamAppID ? steam.details(steamAppID).catch(() => null) : null,
-    steamAppID ? steam.reviews(steamAppID) : null,
-    steamAppID ? steam.deck(steamAppID) : null
-  ]);
-  if (!qt.best) throw new UserError('No hay ninguna tienda vendiendo este juego ahora mismo.');
-  const appId = qt.steamAppID, now = Date.now();
-  const it = {
+export async function createTracker(body) {
+  if (!(+body.target > 0)) throw new UserError('Indica un precio objetivo mayor que 0.');
+  const cached = previews.get(body.previewId);
+  const spec = cached?.spec || cleanSpec(body);
+  const q = cached?.q || await quote(spec);
+  if (!q.best) throw new UserError('No hay ningún precio válido para este juego ahora mismo.');
+  const st = q.steam, appId = st?.appId || null;
+  const [rev, dk] = appId ? await Promise.all([steam.reviews(appId), steam.deck(appId)]) : [null, null];
+  const now = Date.now(), det = st?.det;
+  previews.delete(body.previewId);
+  return {
     id: 'g-' + crypto.randomBytes(4).toString('hex'),
-    cat: 'game', live: true, source: 'CheapShark + Steam ES',
-    gameID: gameID || null, steamAppID: appId,
-    title: det?.name || qt.title,
-    image: det?.image || (appId ? `https://cdn.cloudflare.steamstatic.com/steam/apps/${appId}/header.jpg` : qt.thumb),
-    url: url || (appId ? steam.appUrl(appId) : qt.best.url), userUrl: !!url, fetchedFrom: url ? 'Steam' : null,
-    platform: 'PC · Steam', format: 'Digital', deck: dk,
-    msrp: qt.msrp || qt.best.price,
-    target: round(+target), alert: !!alert, alerted: false,
+    cat: 'game', live: true, kind: 'multi', source: 'tiendas',
+    title: q.title, query: spec.title || q.title, platform: spec.platform, format: 'Cualquiera',
+    keys: spec.keys, links: spec.links, steamAppID: appId,
+    image: q.image, url: q.best.url, deck: dk,
+    msrp: q.msrp || q.best.price,
+    target: round(+body.target), alert: body.alert !== false, alerted: false,
     createdAt: now, lastCheck: now, lastError: null,
-    stores: qt.stores, current: qt.best.price,
-    history: [{ t: now, p: qt.best.price }],
-    atlEver: qt.atlEver,
+    stores: q.stores, current: q.best.price,
+    history: [{ t: now, p: q.best.price }],
     coupons: [],
     specs: Object.fromEntries([['Género', det?.genres?.join(', ')], ['Metacritic', det?.metacritic], ['Desarrollador', det?.developer], ['Lanzamiento', det?.release]].filter(([, v]) => v)),
     reviews: { rating: rev?.rating ?? null, n: rev?.n ?? 0, src: rev ? `Steam · ${rev.desc}` : 'sin reseñas todavía', pros: [], cons: [] }
   };
-  return it;
 }
+
+// Los trackers creados con la primera versión (CheapShark) pasan a buscar en las tiendas de Javi.
+export function migrate(it) {
+  if (it.cat !== 'game' || !it.live || it.kind === 'multi') return false;
+  Object.assign(it, { kind: 'multi', source: 'tiendas', query: it.title, platform: 'PC', format: 'Cualquiera', keys: true, links: [] });
+  delete it.gameID; delete it.atlEver;
+  it.stores = (it.stores || []).filter(s => s.name === 'Steam');
+  return true;
+}
+
+export const specOf = it => ({ title: it.query || it.title, platform: PLATFORMS.includes(it.platform) ? it.platform : 'PC', keys: it.keys !== false, links: it.links || [], steamAppID: it.steamAppID || null });
 
 // Un ciclo de rastreo para un tracker: actualiza tiendas, precio actual e histórico diario.
 export async function refresh(it) {
-  const qt = await quote({ gameID: it.gameID, steamAppID: it.steamAppID });
-  if (!qt.best) throw new Error('ninguna tienda lo vende ahora mismo');
+  migrate(it);
+  const q = await quote(specOf(it), it.stores || []);
   const old = it.current, now = Date.now();
-  it.stores = qt.stores;
-  it.current = qt.best.price;
-  if (qt.msrp) it.msrp = qt.msrp;
-  if (qt.atlEver) it.atlEver = qt.atlEver;
+  it.stores = q.stores;
+  if (!q.best) {
+    it.lastCheck = now;
+    throw new Error(q.stores.map(s => `${s.name}: ${s.error || (s.out ? 'sin stock' : 'sin precio')}`).join(' · ') || 'ninguna tienda devuelve precio');
+  }
+  it.current = q.best.price;
+  it.url = q.best.url;
+  if (q.msrp) it.msrp = q.msrp;
+  if (!it.image && q.image) it.image = q.image;
   const last = it.history.at(-1);
   if (last && dayKey(last.t) === dayKey(now)) { last.t = now; last.p = it.current; }
   else it.history.push({ t: now, p: it.current });
   if (it.history.length > 365) it.history = it.history.slice(-365);
-  it.lastCheck = now; it.lastError = null;
-  return { old, current: it.current, best: qt.best };
+  // Si al crearlo Steam no devolvió reseñas, se vuelve a intentar.
+  if (it.steamAppID && !it.reviews?.n) {
+    const rev = await steam.reviews(it.steamAppID);
+    if (rev) it.reviews = { ...it.reviews, rating: rev.rating, n: rev.n, src: `Steam · ${rev.desc}` };
+  }
+  const failed = q.stores.filter(s => s.error).map(s => `${s.name}: ${s.error}`);
+  it.lastCheck = now; it.lastError = failed.length ? failed.join(' · ') : null;
+  return { old, current: it.current, best: q.best, failed };
+}
+
+// Cambiar los enlaces o la búsqueda de keys de un tracker existente.
+export function updateSources(it, b) {
+  migrate(it);
+  if (b.links !== undefined) it.links = cleanSpec({ title: 'x', links: b.links }).links;
+  if (b.keys !== undefined) it.keys = !!b.keys;
 }

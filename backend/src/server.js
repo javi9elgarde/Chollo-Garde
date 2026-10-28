@@ -9,9 +9,12 @@ import { bus, log, recentLogs } from './bus.js';
 import { hostStats } from './http.js';
 import { engine } from './engine.js';
 import * as games from './games.js';
+import { parseUrl, shopFor } from './sources/shops.js';
+import { norm } from './sources/keyshops.js';
+import { close as closeBrowser } from './sources/browser.js';
 import { dispatch, send, SAMPLE } from './notify/index.js';
 
-const VERSION = '0.2.0';
+const VERSION = '0.3.0';
 
 export function createApp() {
   const app = express();
@@ -59,11 +62,20 @@ export function createApp() {
       const s = stats.get(host) || {};
       return { name, kind, covers, host, ok: s.runs ? Math.round((1 - s.fails / s.runs) * 100) : null, lat: s.lat || null, last: s.last || null, status: s.runs ? s.status : 'idle', runs: s.runs || 0 };
     };
-    return [
-      row('CheapShark', 'API', '~30 tiendas de PC (USD → EUR)', new URL(config.cheapsharkBase).hostname),
-      row('Steam España', 'API web', 'Precio de Steam en EUR, reseñas, Steam Deck', new URL(config.steamStoreBase).hostname),
-      row('Frankfurter (BCE)', 'API', 'Cambio USD → EUR', new URL(config.fxUrl).hostname)
+    const base = [
+      row('Instant Gaming', 'búsqueda', 'Keys · búsqueda automática por nombre', 'www.instant-gaming.com'),
+      row('Eneba', 'navegador', 'Keys · búsqueda automática por nombre', 'www.eneba.com'),
+      row('Steam España', 'API web', 'Precio oficial de PC, reseñas, Steam Deck', new URL(config.steamStoreBase).hostname)
     ];
+    // Las tiendas de los enlaces pegados (Amazon, MediaMarkt, GAME, Impact…) aparecen según se usan.
+    const known = new Set(base.map(b => b.host));
+    const linked = new Map();
+    for (const t of db().trackers) for (const l of t.links || []) {
+      const u = parseUrl(l); if (!u || known.has(u.hostname) || linked.has(u.hostname)) continue;
+      const sh = shopFor(u);
+      linked.set(u.hostname, row(sh.name, sh.browser ? 'navegador' : 'ficha web', 'Enlaces de producto', u.hostname));
+    }
+    return [...base, ...linked.values()];
   };
 
   app.get('/api/health', (req, res) => res.json({ ok: true, version: VERSION, mode: 'live' }));
@@ -90,17 +102,18 @@ export function createApp() {
   app.get('/api/trackers', (req, res) => res.json(db().trackers));
 
   app.post('/api/fetch-meta', wrap(async (req, res) => {
-    const { url, q, gameID, steamAppID } = req.body || {};
-    const m = gameID || steamAppID ? await games.describe({ gameID, steamAppID, url }) : await games.lookup({ url, q });
-    log('info', 'fetch-meta', `«${m.title}» ${m.approx ? '≈ ' : ''}${m.price.toFixed(2)} € en ${m.store}`);
+    const m = await games.preview(req.body || {});
+    const bad = m.stores.filter(s => s.error).length;
+    log('info', 'fetch-meta', `«${m.title}» ${m.price.toFixed(2)} € en ${m.store} · ${m.stores.length - bad}/${m.stores.length} tiendas con precio`);
     res.json(m);
   }));
 
   app.post('/api/trackers', wrap(async (req, res) => {
     const b = req.body || {};
-    if (b.cat && b.cat !== 'game') throw new games.UserError('De momento solo hay fuente real para videojuegos de PC. Productos y vuelos llegarán en las próximas fases.');
+    if (b.cat && b.cat !== 'game') throw new games.UserError('De momento solo hay fuente real para videojuegos. Productos y vuelos llegarán en las próximas fases.');
     const it = await games.createTracker(b);
-    const dup = db().trackers.find(t => t.cat === 'game' && ((it.gameID && t.gameID === it.gameID) || (it.steamAppID && t.steamAppID === it.steamAppID)));
+    const key = t => `${norm(t.title)}|${t.platform || 'PC'}`;
+    const dup = db().trackers.find(t => t.cat === 'game' && t.live && key(t) === key(it));
     if (dup) throw new games.UserError(`Ya sigues «${dup.title}». Cambia su objetivo desde su ficha.`);
     db().trackers.unshift(it);
     store.save();
@@ -123,9 +136,12 @@ export function createApp() {
       fire = true;
     }
     if (b.alert !== undefined) { it.alert = !!b.alert; if (it.alert) { it.alerted = false; fire = true; } }
+    const rescan = it.cat === 'game' && it.live && (b.links !== undefined || b.keys !== undefined);
+    if (rescan) games.updateSources(it, b);
     store.save();
     bus.emit('event', 'tracker', it);
     res.json(it);
+    if (rescan) { log('info', 'api', `«${it.title}»: tiendas actualizadas, comprobando precios`); engine.cycle(it.id).catch(() => {}); return; }
     if (fire && it.alert && it.current <= it.target) { it.alerted = true; store.save(); dispatch(it); }
   }));
 
@@ -194,6 +210,7 @@ export function createApp() {
 
 export function start() {
   store.load();
+  if (store.get().trackers.filter(games.migrate).length) store.save();
   const app = createApp();
   const server = app.listen(config.port, config.host, () => {
     const url = `http://${config.host === '0.0.0.0' ? 'localhost' : config.host}:${config.port}`;
@@ -210,7 +227,7 @@ export function start() {
     else console.error(e);
     process.exit(1);
   });
-  const bye = () => { store.save({ now: true }); process.exit(0); };
+  const bye = async () => { store.save({ now: true }); await closeBrowser(); process.exit(0); };
   process.on('SIGINT', bye);
   process.on('SIGTERM', bye);
   return server;
