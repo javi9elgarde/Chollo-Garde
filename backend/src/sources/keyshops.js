@@ -5,7 +5,9 @@ import * as web from './web.js';
 
 // «Marvel's» y «Marvel’s» se escriben juntos («marvels»): así coinciden con «Marvels» y, quitando la s, con «Marvel».
 export const norm = s => String(s || '').replace(/['’`´]s\b/gi, 's').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
-const toks = s => norm(s).split(' ').filter(Boolean);
+// Formas distintas de escribir lo mismo: «Vol.», «Volume» y «Volumen»; «Hades II» y «Hades 2».
+const SYN = { volume: 'vol', volumen: 'vol', ii: '2', iii: '3', iv: '4', v: '5', vi: '6', vii: '7', viii: '8', ix: '9', and: 'y', edition: 'edicion' };
+const toks = s => norm(s).split(' ').filter(Boolean).map(t => SYN[t] || t);
 
 export const PLATFORMS = {
   PC: ['pc', 'steam'],
@@ -27,12 +29,17 @@ const UNWANTED_RETAIL = /\b(segunda mano|usado|reacondicionado|funda|mando|amiib
 const OTHER_REGION = /\b(us|usa|united states|north america|latam|latin america|turkey|turquia|argentina|india|brazil|brasil|mena|asia|ru|russia|cis|row|uk|united kingdom|japan|japon|china|korea|mexico|canada)\b/;
 
 // Puntuación de un candidato (mayor es mejor) o null si no vale.
-export function score(candidate, title, platform, { retail = false } = {}) {
+// `loose`: búsqueda por palabras clave. Vale aunque falte alguna palabra del nombre (una de cada cuatro),
+// pero nunca un número («Vol. 2» no es «Vol. 1»). Esos resultados se marcan como dudosos para que Javi elija.
+export function score(candidate, title, platform, { retail = false, loose = false } = {}) {
   const q = toks(title), c = toks(candidate), cs = ' ' + c.join(' ') + ' ';
   // «FC 27» y «FC27» son lo mismo: vale la palabra suelta, pegada a la vecina o separada en letras y número.
   const glued = new Set([...q.slice(1).map((t, i) => q[i] + t), ...q.flatMap(t => t.match(/^([a-z]+)(\d+)$/)?.slice(1) || [])]);
   const has = (t, i) => c.includes(t) || (ALIAS[t] || []).some(a => c.includes(a)) || (t.length > 3 && (c.includes(t + 's') || (t.endsWith('s') && c.includes(t.slice(0, -1))))) || c.includes(t + q[i + 1]) || c.includes(q[i - 1] + t) || (/^([a-z]+)(\d+)$/.test(t) && cs.includes(' ' + t.replace(/^([a-z]+)(\d+)$/, '$1 $2') + ' '));
-  if (!q.length || !q.every(has)) return null;
+  const missing = q.filter((t, i) => !has(t, i));
+  const sig = q.filter(t => !NEUTRAL.has(t)).length;
+  if (!q.length) return null;
+  if (missing.length && (!loose || missing.some(t => /\d/.test(t)) || missing.filter(t => !NEUTRAL.has(t)).length > Math.floor(sig / 4))) return null;
   const plat = PLATFORMS[platform] || [];
   if (plat.length && !plat.some(k => cs.includes(' ' + k + ' '))) return null;
   // «Switch» no vale para un juego de Switch 2 (y al revés ya lo filtra la lista de arriba).
@@ -43,28 +50,39 @@ export function score(candidate, title, platform, { retail = false } = {}) {
   if (retail && UNWANTED_RETAIL.test(cs) && !UNWANTED_RETAIL.test(qs)) return null;
   if (OTHER_REGION.test(cs.replace(/\b(eu|europe|global)\b/g, ''))) return null;
   const extra = c.filter(t => !q.includes(t) && !glued.has(t) && !NEUTRAL.has(t)).length;
-  return 100 - extra * 10 - (/\b(global|europe|eu)\b/.test(cs) ? 0 : 3);
+  return 100 - extra * 10 - missing.length * 30 - (/\b(global|europe|eu)\b/.test(cs) ? 0 : 3);
 }
 
-export function pick(cands, title, platform, opts) {
-  let best = null;
-  for (const c of cands) {
-    const s = score(c.label, title, platform, opts);
-    if (s !== null && (!best || s > best.s)) best = { ...c, s };
-  }
-  return best;
+// La mejor ficha de una lista de resultados, o null. Si hay otras casi igual de buenas, o solo se ha
+// encontrado por palabras clave, lleva `doubt` y las opciones para que Javi elija cuál es (o ninguna).
+// `reject`: direcciones que Javi ya ha descartado para esta tienda.
+export function pick(cands, title, platform, { reject = [], ...opts } = {}) {
+  const ok = cands.filter(c => !reject.includes(c.url));
+  const rank = o => [...new Map(ok.map(c => [c.url, { ...c, s: score(c.label, title, platform, { ...opts, ...o }) }])).values()].filter(c => c.s !== null).sort((a, b) => b.s - a.s);
+  let list = rank({}), loose = false;
+  if (!list.length) { list = rank({ loose: true }); loose = true; }
+  const best = list[0];
+  if (!best) return null;
+  const alts = list.slice(1).filter(c => c.s >= best.s - 10).slice(0, 3);
+  const doubt = loose || alts.length > 0;
+  return { ...best, doubt, options: doubt ? [best, ...alts].map(c => ({ url: c.url, title: (c.title || c.label).trim().slice(0, 160), ...(c.price && { price: c.price }) })) : null };
 }
+// Campos que una tienda añade a su resultado cuando la elección es dudosa.
+export const doubtOf = best => (best.doubt ? { doubt: true, options: best.options } : {});
 
 // Busca primero «juego plataforma» (en consolas la primera página suele ser de otras plataformas) y luego solo el juego.
-async function searchKeys(search, title, platform) {
+async function searchKeys(search, title, platform, reject) {
   const terms = platform && platform !== 'PC' ? [`${title} ${platform}`, title] : [title];
-  let other = false;
+  let other = false, fallback = null;
   for (const term of terms) {
     const cands = await search(term);
-    const best = pick(cands, title, platform);
-    if (best) return best;
-    other ||= !!pick(cands, title, '');
+    const best = pick(cands, title, platform, { reject });
+    // Un resultado seguro en la segunda búsqueda vale más que uno dudoso en la primera.
+    if (best && !best.doubt) return best;
+    fallback ||= best;
+    other ||= !!pick(cands, title, '', { reject });
   }
+  if (fallback) return fallback;
   throw new Error(other ? `no vende «${title}» para ${platform}, solo para otras plataformas` : `no encuentro «${title}» para ${platform}`);
 }
 
@@ -85,12 +103,12 @@ export function igCandidates(html) {
   return out;
 }
 
-export async function instantGaming(title, platform) {
+export async function instantGaming(title, platform, { reject = [] } = {}) {
   const search = async term => igCandidates((await web.page(`https://www.instant-gaming.com/es/busquedas/?q=${encodeURIComponent(term)}`, { forceBrowser: true, waitFor: 'a[href*="-comprar-"]' })).html);
-  const best = await searchKeys(search, title, platform);
-  let price = best.price, out = false, img = null;
-  if (!price) ({ price, out, image: img } = await web.product(best.url));
-  return { name: 'Instant Gaming', type: 'key', url: best.url, price, out, match: best.title, image: img };
+  const best = await searchKeys(search, title, platform, reject);
+  let price = best.price, out = false, pre = false, img = null;
+  if (!price) ({ price, out, pre, image: img } = await web.product(best.url));
+  return { name: 'Instant Gaming', type: 'key', url: best.url, price, out, pre, match: best.title, image: img, ...doubtOf(best) };
 }
 
 // ---------- Eneba ----------
@@ -106,11 +124,11 @@ export function enebaCandidates(html) {
   return out;
 }
 
-export async function eneba(title, platform) {
+export async function eneba(title, platform, { reject = [] } = {}) {
   const search = async term => enebaCandidates((await web.page(`https://www.eneba.com/es/store/all?text=${encodeURIComponent(term)}&currency=EUR`, { forceBrowser: true, waitFor: 'a[href*="/es/"]' })).html);
-  const best = await searchKeys(search, title, platform);
+  const best = await searchKeys(search, title, platform, reject);
   const prod = await web.product(best.url);
-  return { name: 'Eneba', type: 'key', url: best.url, price: prod.price, out: prod.out, match: prod.title || best.title, image: prod.image };
+  return { name: 'Eneba', type: 'key', url: best.url, price: prod.price, out: prod.out, pre: prod.pre, match: prod.title || best.title, image: prod.image, ...doubtOf(best) };
 }
 
 export const KEY_SHOPS = { 'Instant Gaming': instantGaming, Eneba: eneba };

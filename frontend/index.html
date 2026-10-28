@@ -355,7 +355,11 @@ function syncBest(it) {
 }
 const bestSeller = it => [...it.sellers].sort((a, b) => (a.price + a.ship) - (b.price + b.ship))[0];
 // En trackers reales una tienda puede estar agotada o haber fallado en la última comprobación: no cuenta.
-const okStore = s => s.price > 0 && !s.error && !s.out;
+// Una ficha dudosa (la tienda tiene varios parecidos) no cuenta hasta que elijas cuál es.
+const okStore = s => s.price > 0 && !s.error && !s.out && !s.doubt;
+const doubts = it => (it.stores || []).filter(s => s.doubt && s.options && s.options.length);
+// Stock de cada tienda: en stock, agotado o en reserva.
+const stockTag = s => s.error && !s.stale ? '<span class="text-dim">—</span>' : s.out ? '<span class="inline-flex rounded-md bg-bad/15 text-bad px-1.5 py-0.5 text-[11px] font-medium">Agotado</span>' : s.pre ? '<span class="inline-flex rounded-md bg-ai/15 text-ai px-1.5 py-0.5 text-[11px] font-medium" title="Todavía no ha salido: se puede reservar">Reserva</span>' : s.stale ? '<span class="text-dim text-[11px]">sin dato</span>' : '<span class="inline-flex rounded-md bg-good/15 text-good px-1.5 py-0.5 text-[11px] font-medium">En stock</span>';
 const bestStore = it => [...it.stores].filter(okStore).sort((a, b) => a.price - b.price)[0] || it.stores[0] || { name: '—', price: it.current };
 const officialStore = it => it.stores.find(s => s.type === 'official' && s.price > 0) || null;
 // Fase 1: sin scraper no hay URL exacta de cada ficha, así que se abre la búsqueda en la tienda
@@ -1009,6 +1013,7 @@ function gameCard(it) {
         <div class="absolute top-2.5 left-2.5 right-2.5 flex items-start gap-1.5">
           <span class="rounded-md bg-ink-950/75 backdrop-blur px-2 py-0.5 text-[11px] font-semibold text-fg">${esc(it.platform)}</span>
           ${!it.alert ? `<span class="grid place-items-center w-6 h-6 rounded-md bg-ink-950/75 text-mute" title="Alerta pausada"><i data-lucide="bell-off" class="w-3.5 h-3.5"></i></span>` : ''}
+          ${doubts(it).length ? `<span class="inline-flex items-center gap-1 rounded-md bg-warn text-ink-950 px-2 py-0.5 text-[11px] font-bold" title="Hay tiendas con varios productos parecidos: ábrelo y elige cuál es"><i data-lucide="circle-help" class="w-3 h-3"></i>Elige producto</span>` : ''}
           <span class="ml-auto">${reached ? `<span class="inline-flex items-center gap-1 rounded-md bg-good text-ink-950 px-2 py-0.5 text-[11px] font-bold"><i data-lucide="party-popper" class="w-3 h-3"></i>¡Objetivo!</span>` : a.atlNow ? atlBadge(true) : ''}</span>
         </div>
         <div class="absolute left-3 right-3 bottom-2.5">
@@ -1546,12 +1551,20 @@ function gameBlock(it) {
 function gameBlockLive(it) {
   const o = officialStore(it), best = bestStore(it);
   const sorted = [...it.stores].sort((a, b) => (okStore(a) ? 0 : 1) - (okStore(b) ? 0 : 1) || (a.price || 1e9) - (b.price || 1e9));
-  const cell = s => s.error ? `<span class="text-bad" title="${esc(s.error)}">${s.stale ? `${eur(s.price)} <span class="text-[11px]">(antiguo)</span>` : 'sin precio'}</span>` : s.out ? '<span class="text-dim">sin stock</span>' : eur(s.price);
+  const cell = s => s.error ? `<span class="text-bad" title="${esc(s.error)}">${s.stale ? `${eur(s.price)} <span class="text-[11px]">(antiguo)</span>` : 'sin precio'}</span>` : s.doubt ? `<span class="text-warn" title="No cuenta hasta que elijas el producto">${eur(s.price)} ?</span>` : s.out ? `<span class="text-dim line-through">${eur(s.price)}</span>` : eur(s.price);
+  const pend = doubts(it);
+  // Tienda con varios productos parecidos: elige cuál es el juego o descártalos todos.
+  const chooser = s => `<tr class="border-b border-ink-700 bg-warn/[.06]"><td colspan="6" class="px-4 pb-3 pt-1">
+      <p class="text-[12px] text-warn mb-1.5 inline-flex items-center gap-1"><i data-lucide="circle-help" class="w-3.5 h-3.5"></i>${esc(s.name)} tiene varios productos parecidos. ¿Cuál es «${esc(it.title)}» (${esc(it.platform)})?</p>
+      <ul class="flex flex-col gap-1.5">${s.options.map(op => `<li class="flex items-center gap-2 text-[12px]"><a href="${esc(op.url)}" target="_blank" rel="noopener noreferrer" class="min-w-0 flex-1 truncate text-fg/90 hover:text-fg underline decoration-ink-500 underline-offset-2" title="${esc(op.title)}">${esc(op.title)}</a>${op.price ? `<span class="tnum text-mute">${eur(op.price)}</span>` : ''}<button data-action="pick-store" data-id="${it.id}" data-url="${esc(op.url)}" class="shrink-0 rounded-lg border border-good/40 text-good px-2 py-0.5 hover:bg-good/10">Es este</button></li>`).join('')}</ul>
+      <button data-action="reject-store" data-id="${it.id}" data-shop="${esc(s.name)}" class="mt-2 rounded-lg border border-ink-500 px-2 py-0.5 text-[12px] text-mute hover:text-fg hover:border-bad/50">Ninguno es: descartar y seguir buscando</button>
+    </td></tr>`;
   return `<section class="rounded-2xl bg-ink-800/70 border border-ink-600/80 overflow-hidden">
+    ${pend.length ? `<div class="px-4 py-2.5 bg-warn/10 border-b border-warn/30 text-[12px] text-warn flex items-center gap-2"><i data-lucide="circle-help" class="w-4 h-4 shrink-0"></i>${pend.length === 1 ? `En ${esc(pend[0].name)} hay` : `En ${pend.length} tiendas hay`} varios productos parecidos. Elige cuál es (abajo): hasta entonces ese precio no cuenta para las alertas.</div>` : ''}
     <div class="px-4 pt-4 pb-2 flex flex-wrap items-center gap-2"><i data-lucide="store" class="w-4 h-4 text-mute"></i><h3 class="font-display font-bold text-[15px]">Precio en cada tienda</h3>
       <span class="ml-auto flex flex-wrap gap-1.5 text-[12px]"><span class="rounded-md border border-ink-500 px-2 py-0.5">${esc(it.platform)}</span>${it.deck && it.deck !== 'No compatible' ? `<span class="rounded-md border border-good/30 text-good px-2 py-0.5 inline-flex items-center gap-1"><i data-lucide="circle-check" class="w-3.5 h-3.5"></i>Steam Deck: ${esc(it.deck)}</span>` : ''}</span></div>
-    <div class="overflow-x-auto"><table class="w-full text-[13px] tnum min-w-[460px]"><thead><tr class="text-left text-mute border-b border-ink-600"><th class="font-medium px-4 py-2">Tienda</th><th class="font-medium px-4 py-2">Tipo</th><th class="font-medium px-4 py-2 text-right">Precio</th><th class="font-medium px-4 py-2 text-right">vs oficial</th><th class="px-4 py-2"></th></tr></thead>
-    <tbody>${sorted.map(s => `<tr class="border-b border-ink-700 last:border-0 ${s === best ? 'bg-good/[.06]' : ''}"><td class="px-4 py-2.5 font-medium">${esc(s.name)} ${s === best ? '<span class="ml-1 text-[11px] text-good">mejor precio</span>' : ''}${s.via === 'pc' ? '<span class="ml-1 text-[11px] text-ai" title="Precio leído por tu PC, con la conexión de casa">desde tu PC</span>' : ''}${s.match && s.match.toLowerCase() !== it.title.toLowerCase() ? `<div class="text-[11px] text-dim font-normal truncate max-w-[220px]" title="${esc(s.match)}">${esc(s.match)}</div>` : ''}</td><td class="px-4 py-2.5 text-mute">${STORE_KIND[s.type] || 'Tienda'}</td><td class="px-4 py-2.5 text-right font-medium">${cell(s)}</td><td class="px-4 py-2.5 text-right ${o && okStore(s) && s.price < o.price ? 'text-good' : 'text-mute'}">${!o || s === o || !okStore(s) ? '—' : pct(s.price / o.price - 1)}</td><td class="px-4 py-2.5 text-right">${s.url ? `<a href="${esc(s.url)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-[12px] text-mute hover:text-fg">Abrir<i data-lucide="external-link" class="w-3.5 h-3.5"></i></a>` : ''}</td></tr>`).join('')}</tbody></table></div>
+    <div class="overflow-x-auto"><table class="w-full text-[13px] tnum min-w-[540px]"><thead><tr class="text-left text-mute border-b border-ink-600"><th class="font-medium px-4 py-2">Tienda</th><th class="font-medium px-4 py-2">Tipo</th><th class="font-medium px-4 py-2">Stock</th><th class="font-medium px-4 py-2 text-right">Precio</th><th class="font-medium px-4 py-2 text-right">vs oficial</th><th class="px-4 py-2"></th></tr></thead>
+    <tbody>${sorted.map(s => `<tr class="border-b border-ink-700 last:border-0 ${s === best ? 'bg-good/[.06]' : ''}"><td class="px-4 py-2.5 font-medium">${esc(s.name)} ${s === best ? '<span class="ml-1 text-[11px] text-good">mejor precio</span>' : ''}${s.doubt ? '<span class="ml-1 text-[11px] text-warn">¿es este?</span>' : ''}${s.via === 'pc' ? '<span class="ml-1 text-[11px] text-ai" title="Precio leído por tu PC, con la conexión de casa">desde tu PC</span>' : ''}${s.match && s.match.toLowerCase() !== it.title.toLowerCase() ? `<div class="text-[11px] text-dim font-normal truncate max-w-[220px]" title="${esc(s.match)}">${esc(s.match)}</div>` : ''}</td><td class="px-4 py-2.5 text-mute">${STORE_KIND[s.type] || 'Tienda'}</td><td class="px-4 py-2.5">${s.type === 'deal' ? '<span class="text-dim text-[11px]">oferta</span>' : stockTag(s)}</td><td class="px-4 py-2.5 text-right font-medium">${cell(s)}</td><td class="px-4 py-2.5 text-right ${o && okStore(s) && s.price < o.price ? 'text-good' : 'text-mute'}">${!o || s === o || !okStore(s) ? '—' : pct(s.price / o.price - 1)}</td><td class="px-4 py-2.5 text-right">${s.url ? `<a href="${esc(s.url)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-[12px] text-mute hover:text-fg">Abrir<i data-lucide="external-link" class="w-3.5 h-3.5"></i></a>` : ''}</td></tr>${s.doubt && s.options && s.options.length ? chooser(s) : ''}`).join('')}</tbody></table></div>
     <p class="px-4 py-3 text-[12px] text-dim">Última comprobación: ${it.lastCheck ? ago(it.lastCheck) : '—'}.${it.lastError ? ` <span class="text-bad">Tiendas con problemas: ${esc(it.lastError)}</span>` : ''}</p>
     <details class="border-t border-ink-600"><summary class="px-4 py-3 text-[13px] cursor-pointer select-none text-mute hover:text-fg">Cambiar las tiendas que vigilo</summary>
       <form data-form="sources" data-id="${it.id}" class="px-4 pb-4 flex flex-col gap-2">
@@ -1655,7 +1668,7 @@ const liveSpec = () => ({ title: $('#nt-url').value.trim(), platform: $('#nt-pla
 const STORE_KIND = { key: 'Tienda de keys', official: 'Tienda oficial', retail: 'Tienda', deal: 'Oferta en Chollometro' };
 // Una línea por tienda en la vista previa y en la ficha: precio, agotado o el motivo del fallo.
 function storeLine(x, best) {
-  const st = x.error ? `<span class="text-bad" title="${esc(x.error)}">${x.stale ? `${eur(x.price)} · antiguo` : 'sin precio'}</span>` : x.out ? '<span class="text-dim">sin stock</span>' : `<span class="${x === best ? 'text-good font-medium' : ''}">${eur(x.price)}</span>`;
+  const st = x.error ? `<span class="text-bad" title="${esc(x.error)}">${x.stale ? `${eur(x.price)} · antiguo` : 'sin precio'}</span>` : x.out ? '<span class="text-dim">agotado</span>' : x.doubt ? `<span class="text-warn" title="Varios productos parecidos: elige cuál es en la ficha">${eur(x.price)} ?</span>` : `<span class="${x === best ? 'text-good font-medium' : ''}">${eur(x.price)}${x.pre ? ' <span class="text-ai text-[11px]">reserva</span>' : ''}</span>`;
   return `<li class="flex justify-between gap-3"><span class="text-mute truncate">${esc(x.name)} <span class="text-dim">· ${STORE_KIND[x.type] || 'Tienda'}</span></span>${st}</li>${x.match && !x.error ? `<li class="text-[11px] text-dim -mt-0.5 mb-0.5 truncate" title="${esc(x.match)}">${x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener noreferrer" class="hover:text-fg">${esc(x.match)}</a>` : esc(x.match)}</li>` : ''}${x.error ? `<li class="text-[11px] text-bad/80 -mt-0.5 mb-0.5 truncate" title="${esc(x.error)}">${esc(x.error)}</li>` : ''}`;
 }
 function urlForm() {
@@ -1960,6 +1973,15 @@ document.addEventListener('click', async e => {
       log('info', 'sim', `bajada forzada en ${it.title}`);
       it.alert = true; it.alerted = false;
       engine.setPrice(it, tgt); refresh(); rerenderDrawer(); break;
+    }
+    case 'pick-store': case 'reject-store': {
+      if (!LIVE.on || !it) break;
+      const s = A === 'reject-store' && doubts(it).find(x => x.name === el.dataset.shop);
+      // «Es este»: la ficha elegida pasa a ser un enlace fijo de esa tienda. «Ninguno es»: esas fichas no se vuelven a proponer.
+      const body = A === 'pick-store' ? { links: [...new Set([...(it.links || []), el.dataset.url])] } : { reject: { [el.dataset.shop]: (s ? s.options : []).map(op => op.url) } };
+      el.disabled = true;
+      api('PATCH', `/api/trackers/${id}`, body).then(t => { LIVE.upsert(t); rerenderDrawer(); toast({ tone: 'good', icon: 'store', title: A === 'pick-store' ? 'Producto elegido' : 'Descartado', body: `${esc(it.title)} · comprobando precios…`, ms: 3000 }); }).catch(err => { el.disabled = false; toast({ tone: 'bad', icon: 'circle-alert', title: 'No se pudo guardar', body: esc(err.message) }); });
+      break;
     }
     case 'toggle-alert': if (LIVE.on) { api('PATCH', `/api/trackers/${id}`, { alert: el.checked }).catch(err => toast({ tone: 'bad', icon: 'circle-alert', title: 'No se pudo cambiar la alerta', body: esc(err.message) })); break; }
       it.alert = el.checked; if (it.alert && it.current <= it.target) it.alerted = false; save(); refresh(); break;

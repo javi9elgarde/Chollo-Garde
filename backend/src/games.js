@@ -54,17 +54,18 @@ async function steamInfo(spec) {
 
 // Una tienda con búsqueda automática: si ya se encontró la ficha, solo se relee su precio;
 // si esa ficha ya no vale (retirada, sin precio…), se vuelve a buscar.
-async function findIn(name, title, platform, prev) {
+async function findIn(name, title, platform, prev, reject = []) {
   const type = KEY_NAMES.includes(name) ? 'key' : 'retail';
-  const known = prev.find(p => p.name === name && p.auto && p.url);
+  const known = prev.find(p => p.name === name && p.auto && p.url && !reject.includes(p.url));
   if (known) {
     try {
       const p = await web.product(known.url);
-      return { name, type, auto: true, url: known.url, price: p.price, out: p.out, match: p.title || known.match, image: p.image };
+      // Si la elección era dudosa, sigue pendiente de que Javi diga cuál es.
+      return { name, type, auto: true, url: known.url, price: p.price, out: p.out, pre: p.pre, match: p.title || known.match, image: p.image, ...(known.doubt && { doubt: true, options: known.options }) };
     } catch {}
   }
   try {
-    const r = await (type === 'key' ? keyshops.KEY_SHOPS[name] : (t, pl) => retail.find(name, t, pl))(title, platform);
+    const r = await (type === 'key' ? keyshops.KEY_SHOPS[name] : (t, pl, o) => retail.find(name, t, pl, o))(title, platform, { reject });
     return { ...r, auto: true };
   } catch (e) { return { name, type, auto: true, error: e.message }; }
 }
@@ -96,10 +97,10 @@ export async function quote(spec, prev = [], { trackerId = null } = {}) {
     const shop = shopFor(link);
     try {
       const p = await web.product(link);
-      return { name: shop.name, type: shop.type, price: p.price, out: p.out, url: link, match: p.title, image: p.image };
+      return { name: shop.name, type: shop.type, price: p.price, out: p.out, pre: p.pre, url: link, match: p.title, image: p.image };
     } catch (e) { return { name: shop.name, type: shop.type, url: link, error: e.message }; }
   });
-  stores.push(...await Promise.all([...auto.map(n => findIn(n, title, spec.platform, prev)), ...fromLinks]));
+  stores.push(...await Promise.all([...auto.map(n => findIn(n, title, spec.platform, prev, spec.reject?.[n] || [])), ...fromLinks]));
   const d = await deal;
   if (d) stores.push(d);
   for (const s of stores) {
@@ -112,8 +113,9 @@ export async function quote(spec, prev = [], { trackerId = null } = {}) {
     }
   }
   // Una línea por tienda en el registro: así se ve qué ha encontrado cada una o por qué ha fallado.
-  for (const s of stores) log(s.error ? 'warn' : 'info', s.name, s.error ? `${title} (${spec.platform}): ${s.error}` : `${title} (${spec.platform}): ${s.out ? 'sin stock' : s.price + ' €'} · ${s.match || s.url || ''}${s.via === 'pc' ? ' · leído desde tu PC' : ''}`);
-  const valid = stores.filter(s => s.price && !s.error && !s.out).sort((a, b) => a.price - b.price);
+  for (const s of stores) log(s.error ? 'warn' : 'info', s.name, s.error ? `${title} (${spec.platform}): ${s.error}` : `${title} (${spec.platform}): ${s.out ? 'sin stock' : s.price + ' €'} · ${s.match || s.url || ''}${s.via === 'pc' ? ' · leído desde tu PC' : ''}${s.doubt ? ` · dudoso, ${s.options.length} opciones para elegir` : ''}`);
+  // Una ficha dudosa no cuenta para el precio actual ni para las alertas hasta que Javi confirme cuál es.
+  const valid = stores.filter(s => s.price && !s.error && !s.out && !s.doubt).sort((a, b) => a.price - b.price);
   stores.sort((a, b) => (a.error ? 1 : 0) - (b.error ? 1 : 0) || (a.price || 1e9) - (b.price || 1e9));
   const ref = stores.find(s => s.type === 'official')?.initial || Math.max(0, ...stores.filter(s => s.type !== 'key' && s.type !== 'deal' && s.price).map(s => s.price)) || null;
   return { title, steam: st, image, stores, best: valid[0] || null, msrp: ref };
@@ -138,7 +140,7 @@ export async function preview(body) {
     title: q.title, platform: spec.platform, image: q.image,
     price: q.best.price, ship: 0, store: q.best.name, src: 'tiendas',
     url: q.best.url, steamAppID: q.steam?.appId || null,
-    stores: q.stores.map(({ name, type, price, url, error, out, match, stale, auto }) => ({ name, type, price, url, error, out, match, stale, auto })),
+    stores: q.stores.map(({ name, type, price, url, error, out, pre, match, stale, auto, doubt, options }) => ({ name, type, price, url, error, out, pre, match, stale, auto, doubt, options })),
     msrp: q.msrp
   };
 }
@@ -191,7 +193,7 @@ export function migrate(it) {
   return changed;
 }
 
-export const specOf = it => ({ title: it.query || it.title, platform: PLATFORMS.includes(it.platform) ? it.platform : 'PC', shops: it.shops || [...SHOP_NAMES], links: it.links || [], steamAppID: it.steamAppID || null });
+export const specOf = it => ({ title: it.query || it.title, platform: PLATFORMS.includes(it.platform) ? it.platform : 'PC', shops: it.shops || [...SHOP_NAMES], links: it.links || [], reject: it.reject || {}, steamAppID: it.steamAppID || null });
 
 // Arte apaisado y datos del juego: primero IGDB (como el Refugio 111), si no lo encuentra RAWG.
 // Si ninguno lo encuentra, se vuelve a probar al día siguiente.
@@ -247,9 +249,18 @@ export function updateSources(it, b) {
   migrate(it);
   if (b.links !== undefined) it.links = cleanSpec({ title: 'x', links: b.links }).links;
   if (Array.isArray(b.shops)) it.shops = cleanSpec({ title: 'x', shops: b.shops }).shops;
+  // «Ninguno es»: esas fichas no se vuelven a proponer en esa tienda y se busca otra.
+  if (b.reject && typeof b.reject === 'object') {
+    it.reject ||= {};
+    for (const [shop, urls] of Object.entries(b.reject)) {
+      if (!SHOP_NAMES.includes(shop) || !Array.isArray(urls)) continue;
+      it.reject[shop] = [...new Set([...(it.reject[shop] || []), ...urls.map(u => parseUrl(u)?.href).filter(Boolean)])].slice(-30);
+    }
+  }
   // Si cambian las tiendas o los enlaces, se olvidan las fichas que ya no se usan.
   const linked = new Set(it.links.map(l => shopFor(l).name));
-  it.stores = (it.stores || []).filter(s => s.type === 'official' || s.type === 'deal' || (s.auto ? it.shops.includes(s.name) && !linked.has(s.name) : it.links.includes(s.url)));
+  const rejected = s => (it.reject?.[s.name] || []).includes(s.url);
+  it.stores = (it.stores || []).filter(s => s.type === 'official' || s.type === 'deal' || (s.auto ? it.shops.includes(s.name) && !linked.has(s.name) && !rejected(s) : it.links.includes(s.url)));
 }
 
 // Runner del PC: precios de Amazon, Fnac y El Corte Inglés para un tracker (los guarda pcdata.js).

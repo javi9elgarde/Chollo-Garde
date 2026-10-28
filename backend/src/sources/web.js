@@ -76,6 +76,7 @@ function jsonLd(html) {
 
 const isProduct = o => [].concat(o['@type'] || []).some(t => /^(Product|VideoGame|ProductGroup|SoftwareApplication|IndividualProduct)$/i.test(t));
 const AVAIL_OUT = /OutOfStock|SoldOut|Discontinued/i;
+const AVAIL_PRE = /PreOrder|PreSale/i;
 
 function offerOf(p) {
   const offers = [].concat(p.offers || [], p.hasVariant ? [].concat(p.hasVariant).flatMap(v => [].concat(v.offers || [])) : []).flatMap(o => o && o['@type'] === 'AggregateOffer' && o.offers ? [o, ...[].concat(o.offers)] : [o]).filter(Boolean);
@@ -86,8 +87,8 @@ function offerOf(p) {
     const price = parsePrice(o.lowPrice ?? o.price ?? spec?.price);
     const cur = o.priceCurrency || spec?.priceCurrency || 'EUR';
     if (!price || (cur && cur !== 'EUR')) continue;
-    const out = AVAIL_OUT.test(String(o.availability || ''));
-    if (!best || (best.out && !out) || (best.out === out && price < best.price)) best = { price, out, url: o.url || null };
+    const out = AVAIL_OUT.test(String(o.availability || '')), pre = AVAIL_PRE.test(String(o.availability || ''));
+    if (!best || (best.out && !out) || (best.out === out && price < best.price)) best = { price, out, pre, url: o.url || null };
   }
   return best;
 }
@@ -104,7 +105,7 @@ function amazon(html) {
   const title = decode(html.match(/id="productTitle"[^>]*>([\s\S]*?)<\/span>/)?.[1]);
   const image = html.match(/id="landingImage"[^>]*data-old-hires="([^"]+)"/)?.[1] || html.match(/id="landingImage"[^>]*src="([^"]+)"/)?.[1] || null;
   const avail = decode(html.match(/id="availability"[\s\S]{0,400}?<span[^>]*>([\s\S]*?)<\/span>/)?.[1]);
-  return { price: parsePrice(priceTxt), title, image, out: /no disponible|agotado/i.test(avail) };
+  return { price: parsePrice(priceTxt), title, image, out: /no disponible|agotado/i.test(avail), pre: /reserva|pre-?pedido|disponible el/i.test(avail) };
 }
 
 // Productos con variantes de WooCommerce (p. ej. un juego con una variante por plataforma).
@@ -129,11 +130,12 @@ function looseOffer(html) {
   return null;
 }
 
-// Devuelve { title, image, price, out } o lanza un error explicando qué falta.
+// Devuelve { title, image, price, out, pre } o lanza un error explicando qué falta.
+// `out`: agotado. `pre`: en reserva (todavía no ha salido, pero se puede comprar).
 export function extract(html, url) {
   const u = parseUrl(url), host = u?.hostname || '';
-  let title = null, image = null, price = null, out = false;
-  if (/amazon\./.test(host)) ({ title, image, price, out } = amazon(html));
+  let title = null, image = null, price = null, out = false, pre = false;
+  if (/amazon\./.test(host)) ({ title, image, price, out, pre } = amazon(html));
   // Enlace a una variante concreta (…?attribute_pa_plataforma=ps5): su precio, no el «desde» del producto.
   const want = u ? [...u.searchParams].filter(([k]) => k.startsWith('attribute_')) : [];
   if (!price && want.length) {
@@ -144,7 +146,7 @@ export function extract(html, url) {
     for (const p of jsonLd(html).filter(isProduct)) {
       const o = offerOf(p);
       if (!o) continue;
-      price = o.price; out = o.out;
+      price = o.price; out = o.out; pre = o.pre;
       title = title || decode(p.name);
       image = image || [].concat(p.image || []).map(i => (typeof i === 'string' ? i : i?.url)).find(Boolean) || null;
       break;
@@ -160,7 +162,9 @@ export function extract(html, url) {
   image = image || meta(html, 'og:image') || null;
   if (!price && jsonLd(html).some(isProduct)) throw new Error('la ficha no tiene precio ahora mismo (sin vendedores o sin stock)');
   if (!price) throw new Error('no encuentro el precio en la página (¿es la ficha de un producto?)');
-  return { title: title ? title.slice(0, 160) : null, image, price, out };
+  // Tiendas que no lo dicen en los datos, pero sí en el nombre («Reserva Marvel Wolverine…»).
+  pre ||= /^\s*(reserva|pre-?order|preventa)\b/i.test(title || '');
+  return { title: title ? title.slice(0, 160) : null, image, price, out, pre };
 }
 
 // Lee la ficha de producto de un enlace pegado por el usuario.
