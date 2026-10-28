@@ -525,7 +525,7 @@
  },
  "stats": {
   "cycles": 22,
-  "requests": 825
+  "requests": 828
  },
  "logs": [
   {
@@ -2527,6 +2527,17 @@
    "runs": 4
   },
   {
+   "name": "Google Flights",
+   "kind": "búsqueda",
+   "covers": "Vuelos · todas las aerolíneas",
+   "host": "www.google.com",
+   "ok": 100,
+   "lat": 633,
+   "last": 1793227014086,
+   "status": "ok",
+   "runs": 3
+  },
+  {
    "name": "Chollometro",
    "kind": "búsqueda",
    "covers": "Ofertas de la comunidad",
@@ -2554,17 +2565,9 @@
   "busy": false,
   "intervalMin": 60,
   "cycles": 22,
-  "requests": 825,
-  "lastRun": 1793226984191,
-  "lastAction": "ciclo"
+  "requests": 828,
+  "lastRun": 1793227014088,
+  "lastAction": "probar-vuelo"
  },
- "version": "github",
- "ai": {
-  "on": true,
-  "model": "gemini-3.8-flash",
-  "lastRun": 1793226785658,
-  "ok": 0,
-  "failed": 2,
-  "error": "Cuota de Gemini agotada por ahora; se reintenta en el siguiente ciclo"
- }
+ "version": "github"
 }
