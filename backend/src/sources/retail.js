@@ -3,7 +3,7 @@
 // corresponde al juego y la plataforma (edición estándar antes que coleccionista, sin segunda mano ni
 // accesorios) y lee el precio de esa ficha.
 import * as web from './web.js';
-import { pick } from './keyshops.js';
+import { pick, doubtOf } from './keyshops.js';
 
 const q = s => encodeURIComponent(s);
 let RETRY_MS = 6000;
@@ -130,16 +130,17 @@ const search = async (shop, term) => {
 };
 
 // Busca el juego en una tienda y lee el precio de la mejor ficha. Lanza un error explicando qué ha fallado.
-export async function find(name, title, platform) {
+export async function find(name, title, platform, { reject = [] } = {}) {
   const shop = RETAIL[name];
   let cands = await search(shop, `${title} ${platform}`);
-  let best = pick(cands, title, platform, { retail: true });
-  if (!best) {
+  let best = pick(cands, title, platform, { retail: true, reject });
+  if (!best || best.doubt) {
     // Algunas tiendas no encuentran nada si se añade la plataforma: se repite solo con el nombre.
-    cands = await search(shop, title);
-    best = pick(cands, title, platform, { retail: true });
+    const more = await search(shop, title);
+    const again = pick(more, title, platform, { retail: true, reject });
+    if (again && (!best || !again.doubt)) { best = again; cands = more; }
   }
   if (!best) throw new Error(cands.length ? `no encuentro «${title}» para ${platform} entre ${cands.length} resultados` : 'el buscador de la tienda no ha devuelto productos');
   const prod = await web.product(best.url);
-  return { name, type: 'retail', url: best.url, price: prod.price, out: prod.out, match: prod.title || best.title, image: prod.image };
+  return { name, type: 'retail', url: best.url, price: prod.price, out: prod.out, pre: prod.pre, match: prod.title || best.title, image: prod.image, ...doubtOf(best) };
 }

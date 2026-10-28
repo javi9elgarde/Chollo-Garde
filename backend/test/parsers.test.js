@@ -2,10 +2,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { parsePrice, extract, blocked } from '../src/sources/web.js';
-import { score } from '../src/sources/keyshops.js';
+import { score, pick } from '../src/sources/keyshops.js';
 import { candidates, RETAIL } from '../src/sources/retail.js';
 import { shopFor } from '../src/sources/shops.js';
-import { migrate, addArt } from '../src/games.js';
+import { migrate, addArt, updateSources } from '../src/games.js';
 import http from 'node:http';
 import { handler, up } from './fixtures.mjs';
 
@@ -120,4 +120,46 @@ test('arte: IGDB primero y RAWG si IGDB falla', async () => {
     assert.equal(b.art, 'https://media.rawg/hades2.jpg');
     assert.equal(b.rawg, 'hades-2');
   } finally { up.igdbDown = false; server.close(); }
+});
+
+test('palabras clave: «Vol.» y «Volume», números romanos y nombres incompletos', () => {
+  const t = 'Metal Gear Solid Master Collection Vol. 2';
+  assert.ok(score('PS5 Metal Gear Solid: Master Collection Volume 2', t, 'PS5', { retail: true }) > 90, 'MediaMarkt escribe «Volume»');
+  assert.equal(score('Metal Gear Solid Master Collection Vol. 1 - PS5', t, 'PS5'), null, 'otro número nunca vale');
+  assert.ok(score('Hades 2 PC', 'Hades II', 'PC') > 90);
+  // Falta «Master»: no vale de primeras, sí como búsqueda por palabras clave (y entonces es dudoso).
+  assert.equal(score('Metal Gear Solid Collection Vol 2 PS5', t, 'PS5'), null);
+  assert.ok(score('Metal Gear Solid Collection Vol 2 PS5', t, 'PS5', { loose: true }) > 0);
+  assert.equal(score('Metal Gear Solid Delta PS5', t, 'PS5', { loose: true }), null, 'faltan demasiadas palabras');
+});
+
+test('varios productos parecidos: dudoso con opciones; los descartados no vuelven', () => {
+  const t = 'Metal Gear Solid Master Collection Vol. 2';
+  const c = (url, label, price) => ({ url, label, title: label, price });
+  const one = pick([c('a', 'Metal Gear Solid Master Collection Vol. 2 PS5'), c('b', 'Metal Gear Solid Master Collection Vol. 2 Day One Edition PS5 + Steelbook + Póster')], t, 'PS5');
+  assert.equal(one.url, 'a');
+  assert.equal(one.doubt, false, 'la otra se parece mucho menos: no pregunta');
+  const two = pick([c('a', 'Metal Gear Solid Master Collection Vol. 2 PS5', 49.99), c('b', 'Metal Gear Solid Master Collection Vol. 2 Day One PS5', 54.99)], t, 'PS5');
+  assert.equal(two.doubt, true);
+  assert.deepEqual(two.options.map(o => [o.url, o.price]), [['a', 49.99], ['b', 54.99]]);
+  const loose = pick([c('z', 'Metal Gear Solid Collection Vol 2 PS5')], t, 'PS5');
+  assert.equal(loose.doubt, true, 'encontrado solo por palabras clave');
+  assert.equal(pick([c('a', 'Metal Gear Solid Master Collection Vol. 2 PS5')], t, 'PS5', { reject: ['a'] }), null);
+});
+
+test('stock: reserva y agotado', () => {
+  const pre = extract(`<script type="application/ld+json">${JSON.stringify({ '@type': 'Product', name: 'Marvel Lobezno PS5', offers: { '@type': 'Offer', price: 74.9, priceCurrency: 'EUR', availability: 'https://schema.org/PreOrder' } })}</script>`, 'https://www.game.es/marvel-lobezno-ps5/253892');
+  assert.equal(pre.pre, true);
+  assert.equal(pre.out, false);
+  assert.equal(extract('<meta property="og:title" content="Reserva Marvel Wolverine PS5"><meta itemprop="price" content="74,90">', 'https://impactgame.es/producto/x/').pre, true);
+});
+
+test('«Ninguno es»: se guardan los descartes y se olvida esa ficha', () => {
+  const it = { cat: 'game', live: true, kind: 'multi', shops: ['MediaMarkt', 'GAME'], links: [], stores: [
+    { name: 'MediaMarkt', auto: true, url: 'https://www.mediamarkt.es/es/product/_mal-1.html', doubt: true },
+    { name: 'GAME', auto: true, url: 'https://www.game.es/x/1', price: 50 }] };
+  updateSources(it, { reject: { MediaMarkt: ['https://www.mediamarkt.es/es/product/_mal-1.html', 'https://www.mediamarkt.es/es/product/_mal-2.html'], Inventada: ['https://x.es/'] } });
+  assert.deepEqual(Object.keys(it.reject), ['MediaMarkt']);
+  assert.equal(it.reject.MediaMarkt.length, 2);
+  assert.deepEqual(it.stores.map(s => s.name), ['GAME']);
 });

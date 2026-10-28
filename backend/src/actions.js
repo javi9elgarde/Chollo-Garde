@@ -41,7 +41,7 @@ export function editTracker(id, b = {}) {
     fire = true;
   }
   if (b.alert !== undefined) { it.alert = !!b.alert; if (it.alert) { it.alerted = false; fire = true; } }
-  const rescan = it.cat === 'game' && it.live && (b.links !== undefined || b.shops !== undefined);
+  const rescan = it.cat === 'game' && it.live && (b.links !== undefined || b.shops !== undefined || b.reject !== undefined);
   if (rescan) { games.updateSources(it, b); log('info', 'api', `«${it.title}»: tiendas actualizadas, comprobando precios`); }
   store.save();
   bus.emit('event', 'tracker', it);
