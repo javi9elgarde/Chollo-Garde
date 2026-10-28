@@ -1,0 +1,136 @@
+{
+ "trackers": [],
+ "alerts": [],
+ "settings": {
+  "canales": {
+   "telegram": false,
+   "discord": true,
+   "email": false
+  },
+  "engine": true,
+  "intervalMin": 60
+ },
+ "stats": {
+  "cycles": 0,
+  "requests": 0
+ },
+ "sources": [
+  {
+   "name": "Instant Gaming",
+   "kind": "búsqueda",
+   "covers": "Keys · búsqueda automática",
+   "host": "www.instant-gaming.com",
+   "ok": null,
+   "lat": null,
+   "last": null,
+   "status": "idle",
+   "runs": 0
+  },
+  {
+   "name": "Eneba",
+   "kind": "navegador",
+   "covers": "Keys · búsqueda automática",
+   "host": "www.eneba.com",
+   "ok": null,
+   "lat": null,
+   "last": null,
+   "status": "idle",
+   "runs": 0
+  },
+  {
+   "name": "Amazon",
+   "kind": "navegador",
+   "covers": "Búsqueda automática",
+   "host": "www.amazon.es",
+   "ok": null,
+   "lat": null,
+   "last": null,
+   "status": "idle",
+   "runs": 0
+  },
+  {
+   "name": "MediaMarkt",
+   "kind": "navegador",
+   "covers": "Búsqueda automática",
+   "host": "www.mediamarkt.es",
+   "ok": null,
+   "lat": null,
+   "last": null,
+   "status": "idle",
+   "runs": 0
+  },
+  {
+   "name": "Fnac",
+   "kind": "navegador",
+   "covers": "Búsqueda automática",
+   "host": "www.fnac.es",
+   "ok": null,
+   "lat": null,
+   "last": null,
+   "status": "idle",
+   "runs": 0
+  },
+  {
+   "name": "El Corte Inglés",
+   "kind": "navegador",
+   "covers": "Búsqueda automática",
+   "host": "www.elcorteingles.es",
+   "ok": null,
+   "lat": null,
+   "last": null,
+   "status": "idle",
+   "runs": 0
+  },
+  {
+   "name": "GAME",
+   "kind": "búsqueda",
+   "covers": "Búsqueda automática",
+   "host": "www.game.es",
+   "ok": null,
+   "lat": null,
+   "last": null,
+   "status": "idle",
+   "runs": 0
+  },
+  {
+   "name": "Impact",
+   "kind": "búsqueda",
+   "covers": "Búsqueda automática",
+   "host": "impactgame.es",
+   "ok": null,
+   "lat": null,
+   "last": null,
+   "status": "idle",
+   "runs": 0
+  },
+  {
+   "name": "Steam España",
+   "kind": "API web",
+   "covers": "Precio oficial de PC, reseñas, Steam Deck",
+   "host": "store.steampowered.com",
+   "ok": null,
+   "lat": null,
+   "last": null,
+   "status": "idle",
+   "runs": 0
+  }
+ ],
+ "logs": [
+  {
+   "t": 1793151759849,
+   "level": "info",
+   "src": "cron",
+   "msg": "no hay trackers con fuente real todavía"
+  }
+ ],
+ "engine": {
+  "running": true,
+  "busy": false,
+  "intervalMin": 60,
+  "cycles": 0,
+  "requests": 0,
+  "lastRun": 1793151759859,
+  "lastAction": "ciclo"
+ },
+ "version": "github"
+}
