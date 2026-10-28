@@ -6,6 +6,8 @@ import * as web from './web.js';
 import { pick } from './keyshops.js';
 
 const q = s => encodeURIComponent(s);
+let RETRY_MS = 6000;
+export const _setRetryMs = ms => { RETRY_MS = ms; };
 
 export const RETAIL = {
   Amazon: {
@@ -94,9 +96,16 @@ function selfCandidate(p, shop) {
   return [{ url: base, label: `${t} ${slug}`, title: t.slice(0, 160) }];
 }
 const search = async (shop, term) => {
-  const p = await web.page(shop.search(term), { forceBrowser: shop.browser, waitFor: shop.waitFor });
-  const c = candidates(p.html, p.url, shop);
-  return c.length ? c : selfCandidate(p, shop);
+  const url = shop.search(term), opts = { forceBrowser: shop.browser, waitFor: shop.waitFor };
+  // Algunas tiendas (El Corte Inglés) bloquean a ratos: un segundo intento al poco suele entrar.
+  const p = await web.page(url, opts).catch(async e => {
+    if (!/captcha|respondió 5/.test(e.message)) throw e;
+    await new Promise(r => setTimeout(r, RETRY_MS));
+    return web.page(url, opts);
+  });
+  // Si ha llevado directo a una ficha, los enlaces de la página son de otros productos («también te gustará»).
+  const self = selfCandidate(p, shop);
+  return self.length ? self : candidates(p.html, p.url, shop);
 };
 
 // Busca el juego en una tienda y lee el precio de la mejor ficha. Lanza un error explicando qué ha fallado.

@@ -22,6 +22,7 @@ before(async () => {
   });
   const web = await import('../src/sources/web.js');
   web._setFetchers({ fetch: serve, render: serve });
+  (await import('../src/sources/retail.js'))._setRetryMs(0);
   const store = await import('../src/store.js');
   const { createApp } = await import('../src/server.js');
   store.load();
