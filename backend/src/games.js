@@ -9,6 +9,7 @@ import * as keyshops from './sources/keyshops.js';
 import * as web from './sources/web.js';
 import * as retail from './sources/retail.js';
 import { shopFor, parseUrl } from './sources/shops.js';
+import { log } from './bus.js';
 
 const round = (v, d = 2) => Math.round(v * 10 ** d) / 10 ** d;
 const dayKey = t => new Date(t).toLocaleDateString('sv-SE'); // AAAA-MM-DD en hora local
@@ -92,6 +93,8 @@ export async function quote(spec, prev = []) {
       if (old) Object.assign(s, { price: old.price, url: s.url || old.url, match: old.match, stale: true });
     }
   }
+  // Una línea por tienda en el registro: así se ve qué ha encontrado cada una o por qué ha fallado.
+  for (const s of stores) log(s.error ? 'warn' : 'info', s.name, s.error ? `${title} (${spec.platform}): ${s.error}` : `${title} (${spec.platform}): ${s.out ? 'sin stock' : s.price + ' €'} · ${s.match || s.url || ''}`);
   const valid = stores.filter(s => s.price && !s.error && !s.out).sort((a, b) => a.price - b.price);
   stores.sort((a, b) => (a.error ? 1 : 0) - (b.error ? 1 : 0) || (a.price || 1e9) - (b.price || 1e9));
   const ref = stores.find(s => s.type === 'official')?.initial || Math.max(0, ...stores.filter(s => s.type !== 'key' && s.price).map(s => s.price)) || null;
@@ -127,7 +130,7 @@ export async function createTracker(body) {
   const cached = previews.get(body.previewId);
   const spec = cached?.spec || cleanSpec(body);
   const q = cached?.q || await quote(spec);
-  if (!q.best) throw new UserError('No hay ningún precio válido para este juego ahora mismo.');
+  if (!q.best) throw new UserError(`No he encontrado ningún precio válido para «${q.title}» en ${spec.platform}. ${q.stores.map(s => `${s.name}: ${s.error || (s.out ? 'sin stock' : 'sin precio')}`).join(' · ')}`);
   const st = q.steam, appId = st?.appId || null;
   const [rev, dk] = appId ? await Promise.all([steam.reviews(appId), steam.deck(appId)]) : [null, null];
   const now = Date.now(), det = st?.det;
