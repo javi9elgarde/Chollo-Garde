@@ -34,7 +34,7 @@ export const pages = url => {
   }
   if (url === 'https://www.instant-gaming.com/es/1234-comprar-hades-ii-pc-juego-steam/') return '<meta property="og:title" content="Comprar Hades II PC Steam"><meta itemprop="price" content="19.49">';
   if (url.startsWith('https://www.eneba.com/es/store/all')) return `<a href="/es/steam-hades-ii-pc-steam-key-united-states">US</a><a href="/es/steam-hades-ii-pc-steam-key-global">Global</a><a href="/es/store/games">Juegos</a>`;
-  if (url === 'https://www.eneba.com/es/steam-hades-ii-pc-steam-key-global') return `<title>Hades II</title>` + ld({ '@type': 'Product', name: 'Hades II (PC) Steam Key GLOBAL', offers: { '@type': 'AggregateOffer', lowPrice: up.eneba, priceCurrency: 'EUR', availability: 'https://schema.org/InStock' } });
+  if (url === 'https://www.eneba.com/es/steam-hades-ii-pc-steam-key-global?currency=EUR') return `<title>Hades II</title>` + ld({ '@type': 'Product', name: 'Hades II (PC) Steam Key GLOBAL', offers: { '@type': 'AggregateOffer', lowPrice: up.eneba, priceCurrency: 'EUR', availability: 'https://schema.org/InStock' } });
   if (url.startsWith('https://www.amazon.es/s?')) return `<div data-component-type="s-search-result"><a class="a-link-normal" href="/Funda-Hades-II/dp/B0FUNDAAAA/ref=sr_1_1"><h2><span>Funda para Hades II PC</span></h2></a></div>
     <div data-component-type="s-search-result"><a class="a-link-normal" href="/Hades-II-PS5/dp/B0PS5AAAAA/ref=sr_1_2"><h2><span>Hades II - PS5</span></h2></a></div>
     <div data-component-type="s-search-result"><a class="a-link-normal" href="/Hades-II-Pc/dp/B0PCAAAAAA/ref=sr_1_3"><h2><span>Hades II (PC)</span></h2></a><a href="/Hades-II-Pc/dp/B0PCAAAAAA/ref=sr_1_3?th=1">PC</a></div>`;
@@ -42,10 +42,10 @@ export const pages = url => {
   if (url.startsWith('https://www.mediamarkt.es/es/search.html')) return `<a href="/es/product/_hades-ii-pc-1234567.html"><p>Hades II PC</p></a><a href="/es/category/videojuegos-pc-123.html">Videojuegos PC</a>`;
   if (url === 'https://www.mediamarkt.es/es/product/_hades-ii-pc-1234567.html') return ld({ '@type': 'Product', name: 'Hades II PC', offers: { '@type': 'Offer', price: 26.99, priceCurrency: 'EUR' } });
   if (url.startsWith('https://www.elcorteingles.es/search-nwx/')) return '<div class="no-results">No hemos encontrado resultados</div>';
-  if (url.startsWith('https://www.game.es/buscar/')) return `<a href="https://www.game.es/VIDEOJUEGOS/ROL/PC/HADES-II-SEGUNDA-MANO/231236">HADES II PC Segunda mano</a>
-    <a href="https://www.game.es/VIDEOJUEGOS/ROL/PLAYSTATION-5/HADES-II/231235">HADES II PS5</a><a href="https://www.game.es/VIDEOJUEGOS/ROL/PC/HADES-II/231234">HADES II PC</a>`;
-  if (url === 'https://www.game.es/VIDEOJUEGOS/ROL/PC/HADES-II/231234') return '<meta property="og:title" content="HADES II PC"><meta itemprop="price" content="29,95">';
-  if (url.startsWith('https://impactgame.es/busqueda')) return `<a href="https://impactgame.es/carrito">Carrito</a><a href="https://impactgame.es/pc/9876-hades-ii-pc.html" title="Hades II PC"><img alt="Hades II PC"></a>`;
+  if (url.startsWith('https://www.game.es/resultados')) return `<a href="/hades-ii-pc-segunda-mano/231236">HADES II PC Segunda mano</a>
+    <a href="/hades-ii-ps5/231235">HADES II PS5</a><a href="/hades-ii-pc/231234">HADES II PC</a><a href="/resultados?search=halloween">Halloween</a>`;
+  if (url === 'https://www.game.es/hades-ii-pc/231234') return '<meta property="og:title" content="HADES II PC"><meta itemprop="price" content="29,95">';
+  if (url.startsWith('https://impactgame.es/?s=')) return `<a href="https://impactgame.es/carrito">Carrito</a><a href="https://impactgame.es/categoria-producto/videojuegos/">Videojuegos</a><a href="https://impactgame.es/producto/hades-ii-pc/" title="Hades II PC"><img alt="Hades II PC"></a>`;
   if (url.startsWith('https://impactgame.es/')) return ld({ '@context': 'https://schema.org', '@graph': [{ '@type': 'Product', name: 'Hades II PC', image: 'https://impactgame.es/h.jpg', offers: { '@type': 'Offer', price: '17.00', priceCurrency: 'EUR', availability: 'https://schema.org/OutOfStock' } }] });
   if (url.startsWith('https://www.fnac.es/')) return '<html><script src="https://ct.captcha-delivery.com/c.js"></script></html>';
   return null;

@@ -22,6 +22,7 @@ before(async () => {
   });
   const web = await import('../src/sources/web.js');
   web._setFetchers({ fetch: serve, render: serve });
+  (await import('../src/sources/retail.js'))._setRetryMs(0);
   const store = await import('../src/store.js');
   const { createApp } = await import('../src/server.js');
   store.load();
@@ -60,11 +61,11 @@ test('vista previa: busca sola en todas las tiendas, elige la versión correcta 
   const by = Object.fromEntries(body.stores.map(s => [s.name, s]));
   assert.equal(by['Instant Gaming'].price, 19.49, 'descarta la banda sonora');
   assert.match(by['Instant Gaming'].url, /1234-comprar-hades-ii-pc/);
-  assert.match(by.Eneba.url, /key-global$/, 'descarta la key de EE. UU.');
+  assert.match(by.Eneba.url, /key-global\?currency=EUR$/, 'descarta la key de EE. UU.');
   assert.equal(by.Amazon.url, 'https://www.amazon.es/dp/B0PCAAAAAA', 'ni la funda ni la de PS5');
   assert.equal(by.Amazon.price, 24.95);
   assert.equal(by.MediaMarkt.price, 26.99);
-  assert.equal(by.GAME.url, 'https://www.game.es/VIDEOJUEGOS/ROL/PC/HADES-II/231234', 'ni segunda mano ni PS5');
+  assert.equal(by.GAME.url, 'https://www.game.es/hades-ii-pc/231234', 'ni segunda mano ni PS5');
   assert.equal(by.GAME.price, 29.95);
   assert.equal(by.Impact.out, true, 'agotado: no cuenta como mejor precio');
   assert.match(by['El Corte Inglés'].error, /no ha devuelto productos/);
@@ -117,7 +118,7 @@ test('el motor actualiza el precio y dispara Telegram y Discord al llegar al obj
   assert.equal(it.history.length, 1, 'mismo día: se actualiza el punto, no se duplica');
   assert.match(it.lastError, /Fnac/);
   // Las fichas ya encontradas no se vuelven a buscar: solo se relee su precio.
-  for (const search of ['instant-gaming.com/es/busquedas', 'eneba.com/es/store', 'amazon.es/s?', 'mediamarkt.es/es/search', 'game.es/buscar', 'impactgame.es/busqueda']) assert.ok(!up.hits.some(u => u.includes(search)), search);
+  for (const search of ['instant-gaming.com/es/busquedas', 'eneba.com/es/store', 'amazon.es/s?', 'mediamarkt.es/es/search', 'game.es/resultados', 'impactgame.es/?s=']) assert.ok(!up.hits.some(u => u.includes(search)), search);
   assert.ok(up.hits.some(u => u.includes('elcorteingles.es/search')), 'la que no encontró nada se vuelve a buscar');
   assert.deepEqual(body.alerts[0].channels, { web: true, telegram: 'ok', discord: 'ok', email: 'off' });
   assert.equal(up.telegram.at(-1).method, 'sendPhoto');

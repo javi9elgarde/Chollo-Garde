@@ -6,6 +6,8 @@ import * as web from './web.js';
 import { pick } from './keyshops.js';
 
 const q = s => encodeURIComponent(s);
+let RETRY_MS = 6000;
+export const _setRetryMs = ms => { RETRY_MS = ms; };
 
 export const RETAIL = {
   Amazon: {
@@ -30,13 +32,14 @@ export const RETAIL = {
     browser: true, waitFor: 'a[href*="/videojuegos/A"]'
   },
   GAME: {
-    search: t => `https://www.game.es/buscar/${q(t)}`,
-    product: /\/\d{5,}\/?$/,
-    browser: false
+    search: t => `https://www.game.es/resultados?search=${q(t)}`,
+    product: /^\/[a-z0-9-]+\/\d{5,}\/?$/,
+    browser: true
   },
   Impact: {
-    search: t => `https://impactgame.es/busqueda?controller=search&s=${q(t)}`,
-    product: null,
+    // WooCommerce: si solo hay un resultado, el buscador lleva directamente a la ficha.
+    search: t => `https://impactgame.es/?s=${q(t)}&post_type=product`,
+    product: /^\/producto\/[^/]+\/?$/,
     browser: false
   }
 };
@@ -77,16 +80,42 @@ export function candidates(html, pageUrl, shop) {
   return [...out.values()].map(c => ({ ...c, label: `${c.label} ${decodeURIComponent(new URL(c.url).pathname).replace(/[-_/]+/g, ' ')}`, title: c.title.slice(0, 160) }));
 }
 
+// Si el buscador ha llevado directamente a una ficha de producto, esa ficha es el único candidato.
+function selfCandidate(p, shop) {
+  const u = new URL(p.url);
+  const isProduct = shop.product ? shop.product.test(u.pathname) : /"@type"\s*:\s*"Product"|og:type["'][^>]*content=["']product/i.test(p.html);
+  if (!isProduct) return [];
+  const t = text(p.html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i)?.[1] || p.html.match(/<title[^>]*>([^<]*)/i)?.[1] || '');
+  const base = u.origin + u.pathname, slug = decodeURIComponent(u.pathname).replace(/[-_/]+/g, ' ');
+  // Una ficha con variantes (PS5, Xbox, PC…): cada variante es un candidato con su propio enlace.
+  const vars = web.wooVariations(p.html);
+  if (vars.length) return vars.map(v => {
+    const vals = Object.values(v.attrs).join(' ').replace(/[-_]+/g, ' ');
+    return { url: `${base}?${new URLSearchParams(v.attrs)}`, label: `${t} ${vals} ${slug}`, title: `${t} ${vals}`.slice(0, 160) };
+  });
+  return [{ url: base, label: `${t} ${slug}`, title: t.slice(0, 160) }];
+}
+const search = async (shop, term) => {
+  const url = shop.search(term), opts = { forceBrowser: shop.browser, waitFor: shop.waitFor };
+  // Algunas tiendas (El Corte Inglés) bloquean a ratos: un segundo intento al poco suele entrar.
+  const p = await web.page(url, opts).catch(async e => {
+    if (!/captcha|respondió 5/.test(e.message)) throw e;
+    await new Promise(r => setTimeout(r, RETRY_MS));
+    return web.page(url, opts);
+  });
+  // Si ha llevado directo a una ficha, los enlaces de la página son de otros productos («también te gustará»).
+  const self = selfCandidate(p, shop);
+  return self.length ? self : candidates(p.html, p.url, shop);
+};
+
 // Busca el juego en una tienda y lee el precio de la mejor ficha. Lanza un error explicando qué ha fallado.
 export async function find(name, title, platform) {
   const shop = RETAIL[name];
-  const p = await web.page(shop.search(`${title} ${platform}`), { forceBrowser: shop.browser, waitFor: shop.waitFor });
-  let cands = candidates(p.html, p.url, shop);
+  let cands = await search(shop, `${title} ${platform}`);
   let best = pick(cands, title, platform, { retail: true });
   if (!best) {
     // Algunas tiendas no encuentran nada si se añade la plataforma: se repite solo con el nombre.
-    const p2 = await web.page(shop.search(title), { forceBrowser: shop.browser, waitFor: shop.waitFor });
-    cands = candidates(p2.html, p2.url, shop);
+    cands = await search(shop, title);
     best = pick(cands, title, platform, { retail: true });
   }
   if (!best) throw new Error(cands.length ? `no encuentro «${title}» para ${platform} entre ${cands.length} resultados` : 'el buscador de la tienda no ha devuelto productos');

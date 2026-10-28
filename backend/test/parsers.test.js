@@ -44,6 +44,26 @@ test('versiones en tiendas generalistas', () => {
   assert.ok(score(c[0].label, 'Hades II', 'PS5') > 0);
 });
 
+test('lo que se ha visto en las tiendas reales (octubre 2026)', () => {
+  // «FC27» pegado en El Corte Inglés e Impact, «FC™ 27» en MediaMarkt.
+  assert.ok(score('ea sports fc27 playstation 5', 'EA Sports FC 27', 'PS5', { retail: true }) !== null);
+  assert.ok(score('PS5 EA SPORTS FC™ 27', 'EA Sports FC 27', 'PS5', { retail: true }) !== null);
+  assert.ok(score('EA Sports FC 27 PS5', 'EA FC27', 'PS5') !== null);
+  assert.equal(score('ea sports fc27 nintendo switch 2', 'EA Sports FC 27', 'PS5'), null);
+  assert.equal(score('EA Sports FC 26 PS5', 'EA Sports FC 27', 'PS5'), null);
+  // Eneba solo tenía la Ultimate para PS5: no cuenta como la estándar, salvo que se pida.
+  assert.equal(score('psn ea sports fc 27 ultimate edition ps5 psn key europe', 'EA Sports FC 27', 'PS5'), null);
+  assert.ok(score('psn ea sports fc 27 ultimate edition ps5 psn key europe', 'EA Sports FC 27 Ultimate', 'PS5') !== null);
+  // MediaMarkt: la oferta está en un JSON-LD que no se puede leer entero; la primera oferta con precio vale.
+  const mm = '<script type="application/ld+json">{"@type":"ProductGroup",roto}</script><script>{"offers":{"@type":"Offer","priceCurrency":"EUR","price":69.99,"availability":"https://schema.org/InStock"}},{"@type":"Offer","name":"Retirada del antiguo","priceCurrency":"EUR","price":0}</script>';
+  assert.equal(extract(mm, 'https://www.mediamarkt.es/es/product/_ps5-x-1.html').price, 69.99);
+  // Impact (WooCommerce): un producto con una variante por plataforma; el enlace elige la de PS5.
+  const vars = JSON.stringify([{ attributes: { attribute_pa_plataforma: 'xbox-series-x' }, display_price: 54.95, is_in_stock: true }, { attributes: { attribute_pa_plataforma: 'ps5' }, display_price: 72.9, is_in_stock: false }]).replace(/"/g, '&quot;');
+  const woo = `<form class="variations_form" data-product_variations="${vars}"></form><script type="application/ld+json">{"@type":"Product","offers":{"@type":"AggregateOffer","lowPrice":"54.95","priceCurrency":"EUR"}}</script>`;
+  assert.deepEqual([extract(woo, 'https://impactgame.es/producto/fc27/?attribute_pa_plataforma=ps5').price, extract(woo, 'https://impactgame.es/producto/fc27/?attribute_pa_plataforma=ps5').out], [72.9, true]);
+  assert.equal(extract(woo, 'https://impactgame.es/producto/fc27/').price, 54.95);
+});
+
 test('tiendas conocidas y desconocidas', () => {
   assert.deepEqual(shopFor('https://www.mediamarkt.es/es/product/_x.html'), { name: 'MediaMarkt', type: 'retail', browser: true });
   assert.equal(shopFor('https://www.tiendapequena.es/juego').name, 'tiendapequena.es');

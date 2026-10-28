@@ -9,3 +9,4 @@ const base = `http://127.0.0.1:${server.address().port}`;
 Object.assign(process.env, { STEAM_STORE_BASE: base + '/steam', TELEGRAM_API_BASE: base + '/tg', DISCORD_WEBHOOK_URL: base + '/discord' });
 const web = await import('../src/sources/web.js');
 web._setFetchers({ fetch: serve, render: serve });
+(await import('../src/sources/retail.js'))._setRetryMs(0);
