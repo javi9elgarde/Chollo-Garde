@@ -23,16 +23,26 @@
    "links": [],
    "steamAppID": null,
    "image": "https://dam.elcorteingles.es/producto/www-001097581512924-00.jpg",
-   "url": "https://www.mediamarkt.es/es/product/_ps5-metal-gear-solid-master-collection-volume-2-1621005.html",
+   "url": "https://www.amazon.es/dp/B0GNKRMWMS",
    "deck": null,
    "msrp": 49.99,
    "target": 41,
    "alert": true,
-   "alerted": false,
+   "alerted": true,
    "createdAt": 1793201960375,
-   "lastCheck": 1793203655059,
-   "lastError": "Amazon: la tienda ha pedido un captcha; se reintentará en el próximo ciclo · Instant Gaming: no encuentro «Metal Gear Solid Master Collection Vol. 2» para PS5 · Eneba: la ficha no tiene precio ahora mismo (sin vendedores o sin stock) · Fnac: la tienda ha pedido un captcha; se reintentará en el próximo ciclo · Impact: no encuentro «Metal Gear Solid Master Collection Vol. 2» para PS5 entre 1 resultados",
+   "lastCheck": 1793204550460,
+   "lastError": "Instant Gaming: no encuentro «Metal Gear Solid Master Collection Vol. 2» para PS5 · Eneba: la ficha no tiene precio ahora mismo (sin vendedores o sin stock) · Fnac: la tienda ha pedido un captcha; se reintentará en el próximo ciclo · Impact: no encuentro «Metal Gear Solid Master Collection Vol. 2» para PS5 entre 1 resultados",
    "stores": [
+    {
+     "name": "Amazon",
+     "type": "retail",
+     "url": "https://www.amazon.es/dp/B0GNKRMWMS",
+     "price": 33.88,
+     "out": false,
+     "pre": false,
+     "match": "Metal Gear Solid: Master Collection Volume 2 – Day One Edition - PS5",
+     "auto": true
+    },
     {
      "name": "MediaMarkt",
      "type": "retail",
@@ -74,16 +84,6 @@
      "match": "METAL GEAR SOLID: MASTER COLLECTION Vol.2"
     },
     {
-     "name": "Amazon",
-     "type": "retail",
-     "auto": true,
-     "error": "la tienda ha pedido un captcha; se reintentará en el próximo ciclo",
-     "price": 33.88,
-     "url": "https://www.amazon.es/dp/B0GNKRMWMS",
-     "match": "Metal Gear Solid: Master Collection Volume 2 – Day One Edition - PS5",
-     "stale": true
-    },
-    {
      "name": "Instant Gaming",
      "type": "key",
      "auto": true,
@@ -108,11 +108,11 @@
      "error": "no encuentro «Metal Gear Solid Master Collection Vol. 2» para PS5 entre 1 resultados"
     }
    ],
-   "current": 44.99,
+   "current": 33.88,
    "history": [
     {
-     "t": 1793203655059,
-     "p": 44.99
+     "t": 1793204550460,
+     "p": 33.88
     }
    ],
    "coupons": [],
@@ -407,7 +407,26 @@
    "igdb": 408819
   }
  ],
- "alerts": [],
+ "alerts": [
+  {
+   "id": "al-2545a3d1",
+   "itemId": "g-e0948d2d",
+   "title": "Metal Gear Solid Master Collection Vol. 2",
+   "cat": "game",
+   "t": 1793204550721,
+   "price": 33.88,
+   "target": 41,
+   "atl": false,
+   "reason": "target",
+   "read": false,
+   "channels": {
+    "web": true,
+    "telegram": "off",
+    "email": "off",
+    "discord": "error: HTTP 400"
+   }
+  }
+ ],
  "settings": {
   "canales": {
    "telegram": false,
@@ -418,8 +437,8 @@
   "intervalMin": 60
  },
  "stats": {
-  "cycles": 11,
-  "requests": 363
+  "cycles": 12,
+  "requests": 381
  },
  "logs": [
   {
@@ -1735,9 +1754,96 @@
    "level": "ok",
    "src": "parser",
    "msg": "Marvel's Wolverine: 74,90 € → 73,50 € en Fnac · 66.56 s"
+  },
+  {
+   "t": 1793204500927,
+   "level": "info",
+   "src": "cron",
+   "msg": "ciclo #12 · 1 tracker"
+  },
+  {
+   "t": 1793204550460,
+   "level": "warn",
+   "src": "Instant Gaming",
+   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): no encuentro «Metal Gear Solid Master Collection Vol. 2» para PS5"
+  },
+  {
+   "t": 1793204550460,
+   "level": "warn",
+   "src": "Eneba",
+   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): la ficha no tiene precio ahora mismo (sin vendedores o sin stock)"
+  },
+  {
+   "t": 1793204550460,
+   "level": "info",
+   "src": "Amazon",
+   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): 33.88 € · Metal Gear Solid: Master Collection Volume 2 – Day One Edition - PS5"
+  },
+  {
+   "t": 1793204550460,
+   "level": "info",
+   "src": "MediaMarkt",
+   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): 44.99 € · PS5 Metal Gear Solid: Master Collection Volume 2 | MediaMarkt"
+  },
+  {
+   "t": 1793204550460,
+   "level": "warn",
+   "src": "Fnac",
+   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): la tienda ha pedido un captcha; se reintentará en el próximo ciclo"
+  },
+  {
+   "t": 1793204550460,
+   "level": "info",
+   "src": "El Corte Inglés",
+   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): 49.9 € · Metal Gear Solid: Master Collection Vol.2 Day 1 Edition PlayStation 5"
+  },
+  {
+   "t": 1793204550460,
+   "level": "info",
+   "src": "GAME",
+   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): 49.99 € · Metal Gear Solid Master Collection Vol. 2 PS5"
+  },
+  {
+   "t": 1793204550460,
+   "level": "warn",
+   "src": "Impact",
+   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): no encuentro «Metal Gear Solid Master Collection Vol. 2» para PS5 entre 1 resultados"
+  },
+  {
+   "t": 1793204550460,
+   "level": "info",
+   "src": "PS Store",
+   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): 49.99 € · METAL GEAR SOLID: MASTER COLLECTION Vol.2"
+  },
+  {
+   "t": 1793204550461,
+   "level": "ok",
+   "src": "parser",
+   "msg": "Metal Gear Solid Master Collection Vol. 2: 44,99 € → 33,88 € en Amazon · 49.53 s"
+  },
+  {
+   "t": 1793204550462,
+   "level": "ok",
+   "src": "trigger",
+   "msg": "Precio_Actual 33,88 € <= Precio_Objetivo 41,00 € · Metal Gear Solid Master Collection Vol. 2"
+  },
+  {
+   "t": 1793204550721,
+   "level": "err",
+   "src": "discord",
+   "msg": "Discord falló: HTTP 400"
   }
  ],
  "acciones": [
+  {
+   "id": "rmvsbmpw8whhr",
+   "accion": "escanear",
+   "ok": true,
+   "error": null,
+   "at": 1793204550721,
+   "secs": 50,
+   "trackerId": "g-e0948d2d"
+  },
   {
    "id": "rmvsblngt704q",
    "accion": "escanear",
@@ -1834,8 +1940,8 @@
    "covers": "Keys · búsqueda automática",
    "host": "www.instant-gaming.com",
    "ok": 100,
-   "lat": 25986,
-   "last": 1793204464613,
+   "lat": 17990,
+   "last": 1793204538922,
    "status": "ok",
    "runs": 2
   },
@@ -1845,20 +1951,20 @@
    "covers": "Keys · búsqueda automática",
    "host": "www.eneba.com",
    "ok": 100,
-   "lat": 22320,
-   "last": 1793204441754,
+   "lat": 13384,
+   "last": 1793204530030,
    "status": "ok",
-   "runs": 1
+   "runs": 2
   },
   {
    "name": "Amazon",
    "kind": "navegador",
    "covers": "Búsqueda automática",
    "host": "www.amazon.es",
-   "ok": 0,
-   "lat": 22881,
-   "last": 1793204478766,
-   "status": "warn",
+   "ok": 67,
+   "lat": 17832,
+   "last": 1793204550451,
+   "status": "ok",
    "runs": 3
   },
   {
@@ -1867,21 +1973,21 @@
    "covers": "Búsqueda automática",
    "host": "www.mediamarkt.es",
    "ok": 100,
-   "lat": 26071,
-   "last": 1793204481912,
+   "lat": 27023,
+   "last": 1793204527983,
    "status": "ok",
-   "runs": 3
+   "runs": 1
   },
   {
    "name": "Fnac",
    "kind": "navegador",
    "covers": "Búsqueda automática",
    "host": "www.fnac.es",
-   "ok": 67,
-   "lat": 27665,
-   "last": 1793204485872,
-   "status": "ok",
-   "runs": 3
+   "ok": 0,
+   "lat": 21798,
+   "last": 1793204540187,
+   "status": "warn",
+   "runs": 2
   },
   {
    "name": "El Corte Inglés",
@@ -1889,8 +1995,8 @@
    "covers": "Búsqueda automática",
    "host": "www.elcorteingles.es",
    "ok": 100,
-   "lat": 39785,
-   "last": 1793204459220,
+   "lat": 30186,
+   "last": 1793204531147,
    "status": "ok",
    "runs": 1
   },
@@ -1900,8 +2006,8 @@
    "covers": "Búsqueda automática",
    "host": "www.game.es",
    "ok": 100,
-   "lat": 1117,
-   "last": 1793204420552,
+   "lat": 1002,
+   "last": 1793204501963,
    "status": "ok",
    "runs": 1
   },
@@ -1911,10 +2017,10 @@
    "covers": "Búsqueda automática",
    "host": "impactgame.es",
    "ok": 100,
-   "lat": 1723,
-   "last": 1793204421159,
+   "lat": 2833,
+   "last": 1793204507737,
    "status": "ok",
-   "runs": 1
+   "runs": 2
   },
   {
    "name": "Chollometro",
@@ -1922,8 +2028,8 @@
    "covers": "Ofertas de la comunidad",
    "host": "www.chollometro.com",
    "ok": 100,
-   "lat": 1044,
-   "last": 1793204421275,
+   "lat": 926,
+   "last": 1793204502377,
    "status": "ok",
    "runs": 2
   },
@@ -1943,9 +2049,9 @@
   "running": true,
   "busy": false,
   "intervalMin": 60,
-  "cycles": 11,
-  "requests": 363,
-  "lastRun": 1793204485878,
+  "cycles": 12,
+  "requests": 381,
+  "lastRun": 1793204550721,
   "lastAction": "escanear"
  },
  "version": "github"
