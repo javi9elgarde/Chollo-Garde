@@ -75,6 +75,12 @@ async function diagnose({ urls = [], match = '', modes = ['fetch', 'headless'] }
           const names = [...f[2].matchAll(/<input\b[^>]*name=["']([^"']+)/gi)].map(m => m[1]);
           if (names.length) line += `  form ${(f[1].match(/action=["']([^"']*)/i)?.[1] || '-')} [${names.join(',')}]\n`;
         }
+        const web = await import('./sources/web.js'), ks = await import('./sources/keyshops.js');
+        try { const x = web.extract(html, r.url); line += `  ficha: ${x.price} € «${x.title}» agotado=${x.out}\n`; } catch (e) { line += `  ficha: ${e.message}\n`; }
+        const ld = [...html.matchAll(/application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)].map(m => m[1].match(/"@type"\s*:\s*"([^"]+)"/g)?.join(',')).join(' / ');
+        line += `  ld+json: ${ld.slice(0, 300)}\n  precios: ${[...html.matchAll(/.{0,60}(?:"price"|itemprop="price"|"lowPrice"|"amount"|€).{0,60}/g)].slice(0, 6).map(m => m[0].replace(/\s+/g, ' ')).join(' ‖ ').slice(0, 900)}\n`;
+        if (/instant-gaming/.test(url)) line += `  candidatos IG: ${ks.igCandidates(html).slice(0, 8).map(c => c.label).join(' | ')}\n`;
+        if (/eneba/.test(url)) line += `  candidatos Eneba: ${ks.enebaCandidates(html).slice(0, 8).map(c => c.label).join(' | ')}\n`;
         line += `  ${links.length} enlaces; coinciden: ${(re ? links.filter(l => re.test(l)) : []).slice(0, 15).join(' | ')}\n`;
       } catch (e) { line += `  ERROR ${e.message.split('\n')[0]}\n`; }
       console.log(line);
