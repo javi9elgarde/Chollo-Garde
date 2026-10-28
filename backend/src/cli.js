@@ -1,7 +1,7 @@
 // CholloGarde en GitHub: GitHub Actions ejecuta este script cada hora (ciclo de precios) y cuando
 // el panel publicado en GitHub Pages pide algo (crear, editar o borrar un tracker, probar alertas…).
 // Lee y guarda los datos en DATA_DIR/db.json, que el workflow sube a la rama «datos».
-//   node src/cli.js <accion> [json]     acciones: ciclo, crear, editar, borrar, escanear, probar
+//   node src/cli.js <accion> [json]     acciones: ciclo, crear, editar, borrar, escanear, analizar, probar
 //   node src/cli.js pc                  (runner del PC, CG_MODO=pc) solo guarda pc.json
 import * as store from './store.js';
 import * as games from './games.js';
@@ -11,6 +11,7 @@ import { bus } from './bus.js';
 import { dispatch, send, SAMPLE } from './notify/index.js';
 import { close as closeBrowser } from './sources/browser.js';
 import * as pc from './pcdata.js';
+import * as ai from './ai.js';
 
 const accion = process.argv[2] || 'ciclo';
 let datos = {};
@@ -29,6 +30,7 @@ async function run() {
     case 'crear': {
       const { it, notify } = await actions.addTracker(datos);
       await notify();
+      await ai.refresh([it]).catch(() => {});
       return { trackerId: it.id };
     }
     case 'editar': {
@@ -43,6 +45,15 @@ async function run() {
       if (!actions.find(datos.id)) throw new actions.NotFound('Ese tracker no existe');
       await engine.cycle(datos.id);
       return { trackerId: datos.id };
+    case 'analizar': {
+      // Botón «Regenerar» del panel: Gemini rehace el análisis y el resumen de reseñas de ese tracker.
+      const it = actions.find(datos.id);
+      if (!it) throw new actions.NotFound('Ese tracker no existe');
+      if (!ai.enabled()) throw new games.UserError('Falta el secreto GEMINI_API_KEY en GitHub (Settings → Secrets and variables → Actions)');
+      const r = await ai.refresh([it], { force: true });
+      if (!r.ok) throw new games.UserError(r.error);
+      return { trackerId: it.id };
+    }
     case 'probar': {
       const it = actions.find(datos.id) || db.trackers[0] || SAMPLE;
       const ch = datos.channel || 'all';

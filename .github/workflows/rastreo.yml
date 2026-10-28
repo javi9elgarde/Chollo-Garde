@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       accion:
-        description: 'ciclo, crear, editar, borrar, escanear o probar'
+        description: 'ciclo, crear, editar, borrar, escanear, analizar o probar'
         default: ciclo
         required: true
       datos:
@@ -50,6 +50,10 @@ jobs:
       ALERT_EMAIL_TO: ${{ secrets.ALERT_EMAIL_TO }}
       # Arte de los juegos: IGDB (proxy del Refugio 111, sin clave) y, de respaldo, RAWG con esta clave gratuita (opcional).
       RAWG_API_KEY: ${{ secrets.RAWG_API_KEY }}
+      # Fase 3 · IA: clave gratuita de Google AI Studio (aistudio.google.com/apikey). Sin ella, el panel usa su heurística.
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      # Opcional: fija un modelo (por ejemplo gemini-2.5-flash). Vacío = el Flash estable más reciente.
+      GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
     steps:
       - uses: actions/checkout@v4
 

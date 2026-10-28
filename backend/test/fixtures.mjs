@@ -1,5 +1,5 @@
 // Tiendas y APIs simuladas para las pruebas.
-export const up = { steamEur: 29.5, eneba: 18.2, igDown: false, telegram: [], discord: [], hits: [] };
+export const up = { steamEur: 29.5, eneba: 18.2, igDown: false, telegram: [], discord: [], hits: [], gemini: [] };
 
 export const handler = (req, res) => {
   const u = new URL(req.url, 'http://x');
@@ -13,6 +13,7 @@ export const handler = (req, res) => {
       const id = u.searchParams.get('appids');
       return json({ [id]: { success: true, data: { name: 'Hades II', header_image: 'https://cdn/h.jpg', is_free: false, genres: [{ description: 'Acción' }], metacritic: { score: 95 }, developers: ['Supergiant Games'], release_date: { date: '25 sep 2025' }, price_overview: { currency: 'EUR', initial: 2950, final: Math.round(up.steamEur * 100), discount_percent: 0 } } } });
     }
+    if (p.startsWith('/steam/appreviews/') && u.searchParams.get('num_per_page') === '40') return json({ success: 1, reviews: up.steamReviews ? Array.from({ length: 8 }, (_, i) => ({ voted_up: i % 4 !== 0, review: `Reseña ${i}: el combate es adictivo y la música de Darren Korb es increíble, aunque al principio cuesta.` })) : [] });
     if (p.startsWith('/steam/appreviews/')) return json({ success: 1, query_summary: { review_score_desc: 'Extremadamente positivas', total_positive: 96, total_negative: 4, total_reviews: 100 } });
     if (p === '/steam/saleaction/ajaxgetdeckappcompatibilityreport') return json({ results: { resolved_category: 3 } });
     if (p === '/rawg/games') return json({ results: [
@@ -21,6 +22,22 @@ export const handler = (req, res) => {
     if (p === '/igdb/search') return up.igdbDown ? json({ error: 'caído' }, 500) : json(/hades/i.test(u.searchParams.get('q')) ? [
       { id: 1, name: 'Hades II Original Soundtrack', image: 'https://images.igdb.com/igdb/image/upload/t_screenshot_big/ost.jpg' },
       { id: 2, name: 'Hades II', released: '2025-09-25', developer: 'Supergiant Games', genres: ['Roguelike', 'Action'], image: 'https://images.igdb.com/igdb/image/upload/t_screenshot_big/h2.jpg', cover: 'https://images.igdb.com/igdb/image/upload/t_cover_big/c2.jpg' }] : []);
+    // Gemini: responde según el prompt de sistema (Deal Index, reseñas o chat).
+    if (p === '/gemini/models') return json({ models: [
+      { name: 'models/gemini-2.5-flash', supportedGenerationMethods: ['generateContent'] },
+      { name: 'models/gemini-9.0-flash-preview', supportedGenerationMethods: ['generateContent'] },
+      { name: 'models/gemini-3.0-flash', supportedGenerationMethods: ['generateContent'] },
+      { name: 'models/gemini-3.0-pro', supportedGenerationMethods: ['generateContent'] }] });
+    if (p.startsWith('/gemini/models/')) {
+      const b = JSON.parse(body || '{}'), sys = b.systemInstruction?.parts?.[0]?.text || '';
+      up.gemini.push({ model: p.split('/')[3].split(':')[0], sys, body: b, key: req.headers['x-goog-api-key'] });
+      if (up.geminiQuota) return json({ error: { code: 429, message: 'Resource exhausted', details: [{ retryDelay: '120s' }] } }, 429);
+      const out = text => json({ candidates: [{ content: { parts: [{ text: 'pensando…', thought: true }, { text }] }, ...(b.tools && { groundingMetadata: { groundingChunks: [{ web: { title: 'vandal.net' } }, { web: { title: 'ign.com' } }] } }) }] });
+      if (/auditor de precios/.test(sys)) return out(JSON.stringify({ score: 140, inflado: false, descuento_real: 0.38, recomendacion: 'COMPRAR_AHORA', confianza: 0.81, motivos: ['Está a 18,20 €, el mínimo registrado.', 'Un 38 % por debajo del precio oficial (29,50 €).'], proxima_bajada: null }));
+      if (/Busca en Google/.test(sys)) return out('Aquí tienes:\n```json\n' + JSON.stringify({ pros: ['Combate profundo'], contras: ['Empieza lento'], nota: 4.6 }) + '\n```');
+      if (/reseñas que recibes/.test(sys)) return out(JSON.stringify({ pros: ['Combate adictivo', 'Gran música', 'Muy rejugable'], contras: ['Cuesta al principio', 'x', 'y'], nota: 4.7 }));
+      return out('**Hades II** está a 18,20 € en Eneba.');
+    }
     if (p.startsWith('/tg/bot')) { up.telegram.push({ method: p.split('/').pop(), body: JSON.parse(body) }); return json({ ok: true }); }
     if (p === '/discord') { up.discord.push(JSON.parse(body)); res.writeHead(204); return res.end(); }
     json({ error: 'no mock ' + p }, 404);
