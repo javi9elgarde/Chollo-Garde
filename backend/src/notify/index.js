@@ -24,7 +24,7 @@ export function compose(it) {
   const disc = ref ? Math.round((1 - it.current / ref) * 100) : null;
   const atl = isAtl(it);
   return {
-    title: it.title,
+    title: it.cat === 'flight' ? `✈️ ${it.title} · ${flightDates(it)}` : it.title,
     price: eur(it.current),
     store: best.name || '—',
     discount: disc !== null && disc > 0 ? `−${disc} % vs precio oficial (${eur(ref)})` : null,
@@ -32,8 +32,18 @@ export function compose(it) {
     atl,
     url: best.url || it.url,
     image: it.image || null,
-    note: best.type === 'key' ? 'Es una key digital de revendedor: comprueba la región y la plataforma antes de comprar.' : best.type === 'deal' ? `Oferta publicada en Chollometro (${best.match || 'ver detalles'}). Comprueba que sigue activa.` : null
+    note: it.cat === 'flight' ? flightNote(it) : best.type === 'key' ? 'Es una key digital de revendedor: comprueba la región y la plataforma antes de comprar.' : best.type === 'deal' ? `Oferta publicada en Chollometro (${best.match || 'ver detalles'}). Comprueba que sigue activa.` : null
   };
+}
+
+const day = iso => (iso ? new Date(iso + 'T12:00:00Z').toLocaleDateString('es-ES', { day: 'numeric', month: 'short', timeZone: 'UTC' }) : '');
+const flightDates = it => { const d = it.bestDepart || it.depart, r = it.bestRet || it.ret; return r ? `${day(d)} – ${day(r)}` : `${day(d)} (solo ida)`; };
+function flightNote(it) {
+  const parts = [`${it.airline || 'Vuelo'} · ${it.stops ? `${it.stops} escala${it.stops > 1 ? 's' : ''}${it.via ? ` en ${it.via}` : ''}` : 'directo'}`];
+  if (it.bestDepart && it.bestDepart !== it.depart) parts.push(`Es ${it.bestDepart > it.depart ? 'después' : 'antes'} de tu fecha (tienes fechas flexibles).`);
+  if ((it.adults || 1) > 1) parts.push(`Precio total para ${it.adults} pasajeros.`);
+  if (it.baggage?.lowcost) parts.push('Tarifa básica de low cost: la maleta de mano grande y la facturada se pagan aparte.');
+  return parts.join(' ');
 }
 
 // ---------- canales ----------

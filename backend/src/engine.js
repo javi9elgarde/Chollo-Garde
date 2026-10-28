@@ -1,6 +1,7 @@
 // Motor de rastreo: cada X minutos revisa todos los trackers, guarda el histórico,
 // avisa al dashboard en tiempo real y dispara las alertas al llegar al objetivo.
 import * as games from './games.js';
+import * as vuelos from './vuelos.js';
 import { get, save } from './store.js';
 import { log, emit } from './bus.js';
 import { dispatch, isAtl } from './notify/index.js';
@@ -8,7 +9,7 @@ import * as ai from './ai.js';
 
 const EUR = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' });
 const sleep = ms => new Promise(r => setTimeout(r, ms));
-const REFRESHERS = { game: games.refresh };
+const REFRESHERS = { game: games.refresh, flight: vuelos.refresh };
 
 export const engine = {
   timer: null, nextAt: 0, busy: false, pending: new Set(),
@@ -49,7 +50,7 @@ export const engine = {
       return;
     }
     const db = get();
-    const list = db.trackers.filter(t => (!onlyId || t.id === onlyId) && REFRESHERS[t.cat] && t.live);
+    const list = db.trackers.filter(t => (!onlyId || t.id === onlyId) && REFRESHERS[t.cat] && t.live && !t.expired);
     if (!list.length) { if (!onlyId) log('info', 'cron', 'no hay trackers con fuente real todavía'); return; }
     this.busy = true;
     db.stats.cycles++;
