@@ -1,6 +1,136 @@
 {
  "trackers": [
   {
+   "id": "g-e770c9a3",
+   "cat": "game",
+   "live": true,
+   "kind": "multi",
+   "source": "tiendas",
+   "title": "Silver Pines",
+   "query": "Silver Pines",
+   "platform": "PC",
+   "format": "Cualquiera",
+   "shops": [
+    "Instant Gaming",
+    "Eneba",
+    "Amazon",
+    "MediaMarkt",
+    "Fnac",
+    "El Corte Inglés",
+    "GAME",
+    "Impact"
+   ],
+   "links": [],
+   "steamAppID": "2333000",
+   "image": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/2333000/2ce661be5b6e60b8fcc92ecdf3f9dc2dca2a9037/header.jpg?t=1792490698",
+   "url": "https://store.steampowered.com/app/2333000/",
+   "deck": "Verificado",
+   "msrp": 24.99,
+   "target": 15,
+   "alert": true,
+   "alerted": false,
+   "createdAt": 1793227153732,
+   "lastCheck": 1793227153732,
+   "lastError": null,
+   "stores": [
+    {
+     "name": "Eneba",
+     "type": "key",
+     "url": "https://www.eneba.com/es/steam-silver-pines-steam-key-pc-global?currency=EUR",
+     "price": 17.48,
+     "out": false,
+     "pre": false,
+     "match": "Silver Pines Steam Key (PC) GLOBAL",
+     "doubt": true,
+     "options": [
+      {
+       "url": "https://www.eneba.com/es/steam-silver-pines-steam-key-pc-global?currency=EUR",
+       "title": "steam silver pines steam key pc global"
+      },
+      {
+       "url": "https://www.eneba.com/es/steam-silver-pines-steam-key-pc-europe?currency=EUR",
+       "title": "steam silver pines steam key pc europe"
+      }
+     ],
+     "auto": true
+    },
+    {
+     "name": "Steam",
+     "type": "official",
+     "price": 24.99,
+     "initial": 24.99,
+     "url": "https://store.steampowered.com/app/2333000/"
+    },
+    {
+     "name": "Instant Gaming",
+     "type": "key",
+     "auto": true,
+     "error": "no encuentro «Silver Pines» para PC"
+    },
+    {
+     "name": "Amazon",
+     "type": "retail",
+     "auto": true,
+     "error": "la tienda ha pedido un captcha; se reintentará en el próximo ciclo"
+    },
+    {
+     "name": "MediaMarkt",
+     "type": "retail",
+     "auto": true,
+     "error": "no encuentro «Silver Pines» para PC entre 12 resultados"
+    },
+    {
+     "name": "Fnac",
+     "type": "retail",
+     "auto": true,
+     "error": "la tienda ha pedido un captcha; se reintentará en el próximo ciclo"
+    },
+    {
+     "name": "El Corte Inglés",
+     "type": "retail",
+     "auto": true,
+     "error": "el buscador de la tienda no ha devuelto productos"
+    },
+    {
+     "name": "GAME",
+     "type": "retail",
+     "auto": true,
+     "error": "el buscador de la tienda no ha devuelto productos"
+    },
+    {
+     "name": "Impact",
+     "type": "retail",
+     "auto": true,
+     "error": "no encuentro «Silver Pines» para PC entre 5 resultados"
+    }
+   ],
+   "current": 24.99,
+   "history": [
+    {
+     "t": 1793227153732,
+     "p": 24.99
+    }
+   ],
+   "coupons": [],
+   "specs": {
+    "Género": "Acción, Aventura, Indie",
+    "Desarrolladora": "Wych Elm",
+    "Lanzamiento": "8 OCT 2026",
+    "Metacritic": 85,
+    "Desarrollador": "Wych Elm"
+   },
+   "reviews": {
+    "rating": null,
+    "n": 0,
+    "src": "sin reseñas todavía",
+    "pros": [],
+    "cons": []
+   },
+   "artTried": 1793227153732,
+   "art": "https://images.igdb.com/igdb/image/upload/t_1080p/ar6oyi.jpg",
+   "igdb": 313597
+  },
+  {
    "id": "g-e0948d2d",
    "cat": "game",
    "live": true,
@@ -525,75 +655,9 @@
  },
  "stats": {
   "cycles": 22,
-  "requests": 829
+  "requests": 851
  },
  "logs": [
-  {
-   "t": 1793205490513,
-   "level": "info",
-   "src": "Chollometro",
-   "msg": "EA Sports FC 27 (PS5): 58.6 € · PS5 EA SPORTS FC 27 (MediaMarkt · código descuento app · 310°)"
-  },
-  {
-   "t": 1793205490513,
-   "level": "warn",
-   "src": "PS Store",
-   "msg": "EA Sports FC 27 (PS5): la tienda ha pedido un captcha; se reintentará en el próximo ciclo"
-  },
-  {
-   "t": 1793205490513,
-   "level": "info",
-   "src": "parser",
-   "msg": "EA Sports FC 27: sin cambios (58,60 € en Chollometro) · 29.78 s"
-  },
-  {
-   "t": 1793206057626,
-   "level": "info",
-   "src": "cron",
-   "msg": "ciclo #14 · 3 trackers"
-  },
-  {
-   "t": 1793206086819,
-   "level": "info",
-   "src": "Amazon",
-   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): 40.99 € · Metal Gear Solid: Master Collection Volume 2 – Day One Edition - PS5 · leído desde tu PC"
-  },
-  {
-   "t": 1793206086819,
-   "level": "info",
-   "src": "Fnac",
-   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): 46.9 € · Metal Gear Solid: Master Collection Vol. 2 Day One Edition PS5 · leído desde tu PC"
-  },
-  {
-   "t": 1793206086819,
-   "level": "info",
-   "src": "El Corte Inglés",
-   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): 49.9 € · Metal Gear Solid: Master Collection Vol.2 Day 1 Edition PlayStation 5 · leído desde tu PC"
-  },
-  {
-   "t": 1793206086819,
-   "level": "info",
-   "src": "PS Store",
-   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): 49.99 € · METAL GEAR SOLID: MASTER COLLECTION Vol.2 · leído desde tu PC"
-  },
-  {
-   "t": 1793206086819,
-   "level": "warn",
-   "src": "Instant Gaming",
-   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): no encuentro «Metal Gear Solid Master Collection Vol. 2» para PS5"
-  },
-  {
-   "t": 1793206086819,
-   "level": "warn",
-   "src": "Eneba",
-   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): la ficha no tiene precio ahora mismo (sin vendedores o sin stock)"
-  },
-  {
-   "t": 1793206086819,
-   "level": "info",
-   "src": "MediaMarkt",
-   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): 44.99 € · PS5 Metal Gear Solid: Master Collection Volume 2 | MediaMarkt"
-  },
   {
    "t": 1793206086819,
    "level": "info",
@@ -2327,9 +2391,84 @@
    "level": "warn",
    "src": "gemini",
    "msg": "Metal Gear Solid Master Collection Vol. 2: reseñas · Cuota de Gemini agotada por ahora; se reintenta en el siguiente ciclo"
+  },
+  {
+   "t": 1793227153248,
+   "level": "info",
+   "src": "Steam",
+   "msg": "Silver Pines (PC): 24.99 € · https://store.steampowered.com/app/2333000/"
+  },
+  {
+   "t": 1793227153258,
+   "level": "warn",
+   "src": "Instant Gaming",
+   "msg": "Silver Pines (PC): no encuentro «Silver Pines» para PC"
+  },
+  {
+   "t": 1793227153258,
+   "level": "info",
+   "src": "Eneba",
+   "msg": "Silver Pines (PC): 17.48 € · Silver Pines Steam Key (PC) GLOBAL · dudoso, 2 opciones para elegir"
+  },
+  {
+   "t": 1793227153258,
+   "level": "warn",
+   "src": "Amazon",
+   "msg": "Silver Pines (PC): la tienda ha pedido un captcha; se reintentará en el próximo ciclo"
+  },
+  {
+   "t": 1793227153258,
+   "level": "warn",
+   "src": "MediaMarkt",
+   "msg": "Silver Pines (PC): no encuentro «Silver Pines» para PC entre 12 resultados"
+  },
+  {
+   "t": 1793227153258,
+   "level": "warn",
+   "src": "Fnac",
+   "msg": "Silver Pines (PC): la tienda ha pedido un captcha; se reintentará en el próximo ciclo"
+  },
+  {
+   "t": 1793227153258,
+   "level": "warn",
+   "src": "El Corte Inglés",
+   "msg": "Silver Pines (PC): el buscador de la tienda no ha devuelto productos"
+  },
+  {
+   "t": 1793227153258,
+   "level": "warn",
+   "src": "GAME",
+   "msg": "Silver Pines (PC): el buscador de la tienda no ha devuelto productos"
+  },
+  {
+   "t": 1793227153258,
+   "level": "warn",
+   "src": "Impact",
+   "msg": "Silver Pines (PC): no encuentro «Silver Pines» para PC entre 5 resultados"
+  },
+  {
+   "t": 1793227154470,
+   "level": "ok",
+   "src": "api",
+   "msg": "tracker creado: «Silver Pines» · objetivo 15 €"
+  },
+  {
+   "t": 1793227337601,
+   "level": "warn",
+   "src": "gemini",
+   "msg": "Silver Pines: Deal Index · Sin respuesta de Gemini: The operation was aborted due to timeout"
   }
  ],
  "acciones": [
+  {
+   "id": "rmvsp44z08kus",
+   "accion": "crear",
+   "ok": true,
+   "error": null,
+   "at": 1793227337601,
+   "secs": 229,
+   "trackerId": "g-e770c9a3"
+  },
   {
    "id": "rmvscxexm98qc",
    "accion": "editar",
@@ -2444,10 +2583,10 @@
    "covers": "Keys · búsqueda automática",
    "host": "www.instant-gaming.com",
    "ok": 100,
-   "lat": 21091,
-   "last": 1793226776791,
+   "lat": 7531,
+   "last": 1793227116769,
    "status": "ok",
-   "runs": 6
+   "runs": 1
   },
   {
    "name": "Eneba",
@@ -2455,21 +2594,21 @@
    "covers": "Keys · búsqueda automática",
    "host": "www.eneba.com",
    "ok": 100,
-   "lat": 19406,
-   "last": 1793226776034,
+   "lat": 9385,
+   "last": 1793227128965,
    "status": "ok",
-   "runs": 5
+   "runs": 2
   },
   {
    "name": "Amazon",
    "kind": "navegador",
    "covers": "Búsqueda automática",
    "host": "www.amazon.es",
-   "ok": 86,
-   "lat": 20747,
-   "last": 1793226768617,
-   "status": "ok",
-   "runs": 7
+   "ok": 0,
+   "lat": 9063,
+   "last": 1793227135789,
+   "status": "warn",
+   "runs": 2
   },
   {
    "name": "MediaMarkt",
@@ -2477,21 +2616,21 @@
    "covers": "Búsqueda automática",
    "host": "www.mediamarkt.es",
    "ok": 100,
-   "lat": 26969,
-   "last": 1793226773274,
+   "lat": 13349,
+   "last": 1793227137283,
    "status": "ok",
-   "runs": 5
+   "runs": 2
   },
   {
    "name": "Fnac",
    "kind": "navegador",
    "covers": "Búsqueda automática",
    "host": "www.fnac.es",
-   "ok": 67,
-   "lat": 23819,
-   "last": 1793226774985,
-   "status": "ok",
-   "runs": 6
+   "ok": 0,
+   "lat": 15106,
+   "last": 1793227142942,
+   "status": "warn",
+   "runs": 2
   },
   {
    "name": "El Corte Inglés",
@@ -2499,10 +2638,10 @@
    "covers": "Búsqueda automática",
    "host": "www.elcorteingles.es",
    "ok": 100,
-   "lat": 41439,
-   "last": 1793226778149,
+   "lat": 24446,
+   "last": 1793227153245,
    "status": "ok",
-   "runs": 3
+   "runs": 2
   },
   {
    "name": "GAME",
@@ -2510,10 +2649,10 @@
    "covers": "Búsqueda automática",
    "host": "www.game.es",
    "ok": 100,
-   "lat": 1112,
-   "last": 1793226756917,
+   "lat": 16302,
+   "last": 1793227137998,
    "status": "ok",
-   "runs": 3
+   "runs": 2
   },
   {
    "name": "Impact",
@@ -2521,21 +2660,10 @@
    "covers": "Búsqueda automática",
    "host": "impactgame.es",
    "ok": 100,
-   "lat": 2686,
-   "last": 1793226758345,
+   "lat": 3093,
+   "last": 1793227115120,
    "status": "ok",
-   "runs": 4
-  },
-  {
-   "name": "Google Flights",
-   "kind": "búsqueda",
-   "covers": "Vuelos · todas las aerolíneas",
-   "host": "www.google.com",
-   "ok": 100,
-   "lat": 1063,
-   "last": 1793227027842,
-   "status": "ok",
-   "runs": 1
+   "runs": 2
   },
   {
    "name": "Chollometro",
@@ -2543,21 +2671,21 @@
    "covers": "Ofertas de la comunidad",
    "host": "www.chollometro.com",
    "ok": 100,
-   "lat": 1009,
-   "last": 1793226756626,
+   "lat": 682,
+   "last": 1793227109919,
    "status": "ok",
-   "runs": 5
+   "runs": 1
   },
   {
    "name": "Steam España",
    "kind": "API web",
    "covers": "Precio oficial de PC, reseñas, Steam Deck",
    "host": "store.steampowered.com",
-   "ok": null,
-   "lat": null,
-   "last": null,
-   "status": "idle",
-   "runs": 0
+   "ok": 100,
+   "lat": 258,
+   "last": 1793227153702,
+   "status": "ok",
+   "runs": 4
   }
  ],
  "engine": {
@@ -2565,9 +2693,9 @@
   "busy": false,
   "intervalMin": 60,
   "cycles": 22,
-  "requests": 829,
-  "lastRun": 1793227027843,
-  "lastAction": "probar-vuelo"
+  "requests": 851,
+  "lastRun": 1793227337601,
+  "lastAction": "crear"
  },
  "version": "github"
 }
