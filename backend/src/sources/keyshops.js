@@ -16,6 +16,8 @@ export const PLATFORMS = {
 };
 // Palabras que no cuentan como «otra edición» al comparar títulos.
 const NEUTRAL = new Set('pc steam key keys global europe eu es spain cd account cuenta juego juegos videojuego videojuegos game ps5 ps4 psn playstation playstation5 playstation4 5 4 2 xbox series one x s nintendo switch switch2 eshop digital code codigo comprar store windows 10 11 live the edition edicion standard estandar launcher ea app epic games rockstar ubisoft connect battle net gog fisico fisica formato version para de del la el y con en esp espanol castellano pegi nuevo'.split(' '));
+// Ediciones caras: solo valen si se piden en el nombre (si no, se busca la estándar).
+const PREMIUM = /\b(ultimate|deluxe|gold|premium|collector|collectors|coleccionista|legendary|champions|vault)\b/;
 const UNWANTED = /\b(dlc|soundtrack|ost|season pass|pase de temporada|expansion|upgrade|mejora|pack|skin|skins|coins|monedas|points|puntos|vbucks|v bucks|credits|bundle|artbook|gift card|tarjeta)\b/;
 // En tiendas generalistas, además: segunda mano, accesorios y merchandising.
 const UNWANTED_RETAIL = /\b(segunda mano|usado|reacondicionado|funda|mando|amiibo|guia|figura|camiseta|taza|poster|llavero|peluche|lampara|alfombrilla|cargador|auriculares|consola|tarjeta|recarga)\b/;
@@ -34,6 +36,7 @@ export function score(candidate, title, platform, { retail = false } = {}) {
   const qs = ' ' + q.join(' ') + ' ';
   if (platform === 'Switch' && /\bswitch ?2\b/.test(cs) && !/\bswitch ?2\b/.test(qs)) return null;
   if (UNWANTED.test(cs) && !UNWANTED.test(qs)) return null;
+  if (PREMIUM.test(cs) && !PREMIUM.test(qs)) return null;
   if (retail && UNWANTED_RETAIL.test(cs) && !UNWANTED_RETAIL.test(qs)) return null;
   if (OTHER_REGION.test(cs.replace(/\b(eu|europe|global)\b/g, ''))) return null;
   const extra = c.filter(t => !q.includes(t) && !glued.has(t) && !NEUTRAL.has(t)).length;
@@ -94,13 +97,14 @@ export function enebaCandidates(html) {
     const slug = m[1];
     if (seen.has(slug) || /^(store|collection|blog|support|promo|top-up|gift-cards?|giftcards?)\b/.test(slug)) continue;
     seen.add(slug);
-    out.push({ url: `https://www.eneba.com/es/${slug}`, label: slug, title: slug.replace(/-/g, ' ') });
+    // Sin «currency» Eneba enseña la moneda del país desde el que se conecta (dólares desde GitHub).
+    out.push({ url: `https://www.eneba.com/es/${slug}?currency=EUR`, label: slug, title: slug.replace(/-/g, ' ') });
   }
   return out;
 }
 
 export async function eneba(title, platform) {
-  const search = async term => enebaCandidates((await web.page(`https://www.eneba.com/es/store/all?text=${encodeURIComponent(term)}`, { forceBrowser: true, waitFor: 'a[href*="/es/"]' })).html);
+  const search = async term => enebaCandidates((await web.page(`https://www.eneba.com/es/store/all?text=${encodeURIComponent(term)}&currency=EUR`, { forceBrowser: true, waitFor: 'a[href*="/es/"]' })).html);
   const best = await searchKeys(search, title, platform);
   const prod = await web.product(best.url);
   return { name: 'Eneba', type: 'key', url: best.url, price: prod.price, out: prod.out, match: prod.title || best.title, image: prod.image };

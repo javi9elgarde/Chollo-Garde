@@ -51,6 +51,9 @@ test('lo que se ha visto en las tiendas reales (octubre 2026)', () => {
   assert.ok(score('EA Sports FC 27 PS5', 'EA FC27', 'PS5') !== null);
   assert.equal(score('ea sports fc27 nintendo switch 2', 'EA Sports FC 27', 'PS5'), null);
   assert.equal(score('EA Sports FC 26 PS5', 'EA Sports FC 27', 'PS5'), null);
+  // Eneba solo tenía la Ultimate para PS5: no cuenta como la estándar, salvo que se pida.
+  assert.equal(score('psn ea sports fc 27 ultimate edition ps5 psn key europe', 'EA Sports FC 27', 'PS5'), null);
+  assert.ok(score('psn ea sports fc 27 ultimate edition ps5 psn key europe', 'EA Sports FC 27 Ultimate', 'PS5') !== null);
   // MediaMarkt: la oferta está en un JSON-LD que no se puede leer entero; la primera oferta con precio vale.
   const mm = '<script type="application/ld+json">{"@type":"ProductGroup",roto}</script><script>{"offers":{"@type":"Offer","priceCurrency":"EUR","price":69.99,"availability":"https://schema.org/InStock"}},{"@type":"Offer","name":"Retirada del antiguo","priceCurrency":"EUR","price":0}</script>';
   assert.equal(extract(mm, 'https://www.mediamarkt.es/es/product/_ps5-x-1.html').price, 69.99);

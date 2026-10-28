@@ -34,7 +34,7 @@ export const pages = url => {
   }
   if (url === 'https://www.instant-gaming.com/es/1234-comprar-hades-ii-pc-juego-steam/') return '<meta property="og:title" content="Comprar Hades II PC Steam"><meta itemprop="price" content="19.49">';
   if (url.startsWith('https://www.eneba.com/es/store/all')) return `<a href="/es/steam-hades-ii-pc-steam-key-united-states">US</a><a href="/es/steam-hades-ii-pc-steam-key-global">Global</a><a href="/es/store/games">Juegos</a>`;
-  if (url === 'https://www.eneba.com/es/steam-hades-ii-pc-steam-key-global') return `<title>Hades II</title>` + ld({ '@type': 'Product', name: 'Hades II (PC) Steam Key GLOBAL', offers: { '@type': 'AggregateOffer', lowPrice: up.eneba, priceCurrency: 'EUR', availability: 'https://schema.org/InStock' } });
+  if (url === 'https://www.eneba.com/es/steam-hades-ii-pc-steam-key-global?currency=EUR') return `<title>Hades II</title>` + ld({ '@type': 'Product', name: 'Hades II (PC) Steam Key GLOBAL', offers: { '@type': 'AggregateOffer', lowPrice: up.eneba, priceCurrency: 'EUR', availability: 'https://schema.org/InStock' } });
   if (url.startsWith('https://www.amazon.es/s?')) return `<div data-component-type="s-search-result"><a class="a-link-normal" href="/Funda-Hades-II/dp/B0FUNDAAAA/ref=sr_1_1"><h2><span>Funda para Hades II PC</span></h2></a></div>
     <div data-component-type="s-search-result"><a class="a-link-normal" href="/Hades-II-PS5/dp/B0PS5AAAAA/ref=sr_1_2"><h2><span>Hades II - PS5</span></h2></a></div>
     <div data-component-type="s-search-result"><a class="a-link-normal" href="/Hades-II-Pc/dp/B0PCAAAAAA/ref=sr_1_3"><h2><span>Hades II (PC)</span></h2></a><a href="/Hades-II-Pc/dp/B0PCAAAAAA/ref=sr_1_3?th=1">PC</a></div>`;

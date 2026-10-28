@@ -61,7 +61,7 @@ test('vista previa: busca sola en todas las tiendas, elige la versión correcta 
   const by = Object.fromEntries(body.stores.map(s => [s.name, s]));
   assert.equal(by['Instant Gaming'].price, 19.49, 'descarta la banda sonora');
   assert.match(by['Instant Gaming'].url, /1234-comprar-hades-ii-pc/);
-  assert.match(by.Eneba.url, /key-global$/, 'descarta la key de EE. UU.');
+  assert.match(by.Eneba.url, /key-global\?currency=EUR$/, 'descarta la key de EE. UU.');
   assert.equal(by.Amazon.url, 'https://www.amazon.es/dp/B0PCAAAAAA', 'ni la funda ni la de PS5');
   assert.equal(by.Amazon.price, 24.95);
   assert.equal(by.MediaMarkt.price, 26.99);
