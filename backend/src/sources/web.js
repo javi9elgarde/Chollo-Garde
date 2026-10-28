@@ -105,11 +105,39 @@ function amazon(html) {
   return { price: parsePrice(priceTxt), title, image, out: /no disponible|agotado/i.test(avail) };
 }
 
+// Productos con variantes de WooCommerce (p. ej. un juego con una variante por plataforma).
+export function wooVariations(html) {
+  const raw = html.match(/data-product_variations=(["'])([\s\S]*?)\1/)?.[2];
+  if (!raw || raw === 'false') return [];
+  try {
+    return JSON.parse(decode(raw.replace(/&quot;/g, '"'))).map(v => ({
+      attrs: Object.fromEntries(Object.entries(v.attributes || {}).filter(([, val]) => val)),
+      price: parsePrice(v.display_price), out: v.is_in_stock === false
+    }));
+  } catch { return []; }
+}
+
+// Último recurso: ofertas schema.org que no se han podido leer como JSON (scripts mal formados o incrustados).
+function looseOffer(html) {
+  for (const m of html.matchAll(/\{[^{}]*"@type"\s*:\s*"Offer"[^{}]*\}/g)) {
+    const price = parsePrice(m[0].match(/"price"\s*:\s*"?([\d.,]*\d)/)?.[1]);
+    const cur = m[0].match(/"priceCurrency"\s*:\s*"([A-Z]{3})"/)?.[1] || 'EUR';
+    if (price && cur === 'EUR') return { price, out: AVAIL_OUT.test(m[0].match(/"availability"\s*:\s*"([^"]*)"/)?.[1] || '') };
+  }
+  return null;
+}
+
 // Devuelve { title, image, price, out } o lanza un error explicando qué falta.
 export function extract(html, url) {
-  const host = parseUrl(url)?.hostname || '';
+  const u = parseUrl(url), host = u?.hostname || '';
   let title = null, image = null, price = null, out = false;
   if (/amazon\./.test(host)) ({ title, image, price, out } = amazon(html));
+  // Enlace a una variante concreta (…?attribute_pa_plataforma=ps5): su precio, no el «desde» del producto.
+  const want = u ? [...u.searchParams].filter(([k]) => k.startsWith('attribute_')) : [];
+  if (!price && want.length) {
+    const v = wooVariations(html).find(x => want.every(([k, val]) => x.attrs[k] === val));
+    if (v?.price) ({ price, out } = v);
+  }
   if (!price) {
     for (const p of jsonLd(html).filter(isProduct)) {
       const o = offerOf(p);
@@ -120,6 +148,7 @@ export function extract(html, url) {
       break;
     }
   }
+  if (!price) ({ price, out } = looseOffer(html) || { price: null, out });
   if (!price) {
     price = parsePrice(meta(html, 'product:price:amount') || meta(html, 'og:price:amount') || meta(html, 'price'));
     const cur = meta(html, 'product:price:currency') || meta(html, 'og:price:currency');

@@ -84,7 +84,14 @@ function selfCandidate(p, shop) {
   const isProduct = shop.product ? shop.product.test(u.pathname) : /"@type"\s*:\s*"Product"|og:type["'][^>]*content=["']product/i.test(p.html);
   if (!isProduct) return [];
   const t = text(p.html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i)?.[1] || p.html.match(/<title[^>]*>([^<]*)/i)?.[1] || '');
-  return [{ url: u.origin + u.pathname, label: `${t} ${decodeURIComponent(u.pathname).replace(/[-_/]+/g, ' ')}`, title: t.slice(0, 160) }];
+  const base = u.origin + u.pathname, slug = decodeURIComponent(u.pathname).replace(/[-_/]+/g, ' ');
+  // Una ficha con variantes (PS5, Xbox, PC…): cada variante es un candidato con su propio enlace.
+  const vars = web.wooVariations(p.html);
+  if (vars.length) return vars.map(v => {
+    const vals = Object.values(v.attrs).join(' ').replace(/[-_]+/g, ' ');
+    return { url: `${base}?${new URLSearchParams(v.attrs)}`, label: `${t} ${vals} ${slug}`, title: `${t} ${vals}`.slice(0, 160) };
+  });
+  return [{ url: base, label: `${t} ${slug}`, title: t.slice(0, 160) }];
 }
 const search = async (shop, term) => {
   const p = await web.page(shop.search(term), { forceBrowser: shop.browser, waitFor: shop.waitFor });
