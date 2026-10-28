@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CholloGarde · HUB</title>
+<style>
+  /* Vista para tener abierta en una segunda pantalla o incrustada (iframe) en otro panel.
+     Solo lee db.json de la rama «datos»: no pide token y no cambia nada. */
+  :root {
+    color-scheme: dark;
+    --ground: #09090b; --panel: #111114; --line: #27272a; --ink: #f4f4f5; --muted: #a1a1aa; --dim: #71717a;
+    --good: #34d399; --warn: #fbbf24; --cyan: #22d3ee;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--ground); color: var(--ink); }
+  body { font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; padding: 16px; }
+  body.compacto { padding: 10px; font-size: 13px; }
+  .mono { font-family: ui-monospace, "Cascadia Mono", Menlo, monospace; }
+  .tnum { font-variant-numeric: tabular-nums; }
+  header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+  header h1 { font-size: 20px; margin: 0; letter-spacing: -.01em; }
+  .compacto header h1 { font-size: 15px; }
+  .meta { color: var(--dim); font-size: 12px; }
+  .grow { flex: 1; }
+  button { font: inherit; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 5px 10px; cursor: pointer; }
+  button:hover { border-color: #52525b; }
+  .dot { width: 8px; height: 8px; border-radius: 99px; background: var(--good); display: inline-block; }
+  .dot.off { background: var(--warn); }
+  .banner { border: 1px solid rgba(52,211,153,.4); background: rgba(52,211,153,.1); border-radius: 12px; padding: 10px 14px; margin-bottom: 14px; display: none; }
+  .banner.on { display: block; }
+  .list { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr)); }
+  .compacto .list { grid-template-columns: 1fr; gap: 6px; }
+  .card { display: flex; gap: 12px; align-items: center; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; color: inherit; text-decoration: none; min-width: 0; }
+  .card:hover { border-color: #52525b; }
+  .card.chollo { border-color: rgba(52,211,153,.6); box-shadow: 0 0 0 1px rgba(52,211,153,.25) inset; }
+  .card img { width: 48px; height: 48px; object-fit: cover; border-radius: 8px; flex: none; background: #18181b; }
+  .compacto .card img { width: 34px; height: 34px; }
+  .info { min-width: 0; flex: 1; }
+  .title { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sub { color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bar { height: 4px; border-radius: 99px; background: #27272a; margin-top: 6px; overflow: hidden; }
+  .bar span { display: block; height: 100%; background: var(--cyan); }
+  .chollo .bar span { background: var(--good); }
+  .price { text-align: right; flex: none; }
+  .price b { font-size: 18px; display: block; }
+  .compacto .price b { font-size: 15px; }
+  .chollo .price b { color: var(--good); }
+  .tag { display: inline-block; font-size: 11px; padding: 0 6px; border-radius: 99px; border: 1px solid rgba(52,211,153,.5); color: var(--good); }
+  h2 { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); margin: 18px 0 8px; font-weight: 600; }
+  .alerts { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+  .alerts li { color: var(--muted); font-size: 13px; }
+  .empty { color: var(--dim); border: 1px dashed var(--line); border-radius: 12px; padding: 20px; text-align: center; }
+  .err { color: var(--warn); }
+</style>
+</head>
+<body>
+<header>
+  <span class="dot" id="dot"></span>
+  <h1>CholloGarde</h1>
+  <span class="meta" id="meta">cargando…</span>
+  <span class="grow"></span>
+  <button id="notif" hidden>Activar avisos</button>
+  <a id="panel" class="meta" href="./" target="_blank" rel="noopener">Abrir panel ↗</a>
+</header>
+<div class="banner" id="banner"></div>
+<div class="list" id="list"></div>
+<section id="alertsBox" hidden>
+  <h2>Últimos avisos</h2>
+  <ul class="alerts" id="alerts"></ul>
+</section>
+
+<script>
+/* ═════════ Parámetros ═════════
+   ?compacto=1     lista estrecha para meterla en una tarjeta o iframe
+   ?repo=dueño/rep repositorio del que leer (por defecto javi9elgarde/Chollo-Garde)
+   ?cada=2         minutos entre lecturas (mínimo 1)
+   Cuando está dentro de un iframe, cada aviso nuevo se manda también al panel
+   que la contiene con postMessage({ type: "chollogarde:alerta", ... }), porque
+   los navegadores no dejan pedir notificaciones desde un iframe de otro dominio. */
+const Q = new URLSearchParams(location.search);
+const REPO = Q.get('repo') || 'javi9elgarde/Chollo-Garde';
+const EVERY = Math.max(1, +Q.get('cada') || 2) * 60e3;
+const EMBED = window.parent !== window;
+if (Q.get('compacto') === '1') document.body.classList.add('compacto');
+
+const EUR = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' });
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const ago = (t) => { if (!t) return 'nunca'; const m = Math.round((Date.now() - t) / 60e3); return m < 1 ? 'ahora' : m < 60 ? `hace ${m} min` : m < 1440 ? `hace ${Math.round(m / 60)} h` : `hace ${Math.round(m / 1440)} d`; };
+
+/* Lo ya avisado se recuerda en este navegador para no repetir al recargar. */
+const SEEN_KEY = 'cg-hub-avisados';
+let seen = null;
+try { seen = new Set(JSON.parse(localStorage.getItem(SEEN_KEY) || 'null')); } catch {}
+const firstRun = !seen;
+seen = seen || new Set();
+let cycled = false;
+const remember = () => { try { localStorage.setItem(SEEN_KEY, JSON.stringify([...seen].slice(-300))); } catch {} };
+
+async function load() {
+  const r = await fetch(`https://raw.githubusercontent.com/${REPO}/datos/db.json?t=${Date.now()}`, { cache: 'no-store' });
+  if (!r.ok) throw new Error(`GitHub respondió ${r.status}`);
+  return r.json();
+}
+
+function bestStore(t) {
+  return (t.stores || []).filter((s) => s.price != null && !s.out && !s.error).sort((a, b) => a.price - b.price)[0];
+}
+
+const isDeal = (t) => t.current != null && t.target != null && t.current <= t.target;
+
+function card(t) {
+  const deal = isDeal(t), best = bestStore(t);
+  const ref = t.msrp || t.current || 1;
+  const pct = t.current != null && t.target ? Math.max(4, Math.min(100, ((ref - t.current) / Math.max(ref - t.target, 0.01)) * 100)) : 0;
+  const diff = t.current != null && t.target != null ? t.current - t.target : null;
+  return `<a class="card ${deal ? 'chollo' : ''}" href="${esc(best?.url || t.url || './')}" target="_blank" rel="noopener">
+    ${t.image ? `<img src="${esc(t.image)}" alt="" loading="lazy" onerror="this.remove()">` : ''}
+    <div class="info">
+      <div class="title">${esc(t.title)}${t.platform ? ` <span class="meta">· ${esc(t.platform)}</span>` : ''}</div>
+      <div class="sub">${deal ? '<span class="tag">¡Chollo!</span> ' : ''}${best ? esc(best.name) : 'sin precio todavía'} · objetivo ${t.target != null ? EUR.format(t.target) : '—'}${diff != null && !deal ? ` · faltan ${EUR.format(diff)}` : ''}</div>
+      <div class="bar"><span style="width:${deal ? 100 : pct}%"></span></div>
+    </div>
+    <div class="price"><b class="tnum">${t.current != null ? EUR.format(t.current) : '—'}</b><span class="meta">${ago(t.lastCheck)}</span></div>
+  </a>`;
+}
+
+function notify(title, body, url, icon) {
+  if (EMBED) window.parent.postMessage({ type: 'chollogarde:alerta', title, body, url, image: icon || null }, '*');
+  if ('Notification' in window && Notification.permission === 'granted') {
+    try {
+      const n = new Notification(title, { body, icon: icon || undefined, tag: title });
+      n.onclick = () => { window.focus(); if (url) window.open(url, '_blank', 'noopener'); n.close(); };
+    } catch {}
+  }
+  beep();
+}
+
+function beep() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.frequency.value = 880; g.gain.setValueAtTime(0.0001, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.15, ctx.currentTime + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.5);
+    o.connect(g).connect(ctx.destination); o.start(); o.stop(ctx.currentTime + 0.5);
+  } catch {}
+}
+
+/* Avisa una vez por cada alerta nueva del motor y por cada tracker que entra en precio objetivo.
+   La primera vez que se abre solo se apunta lo que ya había, para no soltar una ráfaga de avisos. */
+function checkNew(db) {
+  const fresh = [];
+  for (const a of db.alerts || []) {
+    const key = 'a:' + a.id;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const t = (db.trackers || []).find((x) => x.id === a.itemId);
+    if (t) seen.add(`t:${t.id}:${t.current}`);
+    fresh.push({ title: `¡Chollo! ${a.title}`, body: `${EUR.format(a.price)} (objetivo ${EUR.format(a.target)})${a.atl ? ' · mínimo histórico' : ''}`, url: (t && (bestStore(t)?.url || t.url)) || null, image: t?.image });
+  }
+  for (const t of db.trackers || []) {
+    if (!isDeal(t)) continue;
+    const key = `t:${t.id}:${t.current}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const best = bestStore(t);
+    fresh.push({ title: `¡Chollo! ${t.title}`, body: `${EUR.format(t.current)}${best ? ' en ' + best.name : ''} (objetivo ${EUR.format(t.target)})`, url: best?.url || t.url, image: t.image });
+  }
+  remember();
+  return firstRun && !cycled ? [] : fresh;
+}
+
+function paint(db) {
+  const trackers = (db.trackers || []).slice().sort((a, b) => (isDeal(b) - isDeal(a)) || ((a.current - a.target) / (a.target || 1)) - ((b.current - b.target) / (b.target || 1)));
+  const deals = trackers.filter(isDeal);
+  $('list').innerHTML = trackers.length ? trackers.map(card).join('') : '<p class="empty">Aún no sigues ningún producto. Créalos desde el panel de CholloGarde.</p>';
+  $('banner').classList.toggle('on', deals.length > 0);
+  $('banner').innerHTML = deals.length ? `<b>${deals.length === 1 ? 'Hay 1 producto' : `Hay ${deals.length} productos`} en tu precio objetivo.</b> ${deals.map((t) => esc(t.title)).join(' · ')}` : '';
+  const alerts = (db.alerts || []).slice(0, 5);
+  $('alertsBox').hidden = !alerts.length || document.body.classList.contains('compacto');
+  $('alerts').innerHTML = alerts.map((a) => `<li><span class="mono tnum">${new Date(a.t).toLocaleString('es-ES', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span> · ${esc(a.title)} a ${EUR.format(a.price)}</li>`).join('');
+  const last = db.engine?.lastRun;
+  $('meta').textContent = `${trackers.length} ${trackers.length === 1 ? 'producto' : 'productos'} · revisado ${ago(last)}`;
+  $('dot').classList.toggle('off', !last || Date.now() - last > 3 * 60 * 60e3);
+  if (EMBED) window.parent.postMessage({ type: 'chollogarde:estado', productos: trackers.length, chollos: deals.length, revisado: last || null }, '*');
+}
+
+async function cycle() {
+  try {
+    const db = await load();
+    const fresh = checkNew(db);
+    cycled = true;
+    paint(db);
+    fresh.forEach((n) => notify(n.title, n.body, n.url, n.image));
+  } catch (e) {
+    $('meta').innerHTML = `<span class="err">No se pudieron leer los datos (${esc(e.message)}). Reintento en unos minutos.</span>`;
+    $('dot').classList.add('off');
+  }
+}
+
+/* Botón de avisos: solo tiene sentido abierta directamente (no dentro de un iframe). */
+if (!EMBED && 'Notification' in window && Notification.permission === 'default') {
+  $('notif').hidden = false;
+  $('notif').onclick = () => Notification.requestPermission().then(() => { $('notif').hidden = true; });
+}
+if (EMBED) $('panel').href = new URL('./', location.href).href;
+
+cycle();
+setInterval(cycle, EVERY);
+</script>
+</body>
+</html>

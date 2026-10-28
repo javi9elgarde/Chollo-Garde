@@ -38,6 +38,15 @@ Pasos (solo una vez):
 
 Cómo funciona: `.github/workflows/rastreo.yml` ejecuta `backend/src/cli.js`, que guarda los trackers, el histórico y las alertas en `db.json`, en la rama `datos`. El panel lee ese fichero y, cuando creas o cambias algo, lanza el mismo workflow con tu token. Cada petición tarda de 2 a 5 minutos, y los precios se revisan cada hora (GitHub a veces lo retrasa unos minutos).
 
+### Vista para el HUB o una segunda pantalla
+
+`https://javi9elgarde.github.io/Chollo-Garde/hub.html` es una vista compacta, solo de lectura, para dejar abierta en un monitor o meterla en otro panel:
+
+- Muestra los productos ordenados por lo cerca que están del precio objetivo y destaca los que ya lo han alcanzado.
+- Se actualiza sola cada 2 minutos y avisa con una notificación del navegador y un pitido cuando un producto llega al precio objetivo (pulsa «Activar avisos» la primera vez).
+- `?compacto=1` la deja en una columna estrecha, para una tarjeta. `?cada=5` cambia los minutos entre lecturas.
+- Dentro de un `<iframe>` no puede pedir notificaciones (el navegador no lo deja), así que manda cada aviso al panel que la contiene con `postMessage({ type: "chollogarde:alerta", title, body, url, image })` y el resumen con `{ type: "chollogarde:estado", productos, chollos, revisado }`.
+
 ## Instalación en Windows (alternativa: en tu PC)
 
 1. Instala **Node.js LTS** desde <https://nodejs.org/es> (siguiente, siguiente…).
