@@ -9,6 +9,8 @@ import * as keyshops from './sources/keyshops.js';
 import * as web from './sources/web.js';
 import * as retail from './sources/retail.js';
 import * as chollometro from './sources/chollometro.js';
+import * as rawg from './sources/rawg.js';
+import * as igdb from './sources/igdb.js';
 import * as pc from './pcdata.js';
 import { shopFor, parseUrl } from './sources/shops.js';
 import { log } from './bus.js';
@@ -191,8 +193,29 @@ export function migrate(it) {
 
 export const specOf = it => ({ title: it.query || it.title, platform: PLATFORMS.includes(it.platform) ? it.platform : 'PC', shops: it.shops || [...SHOP_NAMES], links: it.links || [], steamAppID: it.steamAppID || null });
 
+// Arte apaisado y datos del juego: primero IGDB (como el Refugio 111), si no lo encuentra RAWG.
+// Si ninguno lo encuentra, se vuelve a probar al día siguiente.
+export async function addArt(it) {
+  if (it.art || (it.artTried && Date.now() - it.artTried < 864e5)) return;
+  const srcs = [['IGDB', igdb], ['RAWG', rawg]].filter(([, s]) => s.enabled());
+  if (!srcs.length) return;
+  it.artTried = Date.now();
+  for (const [name, src] of srcs) {
+    try {
+      const r = await src.info(it.query || it.title);
+      if (!r) continue;
+      it.art = r.art;
+      if (r.igdb) it.igdb = r.igdb;
+      if (r.rawg) it.rawg = r.rawg;
+      it.specs = { ...(r.genres && { Género: r.genres }), ...(r.developer && { Desarrolladora: r.developer }), ...(r.released && { Lanzamiento: r.released }), ...(r.metacritic && { Metacritic: r.metacritic }), ...it.specs };
+      return;
+    } catch (e) { log('warn', name, `${it.title}: ${e.message}`); }
+  }
+}
+
 // Un ciclo de rastreo para un tracker: actualiza tiendas, precio actual e histórico diario.
 export async function refresh(it) {
+  await addArt(it);
   migrate(it);
   const q = await quote(specOf(it), it.stores || [], { trackerId: it.id });
   const old = it.current, now = Date.now();

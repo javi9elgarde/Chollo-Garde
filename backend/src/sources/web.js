@@ -81,8 +81,10 @@ function offerOf(p) {
   const offers = [].concat(p.offers || [], p.hasVariant ? [].concat(p.hasVariant).flatMap(v => [].concat(v.offers || [])) : []).flatMap(o => o && o['@type'] === 'AggregateOffer' && o.offers ? [o, ...[].concat(o.offers)] : [o]).filter(Boolean);
   let best = null;
   for (const o of offers) {
-    const price = parsePrice(o.lowPrice ?? o.price ?? o.priceSpecification?.price);
-    const cur = o.priceCurrency || o.priceSpecification?.priceCurrency || 'EUR';
+    // WooCommerce publica el precio en priceSpecification, a veces como lista.
+    const spec = [].concat(o.priceSpecification || [])[0];
+    const price = parsePrice(o.lowPrice ?? o.price ?? spec?.price);
+    const cur = o.priceCurrency || spec?.priceCurrency || 'EUR';
     if (!price || (cur && cur !== 'EUR')) continue;
     const out = AVAIL_OUT.test(String(o.availability || ''));
     if (!best || (best.out && !out) || (best.out === out && price < best.price)) best = { price, out, url: o.url || null };

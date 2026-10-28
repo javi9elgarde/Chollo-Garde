@@ -54,6 +54,14 @@ Pasos (solo una vez, en el PC con Windows):
 
 Si el PC está apagado mucho tiempo, GitHub deja una sola ejecución esperando; si pasa más de 24 h sin poder ejecutarla, la cancela y te avisa por correo. No es un error de CholloGarde.
 
+### Arte de los juegos (IGDB y RAWG, como el Refugio 111)
+
+Las tarjetas de juegos usan el arte apaisado de IGDB, la fuente por defecto del Refugio 111, a través de su mismo proxy de Cloudflare: no hace falta ninguna clave. Si IGDB no encuentra un juego, se prueba con RAWG. RAWG es opcional; para activarlo añade la clave en *Settings → Secrets and variables → Actions → New repository secret* con el nombre `RAWG_API_KEY`. Vale la misma clave que usa el Refugio, o una nueva gratis en <https://rawg.io/apidocs>. Sin la clave se sigue viendo la carátula de la tienda.
+
+### Reloj: un ciclo cada hora de verdad
+
+El `schedule` de GitHub es aproximado y a veces se salta horas enteras. El workflow «Reloj (ciclo cada hora)» se queda en marcha casi 6 horas lanzando «Rastreo de precios» cada hora y, al acabar, se vuelve a lanzar solo. Para arrancarlo la primera vez: *Actions → Reloj → Run workflow*. Para pararlo: *Disable workflow*.
+
 ### Chollometro
 
 Además de las tiendas, cada juego se busca en Chollometro. Si hay una oferta activa de ese juego y plataforma (de los últimos 45 días, sin caducar), aparece como una tienda más, con la tienda de la oferta, el código de descuento si lo lleva y los grados. Cuenta para el precio actual y para las alertas: si alguien publica el juego por debajo de tu objetivo, te avisa.

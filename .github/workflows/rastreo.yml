@@ -48,6 +48,8 @@ jobs:
       SMTP_USER: ${{ secrets.SMTP_USER }}
       SMTP_PASS: ${{ secrets.SMTP_PASS }}
       ALERT_EMAIL_TO: ${{ secrets.ALERT_EMAIL_TO }}
+      # Arte de los juegos: IGDB (proxy del Refugio 111, sin clave) y, de respaldo, RAWG con esta clave gratuita (opcional).
+      RAWG_API_KEY: ${{ secrets.RAWG_API_KEY }}
     steps:
       - uses: actions/checkout@v4
 
