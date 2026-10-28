@@ -26,9 +26,9 @@
    "url": "https://www.amazon.es/dp/B0GNKRMWMS",
    "deck": null,
    "msrp": 49.99,
-   "target": 41,
+   "target": 30,
    "alert": true,
-   "alerted": true,
+   "alerted": false,
    "createdAt": 1793201960375,
    "lastCheck": 1793206086819,
    "lastError": "Instant Gaming: no encuentro «Metal Gear Solid Master Collection Vol. 2» para PS5 · Eneba: la ficha no tiene precio ahora mismo (sin vendedores o sin stock) · Impact: no encuentro «Metal Gear Solid Master Collection Vol. 2» para PS5 entre 1 resultados",
@@ -2278,6 +2278,15 @@
  ],
  "acciones": [
   {
+   "id": "rmvscxexm98qc",
+   "accion": "editar",
+   "ok": true,
+   "error": null,
+   "at": 1793206643673,
+   "secs": 0,
+   "trackerId": "g-e0948d2d"
+  },
+  {
    "id": "rmvsbmpw8whhr",
    "accion": "escanear",
    "ok": true,
@@ -2493,8 +2502,8 @@
   "intervalMin": 60,
   "cycles": 14,
   "requests": 460,
-  "lastRun": 1793206143819,
-  "lastAction": "ciclo"
+  "lastRun": 1793206643673,
+  "lastAction": "editar"
  },
  "version": "github"
 }
