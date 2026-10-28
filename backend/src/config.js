@@ -27,6 +27,8 @@ export const config = {
   // 127.0.0.1 = solo accesible desde este PC. 0.0.0.0 lo abre a la red (pon DASHBOARD_PASSWORD).
   host: env.HOST || '127.0.0.1',
   dataDir: path.resolve(ROOT, env.DATA_DIR || 'data'),
+  // En GitHub los datos se guardan en un repositorio público: las claves solo vienen de los secretos.
+  publicData: env.CG_PUBLIC_DATA === '1',
   frontendDir: path.resolve(ROOT, env.FRONTEND_DIR || '../frontend'),
   password: env.DASHBOARD_PASSWORD || '',
   intervalMin: num(env.CHECK_INTERVAL_MIN, 60),

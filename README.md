@@ -21,7 +21,24 @@ Rastreador de precios de vuelos, videojuegos y productos con análisis de IA y a
 - **IA:** el Deal Index y la recomendación usan una heurística local sobre el histórico real. Gemini llega en la Fase 3.
 - **Demo:** si abres `frontend/index.html` directamente (sin servidor) ves la demo con 15 trackers de ejemplo y precios simulados.
 
-## Instalación en Windows (una sola vez)
+## Usarlo en GitHub, sin el PC (recomendado)
+
+GitHub Actions revisa los precios cada hora y el panel se publica en GitHub Pages: `https://javi9elgarde.github.io/Chollo-Garde/`. Funciona con el PC apagado, desde el móvil, y cualquiera con el enlace puede mirarlo.
+
+Pasos (solo una vez):
+
+1. **Hacer público el repositorio**: *Settings → General → Danger Zone → Change visibility → Public*. Hace falta para usar GitHub Pages gratis. Las claves no se publican: van en los secretos (paso 2) y los datos se guardan sin ellas.
+2. **Poner las claves**: en *Settings → Secrets and variables → Actions → New repository secret*. Pon solo las de los canales que quieras usar:
+   - `TELEGRAM_BOT_TOKEN` y `TELEGRAM_CHAT_ID`
+   - `DISCORD_WEBHOOK_URL`
+   - `SMTP_USER`, `SMTP_PASS` y `ALERT_EMAIL_TO`; opcionalmente `SMTP_HOST` y `SMTP_PORT` (por defecto, Gmail)
+3. **Activar Pages**: *Settings → Pages → Build and deployment → Source: GitHub Actions*. Después, en la pestaña *Actions*, abre «Publicar panel» y pulsa *Run workflow*.
+4. **Primera revisión**: en *Actions*, abre «Rastreo de precios» y pulsa *Run workflow*. A partir de ahí se ejecuta solo cada hora.
+5. **Token para el panel**: la primera vez que añadas un juego desde el panel te pedirá un token de GitHub, con instrucciones. Se guarda solo en ese navegador. Para solo mirar no hace falta.
+
+Cómo funciona: `.github/workflows/rastreo.yml` ejecuta `backend/src/cli.js`, que guarda los trackers, el histórico y las alertas en `db.json`, en la rama `datos`. El panel lee ese fichero y, cuando creas o cambias algo, lanza el mismo workflow con tu token. Cada petición tarda de 2 a 5 minutos, y los precios se revisan cada hora (GitHub a veces lo retrasa unos minutos).
+
+## Instalación en Windows (alternativa: en tu PC)
 
 1. Instala **Node.js LTS** desde <https://nodejs.org/es> (siguiente, siguiente…).
 2. Descarga este repositorio (botón verde *Code* → *Download ZIP*) y descomprímelo donde quieras, por ejemplo en `Documentos\chollo-garde`.

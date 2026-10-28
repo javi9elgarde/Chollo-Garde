@@ -1,0 +1,82 @@
+# CholloGarde en GitHub: revisa los precios cada hora y atiende lo que pide el panel (GitHub Pages).
+# Los datos (trackers, histórico, alertas) se guardan en la rama «datos», no en main.
+name: Rastreo de precios
+
+on:
+  schedule:
+    - cron: '17 * * * *'   # cada hora (GitHub puede retrasarlo unos minutos)
+  workflow_dispatch:
+    inputs:
+      accion:
+        description: 'ciclo, crear, editar, borrar, escanear o probar'
+        default: ciclo
+        required: true
+      datos:
+        description: 'JSON con los datos de la acción (lo rellena el panel)'
+        default: '{}'
+        required: false
+
+# Una ejecución detrás de otra, para que no se pisen los datos.
+concurrency:
+  group: chollogarde-datos
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  rastreo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      TZ: Europe/Madrid
+      CG_PUBLIC_DATA: '1'
+      DATA_DIR: ${{ github.workspace }}/datos
+      # Lo que manda el panel va siempre por variables de entorno, nunca pegado en los comandos.
+      CG_ACCION: ${{ github.event.inputs.accion || 'ciclo' }}
+      CG_DATOS: ${{ github.event.inputs.datos || '{}' }}
+      BROWSER_CHANNEL: chrome
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+      SMTP_HOST: ${{ secrets.SMTP_HOST }}
+      SMTP_PORT: ${{ secrets.SMTP_PORT }}
+      SMTP_USER: ${{ secrets.SMTP_USER }}
+      SMTP_PASS: ${{ secrets.SMTP_PASS }}
+      ALERT_EMAIL_TO: ${{ secrets.ALERT_EMAIL_TO }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Traer los datos (rama «datos»)
+        run: |
+          if git ls-remote --exit-code --heads origin datos >/dev/null; then
+            git clone --depth 1 --branch datos "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" datos
+          else
+            mkdir datos && cd datos && git init -q -b datos && git remote add origin "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
+          fi
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Instalar
+        working-directory: backend
+        run: npm ci --omit=dev --no-audit --no-fund
+
+      - name: Ejecutar
+        working-directory: backend
+        run: node src/cli.js "$CG_ACCION"
+
+      - name: Guardar los datos
+        if: always()
+        working-directory: datos
+        run: |
+          [ -f db.json ] || exit 0
+          git config user.name "CholloGarde"
+          git config user.email "chollogarde@users.noreply.github.com"
+          git add db.json
+          git diff --cached --quiet && exit 0
+          git commit -q -m "Datos: ${CG_ACCION//[^a-z]/}"
+          git push -q origin HEAD:datos
