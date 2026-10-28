@@ -955,7 +955,9 @@ function art(it, cls = 'h-28', big = false) {
   // Con imagen: marco 16:9 y la portada entera (sin recortar), con la misma imagen difuminada de fondo.
   if (it.image) {
     cls = cls.replace(/(^|\s)(sm:)?h-\S+/g, '') + ' w-full aspect-video';
-    inner = `<img src="${esc(it.image)}" alt="" aria-hidden="true" loading="lazy" referrerpolicy="no-referrer" class="absolute inset-0 w-full h-full object-cover blur-xl scale-110 opacity-50" onerror="this.remove()"><img src="${esc(it.image)}" alt="" loading="lazy" referrerpolicy="no-referrer" class="absolute inset-0 w-full h-full object-contain" onerror="this.remove()">`;
+    inner = it.artCover
+      ? `<img src="${esc(it.image)}" alt="" loading="lazy" referrerpolicy="no-referrer" class="absolute inset-0 w-full h-full object-cover" onerror="this.remove()">`
+      : `<img src="${esc(it.image)}" alt="" aria-hidden="true" loading="lazy" referrerpolicy="no-referrer" class="absolute inset-0 w-full h-full object-cover blur-xl scale-110 opacity-50" onerror="this.remove()"><img src="${esc(it.image)}" alt="" loading="lazy" referrerpolicy="no-referrer" class="absolute inset-0 w-full h-full object-contain" onerror="this.remove()">`;
   }
   return `<div class="art relative ${cls} overflow-hidden grid place-items-center" style="${bg}">${inner}</div>`;
 }
@@ -985,7 +987,51 @@ function ring(score, size = 76) {
   return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" role="img" aria-label="Deal Index ${score} de 100"><circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="#27324E" stroke-width="6"/><circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="${col}" stroke-width="6" stroke-linecap="round" stroke-dasharray="${c * score / 100} ${c}" transform="rotate(-90 ${size / 2} ${size / 2})"/><text x="50%" y="50%" dy=".35em" text-anchor="middle" fill="#E7EAF2" font-family="Bricolage Grotesque, sans-serif" font-weight="800" font-size="${size * .3}">${score}</text></svg>`;
 }
 
+// Videojuegos: tarjeta tipo biblioteca (como el Refugio 111). Arte apaisado de RAWG a sangre, lo
+// importante encima (precio, objetivo, tienda) y el resto en la ficha que se abre al pinchar.
+function gameCard(it) {
+  const a = AI.analyze(it);
+  const flash = it.flash && Date.now() - it.flash.t < 2500 ? (it.flash.dir < 0 ? 'flash-down' : 'flash-up') : '';
+  const gap = it.current - it.target, reached = gap <= 0;
+  const prog = clamp(it.target / it.current, 0, 1) * 100;
+  const img = it.art || it.image;
+  const best = bestStore(it), deal = best && best.type === 'deal';
+  const pic = img
+    ? (it.art
+      ? `<img src="${esc(img)}" alt="" loading="lazy" referrerpolicy="no-referrer" class="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]" onerror="this.remove()">`
+      : `<img src="${esc(img)}" alt="" aria-hidden="true" loading="lazy" referrerpolicy="no-referrer" class="absolute inset-0 w-full h-full object-cover blur-xl scale-110 opacity-50" onerror="this.remove()"><img src="${esc(img)}" alt="" loading="lazy" referrerpolicy="no-referrer" class="absolute inset-0 w-full h-full object-contain" onerror="this.remove()">`)
+    : '';
+  return `<article class="group rounded-2xl bg-ink-800 border ${reached ? 'border-good/60' : 'border-ink-600/80 hover:border-ink-500'} overflow-hidden transition-colors ${flash}" data-id="${it.id}">
+    <button data-action="open" data-id="${it.id}" class="block w-full text-left" aria-label="Abrir ficha de ${esc(it.title)}">
+      <div class="art relative w-full aspect-video overflow-hidden bg-ink-850">
+        ${pic || art(it, 'absolute inset-0')}
+        <div class="absolute inset-0 bg-gradient-to-t from-ink-950 via-ink-950/40 to-transparent"></div>
+        <div class="absolute top-2.5 left-2.5 right-2.5 flex items-start gap-1.5">
+          <span class="rounded-md bg-ink-950/75 backdrop-blur px-2 py-0.5 text-[11px] font-semibold text-fg">${esc(it.platform)}</span>
+          ${!it.alert ? `<span class="grid place-items-center w-6 h-6 rounded-md bg-ink-950/75 text-mute" title="Alerta pausada"><i data-lucide="bell-off" class="w-3.5 h-3.5"></i></span>` : ''}
+          <span class="ml-auto">${reached ? `<span class="inline-flex items-center gap-1 rounded-md bg-good text-ink-950 px-2 py-0.5 text-[11px] font-bold"><i data-lucide="party-popper" class="w-3 h-3"></i>¡Objetivo!</span>` : a.atlNow ? atlBadge(true) : ''}</span>
+        </div>
+        <div class="absolute left-3 right-3 bottom-2.5">
+          <h3 class="font-display font-bold text-[17px] leading-tight text-white drop-shadow line-clamp-2">${esc(it.title)}</h3>
+          <p class="text-[12px] text-fg/80 mt-0.5 truncate">${best ? `mejor en ${esc(best.name)}${deal ? ' · oferta' : ''}` : 'sin precio todavía'}</p>
+        </div>
+      </div>
+      <div class="px-3 pt-2.5 pb-3">
+        <div class="flex items-end justify-between gap-2">
+          <div class="font-display font-extrabold text-[24px] leading-none tnum ${reached ? 'text-good' : ''}">${money(it)}</div>
+          <div class="text-right text-[12px] leading-tight tnum">
+            <div class="${reached ? 'text-good font-medium' : 'text-mute'}">${reached ? 'por debajo de tu objetivo' : `faltan ${money(it, gap)}`}</div>
+            <div class="text-dim">objetivo ${money(it, it.target)}</div>
+          </div>
+        </div>
+        <div class="h-1 rounded-full bg-ink-700 mt-2 overflow-hidden"><div class="h-full rounded-full ${reached ? 'bg-good' : 'bg-gold'}" style="width:${prog}%"></div></div>
+      </div>
+    </button>
+  </article>`;
+}
+
 function card(it) {
+  if (it.cat === 'game' && it.live) return gameCard(it);
   const a = AI.analyze(it), ref = refPrice(it);
   const flash = it.flash && Date.now() - it.flash.t < 2500 ? (it.flash.dir < 0 ? 'flash-down' : 'flash-up') : '';
   const gap = it.current - it.target, reached = gap <= 0;
@@ -1070,7 +1116,8 @@ function toolbar(showCats) {
 function grid(list) {
   if (!state.trackers.length) return `<div class="rounded-2xl border border-dashed border-ink-500 p-10 text-center text-mute"><i data-lucide="radar" class="w-8 h-8 mx-auto mb-3 text-gold"></i><p class="text-fg font-medium">Aún no sigues ningún precio.</p><p class="text-[13px] mt-1 max-w-md mx-auto">Pulsa «Nuevo tracker», escribe el nombre de un juego y su plataforma, y pon tu precio objetivo. El motor lo revisará solo y te avisará por Telegram, Discord o correo.</p><button data-action="new" class="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-gold text-ink-950 font-semibold px-4 py-2 text-[13px]"><i data-lucide="plus" class="w-4 h-4"></i>Nuevo tracker</button></div>`;
   if (!list.length) return `<div class="rounded-2xl border border-dashed border-ink-500 p-10 text-center text-mute"><i data-lucide="search-x" class="w-8 h-8 mx-auto mb-3 text-dim"></i><p class="text-fg font-medium">No hay trackers con estos filtros.</p><p class="text-[13px] mt-1">Cambia la búsqueda o crea uno nuevo con «Nuevo tracker».</p></div>`;
-  return `<div id="grid" class="grid gap-4 grid-cols-1 sm:grid-cols-2 2xl:grid-cols-3">${list.map(card).join('')}</div>`;
+  const games = list.every(it => it.cat === 'game' && it.live);
+  return `<div id="grid" class="grid gap-4 grid-cols-1 sm:grid-cols-2 ${games ? 'lg:grid-cols-3 2xl:grid-cols-4' : '2xl:grid-cols-3'}">${list.map(card).join('')}</div>`;
 }
 function kpis() {
   const T = state.trackers, an = T.map(t => [t, AI.analyze(t)]);
@@ -1386,7 +1433,7 @@ function closeDrawer() {
 }
 function drawerBody(it, a) {
   const ref = refPrice(it);
-  return `<div class="relative">${art(it, 'h-44 sm:h-52', true)}
+  return `<div class="relative">${art(it.art ? { ...it, image: it.art, artCover: true } : it, 'h-44 sm:h-52', true)}
     <button data-action="close" class="absolute top-3 right-3 w-9 h-9 grid place-items-center rounded-xl bg-ink-950/70 hover:bg-ink-950" aria-label="Cerrar"><i data-lucide="x" class="w-4 h-4"></i></button>
     <span class="absolute top-3 left-3 inline-flex items-center gap-1 rounded-md bg-ink-950/70 px-2 py-1 text-[11px]"><i data-lucide="${CAT[it.cat].icon}" class="w-3 h-3"></i>${CAT[it.cat].label}</span></div>
   <div class="p-5 sm:p-6 flex flex-col gap-6">

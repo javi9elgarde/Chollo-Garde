@@ -20,6 +20,7 @@ export async function addTracker(b = {}) {
   const key = t => `${norm(t.title)}|${t.platform || 'PC'}`;
   const dup = db().trackers.find(t => t.cat === 'game' && t.live && key(t) === key(it));
   if (dup) throw new games.UserError(`Ya sigues «${dup.title}». Cambia su objetivo desde su ficha.`);
+  await games.addArt(it);
   db().trackers.unshift(it);
   store.save();
   log('ok', 'api', `tracker creado: «${it.title}» · objetivo ${it.target} €`);

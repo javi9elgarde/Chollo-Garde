@@ -48,6 +48,8 @@ jobs:
       SMTP_USER: ${{ secrets.SMTP_USER }}
       SMTP_PASS: ${{ secrets.SMTP_PASS }}
       ALERT_EMAIL_TO: ${{ secrets.ALERT_EMAIL_TO }}
+      # Clave gratuita de rawg.io para el arte de los juegos (la misma que usa el Refugio 111 vale).
+      RAWG_API_KEY: ${{ secrets.RAWG_API_KEY }}
     steps:
       - uses: actions/checkout@v4
 

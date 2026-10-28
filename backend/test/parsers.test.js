@@ -80,3 +80,25 @@ test('los trackers de la versión anterior pasan a las tiendas nuevas', () => {
   migrate(v3);
   assert.deepEqual(v3.shops, ['Amazon', 'MediaMarkt', 'Fnac', 'El Corte Inglés', 'GAME', 'Impact']);
 });
+
+test('posesivos («Marvel\'s») y precio en priceSpecification (WooCommerce)', () => {
+  const q = "Marvel's Wolverine";
+  assert.ok(score('Marvel Wolverine Lobezno PS5', q, 'PS5', { retail: true }) !== null, 'Impact lo llama «Marvel Wolverine»');
+  assert.ok(score('MARVELS WOLVERINE PS5', q, 'PS5', { retail: true }) !== null);
+  assert.ok(score('Marvel’s Wolverine (PS5) PSN Key EUROPE', q, 'PS5') !== null);
+  assert.equal(score('Mando PS5 DualSense Marvels Wolverine', q, 'PS5', { retail: true }), null, 'accesorio');
+  assert.equal(score("Marvel's Spider-Man 2 PS5", q, 'PS5', { retail: true }), null);
+  const html = `<script type="application/ld+json">${JSON.stringify({ '@type': 'Product', name: 'Marvel Wolverine Lobezno PS5', offers: [{ '@type': 'Offer', availability: 'https://schema.org/PreOrder', priceSpecification: [{ '@type': 'UnitPriceSpecification', price: '74.90', priceCurrency: 'EUR' }] }] })}</script>`;
+  assert.equal(extract(html, 'https://impactgame.es/producto/reserva-marvel-wolverine-lobezno-ps5/').price, 74.9);
+});
+
+test('GAME: resultados en la lista JSON-LD y nombres en castellano («Lobezno»)', async () => {
+  const { itemList } = await import('../src/sources/retail.js');
+  const { pick } = await import('../src/sources/keyshops.js');
+  const html = `<script type="application/ld+json">${JSON.stringify({ '@type': 'CollectionPage', mainEntity: { '@type': 'ItemList', itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Mando Inalámbrico DualSense Edición Limitada Lobezno', url: 'https://www.game.es/mando-inalambrico-dualsense-edicion-limitada-lobezno/267017' },
+    { '@type': 'ListItem', position: 2, name: 'Marvel: Lobezno PS5', url: 'https://www.game.es/marvel-lobezno-ps5/266999' }] } })}</script>`;
+  const cands = itemList(html, 'https://www.game.es/resultados?search=x', RETAIL.GAME);
+  assert.equal(cands.length, 2);
+  assert.equal(pick(cands, "Marvel's Wolverine", 'PS5', { retail: true }).url, 'https://www.game.es/marvel-lobezno-ps5/266999');
+});

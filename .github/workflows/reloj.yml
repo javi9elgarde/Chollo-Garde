@@ -1,0 +1,35 @@
+# Reloj: lanza el ciclo de precios cada hora. El «schedule» de GitHub es aproximado y a veces se salta
+# horas enteras (el 28/10 solo se ejecutó una vez en todo el día), así que este workflow se queda
+# despierto casi 6 horas lanzando «Rastreo de precios» cada hora y, al acabar, se vuelve a lanzar él.
+# En repositorios públicos los minutos de Actions son gratis. Para pararlo: Actions → Reloj → Disable workflow.
+name: Reloj (ciclo cada hora)
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '41 */4 * * *'   # por si la cadena se corta; si ya hay uno en marcha, este espera y no duplica
+
+concurrency:
+  group: chollogarde-reloj
+  cancel-in-progress: false
+
+permissions:
+  actions: write
+
+jobs:
+  reloj:
+    if: github.repository == 'javi9elgarde/Chollo-Garde'
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Lanzar el ciclo cada hora
+        run: |
+          for i in 1 2 3 4 5; do
+            gh workflow run rastreo.yml --repo "$GITHUB_REPOSITORY" --ref main -f accion=ciclo || echo "no se pudo lanzar el ciclo"
+            sleep 3540
+          done
+      - name: Seguir la cadena
+        if: success() || failure()   # si lo cancelas a mano, no se relanza
+        run: gh workflow run reloj.yml --repo "$GITHUB_REPOSITORY" --ref main

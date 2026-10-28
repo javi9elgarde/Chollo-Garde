@@ -80,6 +80,25 @@ export function candidates(html, pageUrl, shop) {
   return [...out.values()].map(c => ({ ...c, label: `${c.label} ${decodeURIComponent(new URL(c.url).pathname).replace(/[-_/]+/g, ' ')}`, title: c.title.slice(0, 160) }));
 }
 
+// Resultados que la tienda publica como lista schema.org (GAME pinta los enlaces con JavaScript,
+// pero deja la lista con nombre y dirección de cada producto en un JSON-LD).
+export function itemList(html, pageUrl, shop) {
+  const base = new URL(pageUrl), out = [];
+  for (const m of html.matchAll(/<script[^>]*application\/ld\+json[^>]*>([\s\S]*?)<\/script>/gi)) {
+    let d; try { d = JSON.parse(m[1]); } catch { continue; }
+    const lists = [].concat(d, d?.mainEntity || [], d?.['@graph'] || []).filter(x => x && x['@type'] === 'ItemList');
+    for (const l of lists) for (const e of [].concat(l.itemListElement || [])) {
+      const name = e.name || e.item?.name, href = e.url || e.item?.url || e.item?.['@id'];
+      if (!name || !href) continue;
+      let u; try { u = new URL(href, base); } catch { continue; }
+      if (host(u.hostname) !== host(base.hostname) || (shop.product && !shop.product.test(u.pathname))) continue;
+      const key = u.origin + u.pathname;
+      out.push({ url: key, label: `${decode(name)} ${decodeURIComponent(u.pathname).replace(/[-_/]+/g, ' ')}`, title: decode(name).slice(0, 160) });
+    }
+  }
+  return out;
+}
+
 // Si el buscador ha llevado directamente a una ficha de producto, esa ficha es el único candidato.
 function selfCandidate(p, shop) {
   const u = new URL(p.url);
@@ -105,7 +124,9 @@ const search = async (shop, term) => {
   });
   // Si ha llevado directo a una ficha, los enlaces de la página son de otros productos («también te gustará»).
   const self = selfCandidate(p, shop);
-  return self.length ? self : candidates(p.html, p.url, shop);
+  if (self.length) return self;
+  const found = candidates(p.html, p.url, shop), seen = new Set(found.map(c => c.url));
+  return [...found, ...itemList(p.html, p.url, shop).filter(c => !seen.has(c.url))];
 };
 
 // Busca el juego en una tienda y lee el precio de la mejor ficha. Lanza un error explicando qué ha fallado.

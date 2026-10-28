@@ -3,7 +3,8 @@
 // bandas sonoras y keys de otras regiones) y lee el precio de la ficha.
 import * as web from './web.js';
 
-export const norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+// «Marvel's» y «Marvel’s» se escriben juntos («marvels»): así coinciden con «Marvels» y, quitando la s, con «Marvel».
+export const norm = s => String(s || '').replace(/['’`´]s\b/gi, 's').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
 const toks = s => norm(s).split(' ').filter(Boolean);
 
 export const PLATFORMS = {
@@ -16,6 +17,8 @@ export const PLATFORMS = {
 };
 // Palabras que no cuentan como «otra edición» al comparar títulos.
 const NEUTRAL = new Set('pc steam key keys global europe eu es spain cd account cuenta juego juegos videojuego videojuegos game ps5 ps4 psn playstation playstation5 playstation4 5 4 2 xbox series one x s nintendo switch switch2 eshop digital code codigo comprar store windows 10 11 live the edition edicion standard estandar launcher ea app epic games rockstar ubisoft connect battle net gog fisico fisica formato version para de del la el y con en esp espanol castellano pegi nuevo'.split(' '));
+// Títulos que en España se venden con otro nombre (GAME e Impact llaman «Lobezno» a Wolverine).
+const ALIAS = { wolverine: ['lobezno'] };
 // Ediciones caras: solo valen si se piden en el nombre (si no, se busca la estándar).
 const PREMIUM = /\b(ultimate|deluxe|gold|premium|collector|collectors|coleccionista|legendary|champions|vault)\b/;
 const UNWANTED = /\b(dlc|soundtrack|ost|season pass|pase de temporada|expansion|upgrade|mejora|pack|skin|skins|coins|monedas|points|puntos|vbucks|v bucks|credits|bundle|artbook|gift card|tarjeta)\b/;
@@ -28,7 +31,7 @@ export function score(candidate, title, platform, { retail = false } = {}) {
   const q = toks(title), c = toks(candidate), cs = ' ' + c.join(' ') + ' ';
   // «FC 27» y «FC27» son lo mismo: vale la palabra suelta, pegada a la vecina o separada en letras y número.
   const glued = new Set([...q.slice(1).map((t, i) => q[i] + t), ...q.flatMap(t => t.match(/^([a-z]+)(\d+)$/)?.slice(1) || [])]);
-  const has = (t, i) => c.includes(t) || c.includes(t + q[i + 1]) || c.includes(q[i - 1] + t) || (/^([a-z]+)(\d+)$/.test(t) && cs.includes(' ' + t.replace(/^([a-z]+)(\d+)$/, '$1 $2') + ' '));
+  const has = (t, i) => c.includes(t) || (ALIAS[t] || []).some(a => c.includes(a)) || (t.length > 3 && (c.includes(t + 's') || (t.endsWith('s') && c.includes(t.slice(0, -1))))) || c.includes(t + q[i + 1]) || c.includes(q[i - 1] + t) || (/^([a-z]+)(\d+)$/.test(t) && cs.includes(' ' + t.replace(/^([a-z]+)(\d+)$/, '$1 $2') + ' '));
   if (!q.length || !q.every(has)) return null;
   const plat = PLATFORMS[platform] || [];
   if (plat.length && !plat.some(k => cs.includes(' ' + k + ' '))) return null;
