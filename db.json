@@ -23,16 +23,25 @@
    "links": [],
    "steamAppID": null,
    "image": "https://media.game.es/COVERV2/3D_L/264/264870.png",
-   "url": "https://www.mediamarkt.es/es/product/_ps5-ea-sports-fctm-27-1671139.html",
+   "url": "https://www.elcorteingles.es/videojuegos/A201431658-ea-sports-fc27-playstation-5/",
    "deck": null,
    "msrp": 86.13,
    "target": 50,
    "alert": false,
    "alerted": false,
    "createdAt": 1793152333341,
-   "lastCheck": 1793153545080,
-   "lastError": "Amazon: la tienda ha pedido un captcha; se reintentará en el próximo ciclo · Instant Gaming: no vende «EA Sports FC 27» para PS5, solo para otras plataformas · Eneba: no encuentro el precio en la página (¿es la ficha de un producto?) · Fnac: la tienda ha pedido un captcha; se reintentará en el próximo ciclo · El Corte Inglés: la tienda ha pedido un captcha; se reintentará en el próximo ciclo",
+   "lastCheck": 1793176403107,
+   "lastError": "Amazon: la tienda ha pedido un captcha; se reintentará en el próximo ciclo · Instant Gaming: no vende «EA Sports FC 27» para PS5, solo para otras plataformas · Eneba: la ficha no tiene precio ahora mismo (sin vendedores o sin stock) · Fnac: la tienda ha pedido un captcha; se reintentará en el próximo ciclo",
    "stores": [
+    {
+     "name": "El Corte Inglés",
+     "type": "retail",
+     "url": "https://www.elcorteingles.es/videojuegos/A201431658-ea-sports-fc27-playstation-5/",
+     "price": 69.9,
+     "out": false,
+     "match": "EA Sports FC27 PlayStation 5",
+     "auto": true
+    },
     {
      "name": "MediaMarkt",
      "type": "retail",
@@ -45,11 +54,11 @@
     {
      "name": "Impact",
      "type": "retail",
+     "auto": true,
      "url": "https://impactgame.es/producto/reserva-ea-sports-fc27/?attribute_pa_plataforma=ps5",
      "price": 72.9,
      "out": false,
-     "match": "EA Sports FC27 – Impact Game",
-     "auto": true
+     "match": "EA Sports FC27 – Impact Game"
     },
     {
      "name": "GAME",
@@ -80,26 +89,20 @@
      "name": "Eneba",
      "type": "key",
      "auto": true,
-     "error": "no encuentro el precio en la página (¿es la ficha de un producto?)"
+     "error": "la ficha no tiene precio ahora mismo (sin vendedores o sin stock)"
     },
     {
      "name": "Fnac",
      "type": "retail",
      "auto": true,
      "error": "la tienda ha pedido un captcha; se reintentará en el próximo ciclo"
-    },
-    {
-     "name": "El Corte Inglés",
-     "type": "retail",
-     "auto": true,
-     "error": "la tienda ha pedido un captcha; se reintentará en el próximo ciclo"
     }
    ],
-   "current": 69.99,
+   "current": 69.9,
    "history": [
     {
-     "t": 1793153545080,
-     "p": 69.99
+     "t": 1793176403107,
+     "p": 69.9
     }
    ],
    "coupons": [],
@@ -124,8 +127,8 @@
   "intervalMin": 60
  },
  "stats": {
-  "cycles": 3,
-  "requests": 76
+  "cycles": 4,
+  "requests": 91
  },
  "logs": [
   {
@@ -367,6 +370,66 @@
    "level": "info",
    "src": "parser",
    "msg": "EA Sports FC 27: sin cambios (69,99 € en MediaMarkt) · 108.06 s"
+  },
+  {
+   "t": 1793176344323,
+   "level": "info",
+   "src": "cron",
+   "msg": "ciclo #4 · 1 tracker"
+  },
+  {
+   "t": 1793176403106,
+   "level": "warn",
+   "src": "Instant Gaming",
+   "msg": "EA Sports FC 27 (PS5): no vende «EA Sports FC 27» para PS5, solo para otras plataformas"
+  },
+  {
+   "t": 1793176403107,
+   "level": "warn",
+   "src": "Eneba",
+   "msg": "EA Sports FC 27 (PS5): la ficha no tiene precio ahora mismo (sin vendedores o sin stock)"
+  },
+  {
+   "t": 1793176403107,
+   "level": "warn",
+   "src": "Amazon",
+   "msg": "EA Sports FC 27 (PS5): la tienda ha pedido un captcha; se reintentará en el próximo ciclo"
+  },
+  {
+   "t": 1793176403107,
+   "level": "info",
+   "src": "MediaMarkt",
+   "msg": "EA Sports FC 27 (PS5): 69.99 € · PS5 EA SPORTS FC™ 27 | MediaMarkt"
+  },
+  {
+   "t": 1793176403107,
+   "level": "warn",
+   "src": "Fnac",
+   "msg": "EA Sports FC 27 (PS5): la tienda ha pedido un captcha; se reintentará en el próximo ciclo"
+  },
+  {
+   "t": 1793176403107,
+   "level": "info",
+   "src": "El Corte Inglés",
+   "msg": "EA Sports FC 27 (PS5): 69.9 € · EA Sports FC27 PlayStation 5"
+  },
+  {
+   "t": 1793176403107,
+   "level": "info",
+   "src": "GAME",
+   "msg": "EA Sports FC 27 (PS5): 79.99 € · EA Sports FC 27 PS5"
+  },
+  {
+   "t": 1793176403107,
+   "level": "info",
+   "src": "Impact",
+   "msg": "EA Sports FC 27 (PS5): 72.9 € · EA Sports FC27 – Impact Game"
+  },
+  {
+   "t": 1793176403108,
+   "level": "ok",
+   "src": "parser",
+   "msg": "EA Sports FC 27: 69,99 € → 69,90 € en El Corte Inglés · 58.73 s"
   }
  ],
  "acciones": [
@@ -430,8 +493,8 @@
    "covers": "Keys · búsqueda automática",
    "host": "www.instant-gaming.com",
    "ok": 100,
-   "lat": 26092,
-   "last": 1793153474341,
+   "lat": 18158,
+   "last": 1793176372421,
    "status": "ok",
    "runs": 2
   },
@@ -441,8 +504,8 @@
    "covers": "Keys · búsqueda automática",
    "host": "www.eneba.com",
    "ok": 100,
-   "lat": 19549,
-   "last": 1793153471791,
+   "lat": 15082,
+   "last": 1793176369982,
    "status": "ok",
    "runs": 2
   },
@@ -451,11 +514,11 @@
    "kind": "navegador",
    "covers": "Búsqueda automática",
    "host": "www.amazon.es",
-   "ok": 25,
-   "lat": 15811,
-   "last": 1793153494729,
+   "ok": 0,
+   "lat": 15200,
+   "last": 1793176389682,
    "status": "warn",
-   "runs": 4
+   "runs": 3
   },
   {
    "name": "MediaMarkt",
@@ -463,8 +526,8 @@
    "covers": "Búsqueda automática",
    "host": "www.mediamarkt.es",
    "ok": 100,
-   "lat": 29923,
-   "last": 1793153466954,
+   "lat": 19343,
+   "last": 1793176363722,
    "status": "ok",
    "runs": 1
   },
@@ -474,8 +537,8 @@
    "covers": "Búsqueda automática",
    "host": "www.fnac.es",
    "ok": 0,
-   "lat": 25892,
-   "last": 1793153481658,
+   "lat": 22025,
+   "last": 1793176383399,
    "status": "warn",
    "runs": 2
   },
@@ -484,10 +547,10 @@
    "kind": "navegador",
    "covers": "Búsqueda automática",
    "host": "www.elcorteingles.es",
-   "ok": 33,
-   "lat": 40141,
-   "last": 1793153545079,
-   "status": "warn",
+   "ok": 100,
+   "lat": 27767,
+   "last": 1793176403097,
+   "status": "ok",
    "runs": 3
   },
   {
@@ -496,8 +559,8 @@
    "covers": "Búsqueda automática",
    "host": "www.game.es",
    "ok": 100,
-   "lat": 1012,
-   "last": 1793153438044,
+   "lat": 930,
+   "last": 1793176345309,
    "status": "ok",
    "runs": 1
   },
@@ -507,10 +570,10 @@
    "covers": "Búsqueda automática",
    "host": "impactgame.es",
    "ok": 100,
-   "lat": 3658,
-   "last": 1793153456544,
+   "lat": 2492,
+   "last": 1793176346906,
    "status": "ok",
-   "runs": 3
+   "runs": 1
   },
   {
    "name": "Steam España",
@@ -528,10 +591,10 @@
   "running": true,
   "busy": false,
   "intervalMin": 60,
-  "cycles": 3,
-  "requests": 76,
-  "lastRun": 1793153545084,
-  "lastAction": "escanear"
+  "cycles": 4,
+  "requests": 91,
+  "lastRun": 1793176403109,
+  "lastAction": "ciclo"
  },
  "version": "github"
 }
