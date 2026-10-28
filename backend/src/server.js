@@ -14,7 +14,7 @@ import { norm } from './sources/keyshops.js';
 import { close as closeBrowser } from './sources/browser.js';
 import { dispatch, send, SAMPLE } from './notify/index.js';
 
-const VERSION = '0.3.0';
+const VERSION = '0.4.0';
 
 export function createApp() {
   const app = express();
@@ -63,8 +63,14 @@ export function createApp() {
       return { name, kind, covers, host, ok: s.runs ? Math.round((1 - s.fails / s.runs) * 100) : null, lat: s.lat || null, last: s.last || null, status: s.runs ? s.status : 'idle', runs: s.runs || 0 };
     };
     const base = [
-      row('Instant Gaming', 'búsqueda', 'Keys · búsqueda automática por nombre', 'www.instant-gaming.com'),
-      row('Eneba', 'navegador', 'Keys · búsqueda automática por nombre', 'www.eneba.com'),
+      row('Instant Gaming', 'búsqueda', 'Keys · búsqueda automática', 'www.instant-gaming.com'),
+      row('Eneba', 'navegador', 'Keys · búsqueda automática', 'www.eneba.com'),
+      row('Amazon', 'navegador', 'Búsqueda automática', 'www.amazon.es'),
+      row('MediaMarkt', 'navegador', 'Búsqueda automática', 'www.mediamarkt.es'),
+      row('Fnac', 'navegador', 'Búsqueda automática', 'www.fnac.es'),
+      row('El Corte Inglés', 'navegador', 'Búsqueda automática', 'www.elcorteingles.es'),
+      row('GAME', 'búsqueda', 'Búsqueda automática', 'www.game.es'),
+      row('Impact', 'búsqueda', 'Búsqueda automática', 'impactgame.es'),
       row('Steam España', 'API web', 'Precio oficial de PC, reseñas, Steam Deck', new URL(config.steamStoreBase).hostname)
     ];
     // Las tiendas de los enlaces pegados (Amazon, MediaMarkt, GAME, Impact…) aparecen según se usan.
@@ -79,6 +85,7 @@ export function createApp() {
   };
 
   app.get('/api/health', (req, res) => res.json({ ok: true, version: VERSION, mode: 'live' }));
+  app.get('/api/shops', (req, res) => res.json({ keys: games.KEY_NAMES, retail: games.SHOP_NAMES.filter(n => !games.KEY_NAMES.includes(n)), platforms: games.PLATFORMS }));
 
   app.get('/api/state', (req, res) => res.json({
     version: VERSION,
@@ -136,7 +143,7 @@ export function createApp() {
       fire = true;
     }
     if (b.alert !== undefined) { it.alert = !!b.alert; if (it.alert) { it.alerted = false; fire = true; } }
-    const rescan = it.cat === 'game' && it.live && (b.links !== undefined || b.keys !== undefined);
+    const rescan = it.cat === 'game' && it.live && (b.links !== undefined || b.shops !== undefined);
     if (rescan) games.updateSources(it, b);
     store.save();
     bus.emit('event', 'tracker', it);

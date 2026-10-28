@@ -1,21 +1,24 @@
 // Vertical de videojuegos con precios reales en las tiendas que usa Javi:
-// - Instant Gaming y Eneba: búsqueda automática por nombre y plataforma.
-// - Amazon, MediaMarkt, Fnac, El Corte Inglés, GAME, Impact o cualquier otra: enlace del producto.
+// - Búsqueda automática por nombre y plataforma en Instant Gaming, Eneba (keys) y Amazon, MediaMarkt, Fnac,
+//   El Corte Inglés, GAME e Impact. La ficha encontrada se recuerda y en cada ciclo solo se relee su precio.
+// - Enlaces opcionales: para otra tienda o para corregir la versión que haya elegido una búsqueda.
 // - Steam España (solo PC): precio oficial de referencia, reseñas y Steam Deck.
 import crypto from 'node:crypto';
 import * as steam from './sources/steam.js';
 import * as keyshops from './sources/keyshops.js';
 import * as web from './sources/web.js';
+import * as retail from './sources/retail.js';
 import { shopFor, parseUrl } from './sources/shops.js';
 
 const round = (v, d = 2) => Math.round(v * 10 ** d) / 10 ** d;
 const dayKey = t => new Date(t).toLocaleDateString('sv-SE'); // AAAA-MM-DD en hora local
-export const PLATFORMS = ['PC', 'PS5', 'PS4', 'Switch', 'Xbox'];
-const PLATFORM_LABEL = { PC: 'PC', PS5: 'PS5', PS4: 'PS4', Switch: 'Switch', Xbox: 'Xbox' };
+export const PLATFORMS = ['PC', 'PS5', 'PS4', 'Switch 2', 'Switch', 'Xbox'];
+export const KEY_NAMES = Object.keys(keyshops.KEY_SHOPS);
+export const SHOP_NAMES = [...KEY_NAMES, ...retail.RETAIL_NAMES];
 
 export class UserError extends Error {}
 
-// Normaliza lo que llega del panel: título, plataforma, si buscar en tiendas de keys y los enlaces.
+// Normaliza lo que llega del panel: título, plataforma, tiendas donde buscar y enlaces.
 function cleanSpec(b = {}) {
   const platform = PLATFORMS.includes(b.platform) ? b.platform : 'PC';
   const links = [...new Set((Array.isArray(b.links) ? b.links : String(b.links || '').split(/\s+/))
@@ -25,7 +28,9 @@ function cleanSpec(b = {}) {
   // Si en el nombre pegan un enlace de Steam, sirve igual.
   const fromUrl = steam.appIdFromUrl(title) || steam.appIdFromUrl(b.url || '');
   if (fromUrl) { steamAppID = fromUrl; if (/^https?:|steampowered/i.test(title)) title = ''; }
-  return { title, platform, keys: b.keys !== false, links, steamAppID };
+  // `shops`: tiendas donde buscar solo. Los trackers de antes solo tenían `keys` (sí/no).
+  const shops = Array.isArray(b.shops) ? SHOP_NAMES.filter(n => b.shops.includes(n)) : b.keys === false ? [...retail.RETAIL_NAMES] : [...SHOP_NAMES];
+  return { title, platform, shops, links, steamAppID };
 }
 
 async function steamInfo(spec) {
@@ -42,6 +47,23 @@ async function steamInfo(spec) {
   return { appId, det };
 }
 
+// Una tienda con búsqueda automática: si ya se encontró la ficha, solo se relee su precio;
+// si esa ficha ya no vale (retirada, sin precio…), se vuelve a buscar.
+async function findIn(name, title, platform, prev) {
+  const type = KEY_NAMES.includes(name) ? 'key' : 'retail';
+  const known = prev.find(p => p.name === name && p.auto && p.url);
+  if (known) {
+    try {
+      const p = await web.product(known.url);
+      return { name, type, auto: true, url: known.url, price: p.price, out: p.out, match: p.title || known.match, image: p.image };
+    } catch {}
+  }
+  try {
+    const r = await (type === 'key' ? keyshops.KEY_SHOPS[name] : (t, pl) => retail.find(name, t, pl))(title, platform);
+    return { ...r, auto: true };
+  } catch (e) { return { name, type, auto: true, error: e.message }; }
+}
+
 // Precios actuales en todas las tiendas configuradas. Las que fallan llevan `error`.
 export async function quote(spec, prev = []) {
   const stores = [];
@@ -49,16 +71,18 @@ export async function quote(spec, prev = []) {
   const title = spec.title || st?.det?.name;
   if (!title) throw new UserError('Escribe el nombre del juego.');
   if (st?.det?.price) stores.push({ name: 'Steam', type: 'official', price: st.det.price.price, initial: st.det.price.initial, url: steam.appUrl(st.appId) });
-  if (spec.keys) stores.push(...await keyshops.search(title, spec.platform));
   let image = st?.det?.image || null;
-  for (const link of spec.links) {
+  // Un enlace pegado manda sobre la búsqueda automática en esa tienda.
+  const linked = new Set(spec.links.map(l => shopFor(l).name));
+  const auto = spec.shops.filter(n => !linked.has(n));
+  const fromLinks = spec.links.map(async link => {
     const shop = shopFor(link);
     try {
       const p = await web.product(link);
-      image = image || p.image;
-      stores.push({ name: shop.name, type: shop.type, price: p.price, out: p.out, url: link, match: p.title });
-    } catch (e) { stores.push({ name: shop.name, type: shop.type, url: link, error: e.message }); }
-  }
+      return { name: shop.name, type: shop.type, price: p.price, out: p.out, url: link, match: p.title, image: p.image };
+    } catch (e) { return { name: shop.name, type: shop.type, url: link, error: e.message }; }
+  });
+  stores.push(...await Promise.all([...auto.map(n => findIn(n, title, spec.platform, prev)), ...fromLinks]));
   for (const s of stores) {
     image = image || s.image || null;
     delete s.image;
@@ -79,11 +103,11 @@ const previews = new Map();
 export async function preview(body) {
   const spec = cleanSpec(body);
   if (!spec.title && !spec.steamAppID) throw new UserError('Escribe el nombre del juego.');
-  if (!spec.keys && !spec.links.length && spec.platform !== 'PC') throw new UserError('Activa la búsqueda en Instant Gaming y Eneba o pega al menos un enlace de tienda.');
+  if (!spec.shops.length && !spec.links.length && spec.platform !== 'PC') throw new UserError('Marca al menos una tienda o pega un enlace.');
   const q = await quote(spec);
   if (!q.best) {
     const why = q.stores.map(s => `${s.name}: ${s.error || (s.out ? 'sin stock' : 'sin precio')}`).join(' · ');
-    throw new UserError(`No he encontrado ningún precio válido para «${q.title}» en ${PLATFORM_LABEL[spec.platform]}.${why ? ' ' + why : ''}`);
+    throw new UserError(`No he encontrado ningún precio válido para «${q.title}» en ${spec.platform}.${why ? ' ' + why : ''}`);
   }
   const id = crypto.randomBytes(6).toString('hex');
   previews.set(id, { spec: { ...spec, title: q.title, steamAppID: q.steam?.appId || null }, q, at: Date.now() });
@@ -93,7 +117,7 @@ export async function preview(body) {
     title: q.title, platform: spec.platform, image: q.image,
     price: q.best.price, ship: 0, store: q.best.name, src: 'tiendas',
     url: q.best.url, steamAppID: q.steam?.appId || null,
-    stores: q.stores.map(({ name, type, price, url, error, out, match, stale }) => ({ name, type, price, url, error, out, match, stale })),
+    stores: q.stores.map(({ name, type, price, url, error, out, match, stale, auto }) => ({ name, type, price, url, error, out, match, stale, auto })),
     msrp: q.msrp
   };
 }
@@ -112,7 +136,7 @@ export async function createTracker(body) {
     id: 'g-' + crypto.randomBytes(4).toString('hex'),
     cat: 'game', live: true, kind: 'multi', source: 'tiendas',
     title: q.title, query: spec.title || q.title, platform: spec.platform, format: 'Cualquiera',
-    keys: spec.keys, links: spec.links, steamAppID: appId,
+    shops: spec.shops, links: spec.links, steamAppID: appId,
     image: q.image, url: q.best.url, deck: dk,
     msrp: q.msrp || q.best.price,
     target: round(+body.target), alert: body.alert !== false, alerted: false,
@@ -125,16 +149,28 @@ export async function createTracker(body) {
   };
 }
 
-// Los trackers creados con la primera versión (CheapShark) pasan a buscar en las tiendas de Javi.
+// Trackers de versiones anteriores: los de CheapShark pasan a las tiendas de Javi y los que solo
+// tenían «keys sí/no» pasan a la lista de tiendas con búsqueda automática.
 export function migrate(it) {
-  if (it.cat !== 'game' || !it.live || it.kind === 'multi') return false;
-  Object.assign(it, { kind: 'multi', source: 'tiendas', query: it.title, platform: 'PC', format: 'Cualquiera', keys: true, links: [] });
-  delete it.gameID; delete it.atlEver;
-  it.stores = (it.stores || []).filter(s => s.name === 'Steam');
-  return true;
+  if (it.cat !== 'game' || !it.live) return false;
+  let changed = false;
+  if (it.kind !== 'multi') {
+    Object.assign(it, { kind: 'multi', source: 'tiendas', query: it.title, platform: 'PC', format: 'Cualquiera', keys: true, links: [] });
+    delete it.gameID; delete it.atlEver;
+    it.stores = (it.stores || []).filter(s => s.name === 'Steam');
+    changed = true;
+  }
+  if (!Array.isArray(it.shops)) {
+    it.shops = it.keys === false ? [...retail.RETAIL_NAMES] : [...SHOP_NAMES];
+    // Las fichas de Instant Gaming y Eneba encontradas antes se siguen usando.
+    (it.stores || []).forEach(s => { if (KEY_NAMES.includes(s.name) && s.url && !(it.links || []).includes(s.url)) s.auto = true; });
+    delete it.keys;
+    changed = true;
+  }
+  return changed;
 }
 
-export const specOf = it => ({ title: it.query || it.title, platform: PLATFORMS.includes(it.platform) ? it.platform : 'PC', keys: it.keys !== false, links: it.links || [], steamAppID: it.steamAppID || null });
+export const specOf = it => ({ title: it.query || it.title, platform: PLATFORMS.includes(it.platform) ? it.platform : 'PC', shops: it.shops || [...SHOP_NAMES], links: it.links || [], steamAppID: it.steamAppID || null });
 
 // Un ciclo de rastreo para un tracker: actualiza tiendas, precio actual e histórico diario.
 export async function refresh(it) {
@@ -164,9 +200,12 @@ export async function refresh(it) {
   return { old, current: it.current, best: q.best, failed };
 }
 
-// Cambiar los enlaces o la búsqueda de keys de un tracker existente.
+// Cambiar las tiendas o los enlaces de un tracker existente.
 export function updateSources(it, b) {
   migrate(it);
   if (b.links !== undefined) it.links = cleanSpec({ title: 'x', links: b.links }).links;
-  if (b.keys !== undefined) it.keys = !!b.keys;
+  if (Array.isArray(b.shops)) it.shops = cleanSpec({ title: 'x', shops: b.shops }).shops;
+  // Si cambian las tiendas o los enlaces, se olvidan las fichas que ya no se usan.
+  const linked = new Set(it.links.map(l => shopFor(l).name));
+  it.stores = (it.stores || []).filter(s => s.type === 'official' || (s.auto ? it.shops.includes(s.name) && !linked.has(s.name) : it.links.includes(s.url)));
 }
