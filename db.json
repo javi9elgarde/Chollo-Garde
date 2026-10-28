@@ -1,6 +1,108 @@
 {
  "trackers": [
   {
+   "id": "g-d3e2e138",
+   "cat": "game",
+   "live": true,
+   "kind": "multi",
+   "source": "tiendas",
+   "title": "Marvel's Wolverine",
+   "query": "Marvel's Wolverine",
+   "platform": "PS5",
+   "format": "Cualquiera",
+   "shops": [
+    "Instant Gaming",
+    "Eneba",
+    "Amazon",
+    "MediaMarkt",
+    "Fnac",
+    "El Corte Inglés",
+    "GAME",
+    "Impact"
+   ],
+   "links": [],
+   "steamAppID": null,
+   "image": "https://imgproxy.eneba.games/9K1VbPk_P_2KuQ0_jk4lWJxzOv87MtWtBBzDH-mUyjs/rs:fit:300/ar:1/czM6Ly9wcm9kdWN0/cy5lbmViYS5nYW1l/cy9wcm9kdWN0cy83/RGFNbEpldXA2Q0sz/QzlSTzIyZDNvRmh1/WXFIYy14ZHM4c1gw/azJ2LTI0LnBuZw",
+   "url": "https://www.eneba.com/es/psn-marvels-wolverine-ps5-psn-key-europe?currency=EUR",
+   "deck": null,
+   "msrp": 75,
+   "target": 40,
+   "alert": true,
+   "alerted": false,
+   "createdAt": 1793184187081,
+   "lastCheck": 1793184187081,
+   "lastError": null,
+   "stores": [
+    {
+     "name": "Eneba",
+     "type": "key",
+     "url": "https://www.eneba.com/es/psn-marvels-wolverine-ps5-psn-key-europe?currency=EUR",
+     "price": 75,
+     "out": false,
+     "match": "Marvel’s Wolverine (PS5) PSN Key EUROPE",
+     "auto": true
+    },
+    {
+     "name": "Instant Gaming",
+     "type": "key",
+     "auto": true,
+     "error": "no encuentro «Marvel's Wolverine» para PS5"
+    },
+    {
+     "name": "Amazon",
+     "type": "retail",
+     "auto": true,
+     "error": "la tienda ha pedido un captcha; se reintentará en el próximo ciclo"
+    },
+    {
+     "name": "MediaMarkt",
+     "type": "retail",
+     "auto": true,
+     "error": "no encuentro «Marvel's Wolverine» para PS5 entre 12 resultados"
+    },
+    {
+     "name": "Fnac",
+     "type": "retail",
+     "auto": true,
+     "error": "la tienda ha pedido un captcha; se reintentará en el próximo ciclo"
+    },
+    {
+     "name": "El Corte Inglés",
+     "type": "retail",
+     "auto": true,
+     "error": "no encuentro «Marvel's Wolverine» para PS5 entre 1 resultados"
+    },
+    {
+     "name": "GAME",
+     "type": "retail",
+     "auto": true,
+     "error": "no encuentro «Marvel's Wolverine» para PS5 entre 11 resultados"
+    },
+    {
+     "name": "Impact",
+     "type": "retail",
+     "auto": true,
+     "error": "no encuentro «Marvel's Wolverine» para PS5 entre 1 resultados"
+    }
+   ],
+   "current": 75,
+   "history": [
+    {
+     "t": 1793184187081,
+     "p": 75
+    }
+   ],
+   "coupons": [],
+   "specs": {},
+   "reviews": {
+    "rating": null,
+    "n": 0,
+    "src": "sin reseñas todavía",
+    "pros": [],
+    "cons": []
+   }
+  },
+  {
    "id": "g-9cf05a92",
    "cat": "game",
    "live": true,
@@ -128,7 +230,7 @@
  },
  "stats": {
   "cycles": 4,
-  "requests": 91
+  "requests": 107
  },
  "logs": [
   {
@@ -430,9 +532,72 @@
    "level": "ok",
    "src": "parser",
    "msg": "EA Sports FC 27: 69,99 € → 69,90 € en El Corte Inglés · 58.73 s"
+  },
+  {
+   "t": 1793184187031,
+   "level": "warn",
+   "src": "Instant Gaming",
+   "msg": "Marvel's Wolverine (PS5): no encuentro «Marvel's Wolverine» para PS5"
+  },
+  {
+   "t": 1793184187081,
+   "level": "info",
+   "src": "Eneba",
+   "msg": "Marvel's Wolverine (PS5): 75 € · Marvel’s Wolverine (PS5) PSN Key EUROPE"
+  },
+  {
+   "t": 1793184187081,
+   "level": "warn",
+   "src": "Amazon",
+   "msg": "Marvel's Wolverine (PS5): la tienda ha pedido un captcha; se reintentará en el próximo ciclo"
+  },
+  {
+   "t": 1793184187081,
+   "level": "warn",
+   "src": "MediaMarkt",
+   "msg": "Marvel's Wolverine (PS5): no encuentro «Marvel's Wolverine» para PS5 entre 12 resultados"
+  },
+  {
+   "t": 1793184187081,
+   "level": "warn",
+   "src": "Fnac",
+   "msg": "Marvel's Wolverine (PS5): la tienda ha pedido un captcha; se reintentará en el próximo ciclo"
+  },
+  {
+   "t": 1793184187081,
+   "level": "warn",
+   "src": "El Corte Inglés",
+   "msg": "Marvel's Wolverine (PS5): no encuentro «Marvel's Wolverine» para PS5 entre 1 resultados"
+  },
+  {
+   "t": 1793184187081,
+   "level": "warn",
+   "src": "GAME",
+   "msg": "Marvel's Wolverine (PS5): no encuentro «Marvel's Wolverine» para PS5 entre 11 resultados"
+  },
+  {
+   "t": 1793184187081,
+   "level": "warn",
+   "src": "Impact",
+   "msg": "Marvel's Wolverine (PS5): no encuentro «Marvel's Wolverine» para PS5 entre 1 resultados"
+  },
+  {
+   "t": 1793184187082,
+   "level": "ok",
+   "src": "api",
+   "msg": "tracker creado: «Marvel's Wolverine» · objetivo 40 €"
   }
  ],
  "acciones": [
+  {
+   "id": "rmvrzj50rffng",
+   "accion": "crear",
+   "ok": true,
+   "error": null,
+   "at": 1793184187082,
+   "secs": 46,
+   "trackerId": "g-d3e2e138"
+  },
   {
    "id": "claude-diag-4",
    "accion": "escanear",
@@ -493,8 +658,8 @@
    "covers": "Keys · búsqueda automática",
    "host": "www.instant-gaming.com",
    "ok": 100,
-   "lat": 18158,
-   "last": 1793176372421,
+   "lat": 14680,
+   "last": 1793184172363,
    "status": "ok",
    "runs": 2
   },
@@ -504,8 +669,8 @@
    "covers": "Keys · búsqueda automática",
    "host": "www.eneba.com",
    "ok": 100,
-   "lat": 15082,
-   "last": 1793176369982,
+   "lat": 13368,
+   "last": 1793184166777,
    "status": "ok",
    "runs": 2
   },
@@ -515,10 +680,10 @@
    "covers": "Búsqueda automática",
    "host": "www.amazon.es",
    "ok": 0,
-   "lat": 15200,
-   "last": 1793176389682,
+   "lat": 10544,
+   "last": 1793184173568,
    "status": "warn",
-   "runs": 3
+   "runs": 2
   },
   {
    "name": "MediaMarkt",
@@ -526,10 +691,10 @@
    "covers": "Búsqueda automática",
    "host": "www.mediamarkt.es",
    "ok": 100,
-   "lat": 19343,
-   "last": 1793176363722,
+   "lat": 17805,
+   "last": 1793184175184,
    "status": "ok",
-   "runs": 1
+   "runs": 2
   },
   {
    "name": "Fnac",
@@ -537,8 +702,8 @@
    "covers": "Búsqueda automática",
    "host": "www.fnac.es",
    "ok": 0,
-   "lat": 22025,
-   "last": 1793176383399,
+   "lat": 19559,
+   "last": 1793184181234,
    "status": "warn",
    "runs": 2
   },
@@ -548,10 +713,10 @@
    "covers": "Búsqueda automática",
    "host": "www.elcorteingles.es",
    "ok": 100,
-   "lat": 27767,
-   "last": 1793176403097,
+   "lat": 27654,
+   "last": 1793184187027,
    "status": "ok",
-   "runs": 3
+   "runs": 2
   },
   {
    "name": "GAME",
@@ -559,10 +724,10 @@
    "covers": "Búsqueda automática",
    "host": "www.game.es",
    "ok": 100,
-   "lat": 930,
-   "last": 1793176345309,
+   "lat": 20564,
+   "last": 1793184175493,
    "status": "ok",
-   "runs": 1
+   "runs": 2
   },
   {
    "name": "Impact",
@@ -570,10 +735,10 @@
    "covers": "Búsqueda automática",
    "host": "impactgame.es",
    "ok": 100,
-   "lat": 2492,
-   "last": 1793176346906,
+   "lat": 2706,
+   "last": 1793184145468,
    "status": "ok",
-   "runs": 1
+   "runs": 2
   },
   {
    "name": "Steam España",
@@ -592,9 +757,9 @@
   "busy": false,
   "intervalMin": 60,
   "cycles": 4,
-  "requests": 91,
-  "lastRun": 1793184037870,
-  "lastAction": "diagnostico"
+  "requests": 107,
+  "lastRun": 1793184187082,
+  "lastAction": "crear"
  },
  "version": "github"
 }
