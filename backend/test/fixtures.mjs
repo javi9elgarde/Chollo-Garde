@@ -47,6 +47,10 @@ export const pages = url => {
   if (url === 'https://www.game.es/hades-ii-pc/231234') return '<meta property="og:title" content="HADES II PC"><meta itemprop="price" content="29,95">';
   if (url.startsWith('https://impactgame.es/?s=')) return `<a href="https://impactgame.es/carrito">Carrito</a><a href="https://impactgame.es/categoria-producto/videojuegos/">Videojuegos</a><a href="https://impactgame.es/producto/hades-ii-pc/" title="Hades II PC"><img alt="Hades II PC"></a>`;
   if (url.startsWith('https://impactgame.es/')) return ld({ '@context': 'https://schema.org', '@graph': [{ '@type': 'Product', name: 'Hades II PC', image: 'https://impactgame.es/h.jpg', offers: { '@type': 'Offer', price: '17.00', priceCurrency: 'EUR', availability: 'https://schema.org/OutOfStock' } }] });
+  if (url.startsWith('https://www.chollometro.com/search')) {
+    const t = (id, title, price, extra = {}) => `<div data-vue3='${JSON.stringify({ name: 'ThreadMainListItemNormalizer', props: { thread: { threadId: id, titleSlug: title.toLowerCase().replace(/[^a-z0-9]+/g, '-'), title, status: 'Activated', isExpired: false, temperature: 250.4, price, shipping: { isFree: 1, price: 0 }, publishedAt: Math.floor(Date.now() / 1000) - 3600, voucherCode: '', merchant: { merchantName: 'Amazon' }, ...extra } } }).replace(/'/g, '&#039;')}'></div>`;
+    return t('1', 'Hades II PC por 12€', 12, { isExpired: true }) + t('2', "Hades II PS5 (edición física)", 15) + t('3', 'Hades II para PC (Steam) a su precio mínimo', 21) + t('4', 'Funda Hades II', 5);
+  }
   if (url.startsWith('https://www.fnac.es/')) return '<html><script src="https://ct.captcha-delivery.com/c.js"></script></html>';
   return null;
 };

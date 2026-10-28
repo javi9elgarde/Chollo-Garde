@@ -38,6 +38,26 @@ Pasos (solo una vez):
 
 Cómo funciona: `.github/workflows/rastreo.yml` ejecuta `backend/src/cli.js`, que guarda los trackers, el histórico y las alertas en `db.json`, en la rama `datos`. El panel lee ese fichero y, cuando creas o cambias algo, lanza el mismo workflow con tu token. Cada petición tarda de 2 a 5 minutos, y los precios se revisan cada hora (GitHub a veces lo retrasa unos minutos).
 
+### Modo mixto: tu PC revisa Amazon, Fnac y El Corte Inglés (sin captchas)
+
+Esas tres tiendas piden captcha a los servidores de GitHub. Desde la conexión de casa no. Con el modo mixto, un "runner" de GitHub instalado en tu PC revisa solo esas tres tiendas cada hora (workflow «Rastreo desde tu PC») y sube los precios a `pc.json`, en la rama `datos`. El ciclo de GitHub usa esos precios si son de las últimas 3 horas; con el PC apagado, GitHub lo intenta él como hasta ahora. En la ficha de cada juego verás «desde tu PC» al lado de esas tiendas.
+
+Pasos (solo una vez, en el PC con Windows):
+
+1. Instala **Git for Windows** (<https://git-scm.com/download/win>, todo por defecto). Node no hace falta: lo pone el propio workflow. Edge ya viene con Windows.
+2. **Protege el repositorio**, porque es público y el runner ejecuta código en tu PC: *Settings → Actions → General → Fork pull request workflows from outside collaborators* → **Require approval for all outside collaborators**. Nunca apruebes ejecuciones de PRs de desconocidos.
+3. En GitHub: *Settings → Actions → Runners → New self-hosted runner → Windows*. Copia los comandos de **Download** y **Configure** en PowerShell, dentro de una carpeta como `C:\actions-runner`. Durante la configuración:
+   - nombre del runner: el que quieras;
+   - **etiquetas adicionales: `chollogarde-pc`** (importante);
+   - «Would you like to run the runner as service?»: **Y** (así arranca solo con Windows).
+4. En *Actions → Rastreo desde tu PC → Run workflow* lánzalo una vez para comprobar que funciona. Después se ejecuta solo cada hora mientras el PC esté encendido.
+
+Si el PC está apagado mucho tiempo, GitHub deja una sola ejecución esperando; si pasa más de 24 h sin poder ejecutarla, la cancela y te avisa por correo. No es un error de CholloGarde.
+
+### Chollometro
+
+Además de las tiendas, cada juego se busca en Chollometro. Si hay una oferta activa de ese juego y plataforma (de los últimos 45 días, sin caducar), aparece como una tienda más, con la tienda de la oferta, el código de descuento si lo lleva y los grados. Cuenta para el precio actual y para las alertas: si alguien publica el juego por debajo de tu objetivo, te avisa.
+
 ## Instalación en Windows (alternativa: en tu PC)
 
 1. Instala **Node.js LTS** desde <https://nodejs.org/es> (siguiente, siguiente…).

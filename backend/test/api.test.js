@@ -73,6 +73,9 @@ test('vista previa: busca sola en todas las tiendas, elige la versión correcta 
   assert.equal(by.Fnac.auto, undefined, 'el enlace pegado manda sobre la búsqueda');
   assert.ok(!up.hits.some(u => u.includes('fnac.es/SearchResult')));
   assert.equal(by.Steam.type, 'official');
+  assert.equal(by.Chollometro.price, 21, 'la oferta activa de PC, no la caducada ni la de PS5');
+  assert.equal(by.Chollometro.type, 'deal');
+  assert.match(by.Chollometro.match, /Amazon · 250°/);
   assert.ok(['Fnac', 'El Corte Inglés'].includes(body.stores.at(-1).name), 'las tiendas con error van al final');
 });
 

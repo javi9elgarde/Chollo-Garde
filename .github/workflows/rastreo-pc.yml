@@ -1,0 +1,72 @@
+# Modo mixto: tu PC revisa Amazon, Fnac y El Corte Inglés con la conexión de casa (a los servidores de
+# GitHub les piden captcha). Se ejecuta en un runner de GitHub instalado en tu PC (ver README) y solo
+# sube pc.json a la rama «datos»; el ciclo de GitHub (rastreo.yml) usa esos precios mientras sean de
+# las últimas 3 horas. Con el PC apagado no pasa nada: GitHub vuelve a intentarlo él solo.
+name: Rastreo desde tu PC
+
+on:
+  schedule:
+    - cron: '2 * * * *'   # unos minutos antes del ciclo de GitHub (minuto 17)
+  workflow_dispatch:
+
+# Si el PC está apagado, como mucho queda una ejecución esperando, no una por hora.
+concurrency:
+  group: chollogarde-pc
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  pc:
+    # Solo en el repositorio de Javi y solo en el runner con la etiqueta «chollogarde-pc».
+    if: github.repository == 'javi9elgarde/Chollo-Garde'
+    runs-on: [self-hosted, chollogarde-pc]
+    timeout-minutes: 30
+    env:
+      TZ: Europe/Madrid
+      CG_PUBLIC_DATA: '1'
+      CG_MODO: pc
+      DATA_DIR: ${{ github.workspace }}/datos
+      BROWSER_CHANNEL: msedge,chrome
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Traer los datos (rama «datos»)
+        run: |
+          url="https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
+          if [ -d datos/.git ]; then
+            git -C datos remote set-url origin "$url"
+            git -C datos fetch -q --depth 1 origin datos && git -C datos reset -q --hard origin/datos
+          else
+            rm -rf datos && git clone -q --depth 1 --branch datos "$url" datos
+          fi
+          # El perfil del navegador (cookies) se queda en el PC entre ejecuciones, nunca se sube.
+          echo navegador/ >> datos/.git/info/exclude
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Instalar
+        working-directory: backend
+        run: npm ci --omit=dev --no-audit --no-fund
+
+      - name: Revisar Amazon, Fnac y El Corte Inglés
+        working-directory: backend
+        run: node src/cli.js pc
+
+      - name: Subir pc.json
+        working-directory: datos
+        run: |
+          [ -f pc.json ] || exit 0
+          git config user.name "CholloGarde PC"
+          git config user.email "chollogarde@users.noreply.github.com"
+          git add pc.json
+          git diff --cached --quiet && exit 0
+          git commit -q -m "Datos: precios desde el PC"
+          for i in 1 2 3; do git push -q origin HEAD:datos && exit 0; sleep 5; git pull -q --rebase origin datos; done
+          git push -q origin HEAD:datos

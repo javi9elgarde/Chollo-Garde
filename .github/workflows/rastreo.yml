@@ -35,6 +35,8 @@ jobs:
       # Lo que manda el panel va siempre por variables de entorno, nunca pegado en los comandos.
       CG_ACCION: ${{ github.event.inputs.accion || 'ciclo' }}
       CG_DATOS: ${{ github.event.inputs.datos || '{}' }}
+      # Modo mixto: Amazon, Fnac y El Corte Inglés se leen de pc.json si tu PC los ha revisado hace poco.
+      CG_MODO: nube
       BROWSER_CHANNEL: chrome
       # Con pantalla virtual (xvfb): las tiendas bloquean mucho más al navegador oculto.
       BROWSER_VISIBLE: '1'
@@ -81,4 +83,6 @@ jobs:
           git add db.json
           git diff --cached --quiet && exit 0
           git commit -q -m "Datos: ${CG_ACCION//[^a-z]/}"
+          # Tu PC sube pc.json a la misma rama: si se ha adelantado, se coloca este commit encima.
+          for i in 1 2 3; do git push -q origin HEAD:datos && exit 0; sleep 5; git pull -q --rebase origin datos; done
           git push -q origin HEAD:datos

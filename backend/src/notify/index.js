@@ -32,7 +32,7 @@ export function compose(it) {
     atl,
     url: best.url || it.url,
     image: it.image || null,
-    note: best.type === 'key' ? 'Es una key digital de revendedor: comprueba la región y la plataforma antes de comprar.' : null
+    note: best.type === 'key' ? 'Es una key digital de revendedor: comprueba la región y la plataforma antes de comprar.' : best.type === 'deal' ? `Oferta publicada en Chollometro (${best.match || 'ver detalles'}). Comprueba que sigue activa.` : null
   };
 }
 
