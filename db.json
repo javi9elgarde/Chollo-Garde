@@ -155,16 +155,26 @@
    "links": [],
    "steamAppID": null,
    "image": "https://imgproxy.eneba.games/9K1VbPk_P_2KuQ0_jk4lWJxzOv87MtWtBBzDH-mUyjs/rs:fit:300/ar:1/czM6Ly9wcm9kdWN0/cy5lbmViYS5nYW1l/cy9wcm9kdWN0cy83/RGFNbEpldXA2Q0sz/QzlSTzIyZDNvRmh1/WXFIYy14ZHM4c1gw/azJ2LTI0LnBuZw",
-   "url": "https://www.elcorteingles.es/videojuegos/A200949644-marvel-lobezno-playstation-5/",
+   "url": "https://www.fnac.es/Marvel-Lobezno-PS5-Videojuego-PS5/a12684310",
    "deck": null,
    "msrp": 79.99,
    "target": 40,
    "alert": true,
    "alerted": false,
    "createdAt": 1793184187081,
-   "lastCheck": 1793203695395,
-   "lastError": "Amazon: la tienda ha pedido un captcha; se reintentará en el próximo ciclo · Instant Gaming: no encuentro «Marvel's Wolverine» para PS5 · MediaMarkt: no encuentro el precio en la página (¿es la ficha de un producto?) · Fnac: la tienda ha pedido un captcha; se reintentará en el próximo ciclo · PS Store: la tienda ha pedido un captcha; se reintentará en el próximo ciclo",
+   "lastCheck": 1793204485877,
+   "lastError": "Amazon: la tienda ha pedido un captcha; se reintentará en el próximo ciclo · Instant Gaming: no encuentro «Marvel's Wolverine» para PS5 · MediaMarkt: no encuentro el precio en la página (¿es la ficha de un producto?) · PS Store: la tienda ha pedido un captcha; se reintentará en el próximo ciclo",
    "stores": [
+    {
+     "name": "Fnac",
+     "type": "retail",
+     "url": "https://www.fnac.es/Marvel-Lobezno-PS5-Videojuego-PS5/a12684310",
+     "price": 73.5,
+     "out": false,
+     "pre": false,
+     "match": "Marvel: Lobezno PS5",
+     "auto": true
+    },
     {
      "name": "El Corte Inglés",
      "type": "retail",
@@ -228,22 +238,16 @@
      "error": "no encuentro el precio en la página (¿es la ficha de un producto?)"
     },
     {
-     "name": "Fnac",
-     "type": "retail",
-     "auto": true,
-     "error": "la tienda ha pedido un captcha; se reintentará en el próximo ciclo"
-    },
-    {
      "name": "PS Store",
      "type": "official",
      "error": "la tienda ha pedido un captcha; se reintentará en el próximo ciclo"
     }
    ],
-   "current": 74.9,
+   "current": 73.5,
    "history": [
     {
-     "t": 1793203695395,
-     "p": 74.9
+     "t": 1793204485877,
+     "p": 73.5
     }
    ],
    "coupons": [],
@@ -414,8 +418,8 @@
   "intervalMin": 60
  },
  "stats": {
-  "cycles": 10,
-  "requests": 344
+  "cycles": 11,
+  "requests": 363
  },
  "logs": [
   {
@@ -1665,9 +1669,84 @@
    "level": "info",
    "src": "parser",
    "msg": "EA Sports FC 27: sin cambios (58,60 € en Chollometro) · 30.48 s"
+  },
+  {
+   "t": 1793204419257,
+   "level": "info",
+   "src": "cron",
+   "msg": "ciclo #11 · 1 tracker"
+  },
+  {
+   "t": 1793204485876,
+   "level": "warn",
+   "src": "Instant Gaming",
+   "msg": "Marvel's Wolverine (PS5): no encuentro «Marvel's Wolverine» para PS5"
+  },
+  {
+   "t": 1793204485876,
+   "level": "info",
+   "src": "Eneba",
+   "msg": "Marvel's Wolverine (PS5): 75 € · Marvel’s Wolverine (PS5) PSN Key EUROPE"
+  },
+  {
+   "t": 1793204485876,
+   "level": "warn",
+   "src": "Amazon",
+   "msg": "Marvel's Wolverine (PS5): la tienda ha pedido un captcha; se reintentará en el próximo ciclo"
+  },
+  {
+   "t": 1793204485876,
+   "level": "warn",
+   "src": "MediaMarkt",
+   "msg": "Marvel's Wolverine (PS5): no encuentro el precio en la página (¿es la ficha de un producto?)"
+  },
+  {
+   "t": 1793204485877,
+   "level": "info",
+   "src": "Fnac",
+   "msg": "Marvel's Wolverine (PS5): 73.5 € · Marvel: Lobezno PS5"
+  },
+  {
+   "t": 1793204485877,
+   "level": "info",
+   "src": "El Corte Inglés",
+   "msg": "Marvel's Wolverine (PS5): 74.9 € · Marvel Lobezno PlayStation 5"
+  },
+  {
+   "t": 1793204485877,
+   "level": "info",
+   "src": "GAME",
+   "msg": "Marvel's Wolverine (PS5): 79.99 € · Marvel: Lobezno PS5"
+  },
+  {
+   "t": 1793204485877,
+   "level": "info",
+   "src": "Impact",
+   "msg": "Marvel's Wolverine (PS5): 74.9 € · Marvel Wolverine Lobezno PS5"
+  },
+  {
+   "t": 1793204485877,
+   "level": "warn",
+   "src": "PS Store",
+   "msg": "Marvel's Wolverine (PS5): la tienda ha pedido un captcha; se reintentará en el próximo ciclo"
+  },
+  {
+   "t": 1793204485878,
+   "level": "ok",
+   "src": "parser",
+   "msg": "Marvel's Wolverine: 74,90 € → 73,50 € en Fnac · 66.56 s"
   }
  ],
  "acciones": [
+  {
+   "id": "rmvsblngt704q",
+   "accion": "escanear",
+   "ok": true,
+   "error": null,
+   "at": 1793204485878,
+   "secs": 67,
+   "trackerId": "g-d3e2e138"
+  },
   {
    "id": "rmvsbkq1tzkzo",
    "accion": "editar",
@@ -1755,10 +1834,10 @@
    "covers": "Keys · búsqueda automática",
    "host": "www.instant-gaming.com",
    "ok": 100,
-   "lat": 12125,
-   "last": 1793203716686,
+   "lat": 25986,
+   "last": 1793204464613,
    "status": "ok",
-   "runs": 6
+   "runs": 2
   },
   {
    "name": "Eneba",
@@ -1766,21 +1845,21 @@
    "covers": "Keys · búsqueda automática",
    "host": "www.eneba.com",
    "ok": 100,
-   "lat": 10024,
-   "last": 1793203717803,
+   "lat": 22320,
+   "last": 1793204441754,
    "status": "ok",
-   "runs": 5
+   "runs": 1
   },
   {
    "name": "Amazon",
    "kind": "navegador",
    "covers": "Búsqueda automática",
    "host": "www.amazon.es",
-   "ok": 14,
-   "lat": 12292,
-   "last": 1793203709957,
-   "status": "ok",
-   "runs": 7
+   "ok": 0,
+   "lat": 22881,
+   "last": 1793204478766,
+   "status": "warn",
+   "runs": 3
   },
   {
    "name": "MediaMarkt",
@@ -1788,21 +1867,21 @@
    "covers": "Búsqueda automática",
    "host": "www.mediamarkt.es",
    "ok": 100,
-   "lat": 17819,
-   "last": 1793203714379,
+   "lat": 26071,
+   "last": 1793204481912,
    "status": "ok",
-   "runs": 5
+   "runs": 3
   },
   {
    "name": "Fnac",
    "kind": "navegador",
    "covers": "Búsqueda automática",
    "host": "www.fnac.es",
-   "ok": 0,
-   "lat": 14651,
-   "last": 1793203727074,
-   "status": "warn",
-   "runs": 6
+   "ok": 67,
+   "lat": 27665,
+   "last": 1793204485872,
+   "status": "ok",
+   "runs": 3
   },
   {
    "name": "El Corte Inglés",
@@ -1810,10 +1889,10 @@
    "covers": "Búsqueda automática",
    "host": "www.elcorteingles.es",
    "ok": 100,
-   "lat": 25432,
-   "last": 1793203719771,
+   "lat": 39785,
+   "last": 1793204459220,
    "status": "ok",
-   "runs": 3
+   "runs": 1
   },
   {
    "name": "GAME",
@@ -1821,10 +1900,10 @@
    "covers": "Búsqueda automática",
    "host": "www.game.es",
    "ok": 100,
-   "lat": 1080,
-   "last": 1793203697631,
+   "lat": 1117,
+   "last": 1793204420552,
    "status": "ok",
-   "runs": 3
+   "runs": 1
   },
   {
    "name": "Impact",
@@ -1832,10 +1911,10 @@
    "covers": "Búsqueda automática",
    "host": "impactgame.es",
    "ok": 100,
-   "lat": 1282,
-   "last": 1793203697550,
+   "lat": 1723,
+   "last": 1793204421159,
    "status": "ok",
-   "runs": 4
+   "runs": 1
   },
   {
    "name": "Chollometro",
@@ -1843,10 +1922,10 @@
    "covers": "Ofertas de la comunidad",
    "host": "www.chollometro.com",
    "ok": 100,
-   "lat": 599,
-   "last": 1793203697012,
+   "lat": 1044,
+   "last": 1793204421275,
    "status": "ok",
-   "runs": 5
+   "runs": 2
   },
   {
    "name": "Steam España",
@@ -1864,10 +1943,10 @@
   "running": true,
   "busy": false,
   "intervalMin": 60,
-  "cycles": 10,
-  "requests": 344,
-  "lastRun": 1793204371681,
-  "lastAction": "editar"
+  "cycles": 11,
+  "requests": 363,
+  "lastRun": 1793204485878,
+  "lastAction": "escanear"
  },
  "version": "github"
 }
