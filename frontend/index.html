@@ -555,7 +555,7 @@ const API = {
   ],
   async fetchMeta(raw, onStep) {
     if (this.mode === 'live') {
-      const steps = [[raw.keys ? 'Buscando en Instant Gaming y Eneba' : null, raw.links.length ? `leyendo ${raw.links.length} enlace${raw.links.length > 1 ? 's' : ''}` : null, raw.platform === 'PC' ? 'Steam' : null].filter(Boolean).join(', ') + ' (puede tardar un poco)'];
+      const steps = [[raw.shops.length ? `Buscando en ${raw.shops.length} tienda${raw.shops.length > 1 ? 's' : ''}` : null, raw.links.length ? `leyendo ${raw.links.length} enlace${raw.links.length > 1 ? 's' : ''}` : null, raw.platform === 'PC' ? 'Steam' : null].filter(Boolean).join(', ') + ' (puede tardar hasta un minuto)'];
       onStep && onStep(0, steps);
       return api('POST', '/api/fetch-meta', raw);
     }
@@ -975,13 +975,13 @@ function viewGrid(catKey) {
   if (catKey === 'flight') extra = flightTable();
   if (catKey === 'game') extra = gameTable();
   if (catKey === 'product') extra = couponList();
-  if (LIVE.on && (catKey === 'flight' || catKey === 'product')) extra = `<section class="rounded-2xl border border-ai/25 bg-ai/[.05] p-4 flex gap-3 text-[13px]"><i data-lucide="construction" class="w-5 h-5 text-ai shrink-0"></i><div><div class="font-medium text-fg">${catKey === 'flight' ? 'Vuelos' : 'Productos'}: próximamente con precios reales</div><p class="text-mute mt-1">La primera fuente real son los videojuegos (Instant Gaming, Eneba y los enlaces de tienda que pegues). ${catKey === 'flight' ? 'Los vuelos necesitan un conector propio (Skyscanner, Google Flights o Kayak).' : 'Amazon necesita Keepa (de pago) y PcComponentes, AliExpress y El Corte Inglés un scraper con navegador.'} Puedes ver cómo quedará abriendo <span class="font-mono">frontend/index.html</span> directamente, en modo demo.</p></div></section>`;
+  if (LIVE.on && (catKey === 'flight' || catKey === 'product')) extra = `<section class="rounded-2xl border border-ai/25 bg-ai/[.05] p-4 flex gap-3 text-[13px]"><i data-lucide="construction" class="w-5 h-5 text-ai shrink-0"></i><div><div class="font-medium text-fg">${catKey === 'flight' ? 'Vuelos' : 'Productos'}: próximamente con precios reales</div><p class="text-mute mt-1">La primera fuente real son los videojuegos (Instant Gaming, Eneba, Amazon, MediaMarkt, Fnac, El Corte Inglés, GAME e Impact). ${catKey === 'flight' ? 'Los vuelos necesitan un conector propio (Skyscanner, Google Flights o Kayak).' : 'Amazon necesita Keepa (de pago) y PcComponentes, AliExpress y El Corte Inglés un scraper con navegador.'} Puedes ver cómo quedará abriendo <span class="font-mono">frontend/index.html</span> directamente, en modo demo.</p></div></section>`;
   const now = new Date();
   return `<div class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
     <div class="flex flex-col gap-5 min-w-0">
       <div class="flex flex-wrap items-end gap-3 justify-between">
         <div><p class="label">${isDash ? now.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' }) : 'Vertical'}</p><h1 class="font-display font-extrabold text-[30px] sm:text-[34px] leading-tight tracking-tight mt-1">${isDash ? 'Tus chollos, vigilados 24/7' : n.label}</h1></div>
-        ${LIVE.on ? '<span class="inline-flex items-center gap-1.5 text-[12px] text-good border border-good/30 rounded-lg px-2.5 py-1"><i data-lucide="radio" class="w-3.5 h-3.5"></i>Precios reales · Instant Gaming, Eneba y tus tiendas</span>' : '<span class="inline-flex items-center gap-1.5 text-[12px] text-mute border border-ink-600 rounded-lg px-2.5 py-1"><i data-lucide="flask-conical" class="w-3.5 h-3.5"></i>Datos simulados · demo</span>'}
+        ${LIVE.on ? '<span class="inline-flex items-center gap-1.5 text-[12px] text-good border border-good/30 rounded-lg px-2.5 py-1"><i data-lucide="radio" class="w-3.5 h-3.5"></i>Precios reales · 8 tiendas</span>' : '<span class="inline-flex items-center gap-1.5 text-[12px] text-mute border border-ink-600 rounded-lg px-2.5 py-1"><i data-lucide="flask-conical" class="w-3.5 h-3.5"></i>Datos simulados · demo</span>'}
       </div>
       ${isDash ? kpis() + featured() : ''}
       ${extra}
@@ -1319,8 +1319,8 @@ function gameBlockLive(it) {
     <p class="px-4 py-3 text-[12px] text-dim">Última comprobación: ${it.lastCheck ? ago(it.lastCheck) : '—'}.${it.lastError ? ` <span class="text-bad">Tiendas con problemas: ${esc(it.lastError)}</span>` : ''}</p>
     <details class="border-t border-ink-600"><summary class="px-4 py-3 text-[13px] cursor-pointer select-none text-mute hover:text-fg">Cambiar las tiendas que vigilo</summary>
       <form data-form="sources" data-id="${it.id}" class="px-4 pb-4 flex flex-col gap-2">
-        <label class="inline-flex items-center gap-2 text-[13px]"><input id="d-keys" type="checkbox" ${it.keys !== false ? 'checked' : ''}>Buscar en Instant Gaming y Eneba</label>
-        <label class="flex flex-col gap-1 text-[12px] text-mute">Enlaces de producto (uno por línea)<textarea id="d-links" rows="3" class="bg-ink-850 border border-ink-600 rounded-lg px-3 py-2 text-[12px] text-fg font-mono focus:outline-none focus:border-gold/70" placeholder="https://www.amazon.es/dp/…">${esc((it.links || []).join('\n'))}</textarea></label>
+        ${shopPicker('d-shop', it.shops || [...LIVE_SHOPS.keys, ...LIVE_SHOPS.retail])}
+        <label class="flex flex-col gap-1 text-[12px] text-mute">Enlaces (opcional, uno por línea). Si una tienda coge otra versión, pega aquí la buena y manda ese enlace<textarea id="d-links" rows="3" class="bg-ink-850 border border-ink-600 rounded-lg px-3 py-2 text-[12px] text-fg font-mono focus:outline-none focus:border-gold/70" placeholder="https://www.amazon.es/dp/…">${esc((it.links || []).join('\n'))}</textarea></label>
         <div class="flex justify-end"><button class="rounded-xl border border-ink-500 px-3 py-1.5 text-[13px] hover:border-gold/60">Guardar y comprobar</button></div>
       </form></details>
   </section>`;
@@ -1396,7 +1396,7 @@ function openNew(cat = nt.cat) {
 function newHtml() {
   const tabs = [['product', 'Producto', 'package'], ['game', 'Videojuego', 'gamepad-2'], ['flight', 'Vuelo', 'plane']];
   return `<div class="p-5 sm:p-6 flex flex-col gap-5">
-    <div class="flex items-start gap-3"><div><h2 class="font-display font-extrabold text-[24px] leading-tight">Nuevo tracker</h2><p class="text-[13px] text-mute mt-1">${LIVE.on && nt.cat === 'game' ? 'Escribe el juego y su plataforma: lo buscamos en Instant Gaming y Eneba. Si quieres, pega también los enlaces de Amazon, MediaMarkt, GAME… y vigilamos esas fichas.' : nt.cat === 'flight' ? 'Define la ruta y te avisamos cuando baje de tu precio.' : 'Pega un enlace y extraemos portada, título, precio y envío.'}</p></div><button data-action="close-modal" class="ml-auto w-9 h-9 grid place-items-center rounded-xl hover:bg-ink-700" aria-label="Cerrar"><i data-lucide="x" class="w-4 h-4"></i></button></div>
+    <div class="flex items-start gap-3"><div><h2 class="font-display font-extrabold text-[24px] leading-tight">Nuevo tracker</h2><p class="text-[13px] text-mute mt-1">${LIVE.on && nt.cat === 'game' ? 'Escribe el juego y su plataforma: lo buscamos solo en Instant Gaming, Eneba, Amazon, MediaMarkt, Fnac, El Corte Inglés, GAME e Impact, y elegimos la versión que corresponde.' : nt.cat === 'flight' ? 'Define la ruta y te avisamos cuando baje de tu precio.' : 'Pega un enlace y extraemos portada, título, precio y envío.'}</p></div><button data-action="close-modal" class="ml-auto w-9 h-9 grid place-items-center rounded-xl hover:bg-ink-700" aria-label="Cerrar"><i data-lucide="x" class="w-4 h-4"></i></button></div>
     <div class="inline-flex self-start p-1 rounded-xl bg-ink-800 border border-ink-600" role="tablist">${tabs.map(([k, l, i]) => `<button role="tab" aria-selected="${nt.cat === k}" data-action="nt-cat" data-cat="${k}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] ${nt.cat === k ? 'bg-ink-600 text-fg' : 'text-mute hover:text-fg'}"><i data-lucide="${i}" class="w-4 h-4"></i>${l}</button>`).join('')}</div>
     <div id="nt-body">${LIVE.on && nt.cat !== 'game' ? soonHtml() : nt.cat === 'flight' ? flightForm() : urlForm()}</div>
   </div>`;
@@ -1405,13 +1405,22 @@ function soonHtml() {
   return `<div class="rounded-2xl border border-ai/25 bg-ai/[.05] p-4 text-[13px] flex gap-3"><i data-lucide="construction" class="w-5 h-5 text-ai shrink-0"></i><div><div class="font-medium text-fg">${nt.cat === 'flight' ? 'Vuelos' : 'Productos'}: todavía sin fuente real</div><p class="text-mute mt-1">Por ahora el servidor rastrea precios reales de videojuegos. ${nt.cat === 'flight' ? 'Los vuelos' : 'Amazon, PcComponentes, AliExpress y El Corte Inglés'} llegarán con su propio conector en una próxima fase.</p><button data-action="nt-cat" data-cat="game" class="mt-3 inline-flex items-center gap-1.5 rounded-xl border border-ink-500 px-3 py-1.5 text-[12px] text-fg hover:border-gold/60"><i data-lucide="gamepad-2" class="w-4 h-4"></i>Seguir un videojuego</button></div></div>`;
 }
 const LIVE_EXAMPLES = ['Hades II', "Baldur's Gate 3", 'EA Sports FC 26'];
-const LIVE_PLATFORMS = ['PC', 'PS5', 'PS4', 'Switch', 'Xbox'];
-const liveSpec = () => ({ title: $('#nt-url').value.trim(), platform: $('#nt-plat').value, keys: $('#nt-keys').checked, links: $('#nt-links').value.split(/\s+/).filter(Boolean) });
+const LIVE_PLATFORMS = ['PC', 'PS5', 'PS4', 'Switch 2', 'Switch', 'Xbox'];
+const LIVE_SHOPS = { keys: ['Instant Gaming', 'Eneba'], retail: ['Amazon', 'MediaMarkt', 'Fnac', 'El Corte Inglés', 'GAME', 'Impact'] };
+const checkedShops = name => $$(`input[name="${name}"]:checked`).map(i => i.value);
+// Casillas de tiendas con búsqueda automática (todas marcadas por defecto).
+function shopPicker(name, on) {
+  const box = s => `<label class="inline-flex items-center gap-1.5 text-[13px]"><input type="checkbox" name="${name}" value="${esc(s)}" ${on.includes(s) ? 'checked' : ''}>${esc(s)}</label>`;
+  return `<fieldset class="flex flex-col gap-1.5"><legend class="text-[13px] text-mute mb-1">Buscar automáticamente en</legend>
+    <div class="flex flex-wrap gap-x-4 gap-y-1.5"><span class="text-[12px] text-dim w-full sm:w-auto">Keys:</span>${LIVE_SHOPS.keys.map(box).join('')}</div>
+    <div class="flex flex-wrap gap-x-4 gap-y-1.5"><span class="text-[12px] text-dim w-full sm:w-auto">Tiendas:</span>${LIVE_SHOPS.retail.map(box).join('')}</div></fieldset>`;
+}
+const liveSpec = () => ({ title: $('#nt-url').value.trim(), platform: $('#nt-plat').value, shops: checkedShops('nt-shop'), links: $('#nt-links').value.split(/\s+/).filter(Boolean) });
 const STORE_KIND = { key: 'Tienda de keys', official: 'Tienda oficial', retail: 'Tienda' };
 // Una línea por tienda en la vista previa y en la ficha: precio, agotado o el motivo del fallo.
 function storeLine(x, best) {
   const st = x.error ? `<span class="text-bad" title="${esc(x.error)}">${x.stale ? `${eur(x.price)} · antiguo` : 'sin precio'}</span>` : x.out ? '<span class="text-dim">sin stock</span>' : `<span class="${x === best ? 'text-good font-medium' : ''}">${eur(x.price)}</span>`;
-  return `<li class="flex justify-between gap-3"><span class="text-mute truncate">${esc(x.name)} <span class="text-dim">· ${STORE_KIND[x.type] || 'Tienda'}</span></span>${st}</li>${x.error ? `<li class="text-[11px] text-bad/80 -mt-0.5 mb-0.5 truncate" title="${esc(x.error)}">${esc(x.error)}</li>` : ''}`;
+  return `<li class="flex justify-between gap-3"><span class="text-mute truncate">${esc(x.name)} <span class="text-dim">· ${STORE_KIND[x.type] || 'Tienda'}</span></span>${st}</li>${x.match && !x.error ? `<li class="text-[11px] text-dim -mt-0.5 mb-0.5 truncate" title="${esc(x.match)}">${x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener noreferrer" class="hover:text-fg">${esc(x.match)}</a>` : esc(x.match)}</li>` : ''}${x.error ? `<li class="text-[11px] text-bad/80 -mt-0.5 mb-0.5 truncate" title="${esc(x.error)}">${esc(x.error)}</li>` : ''}`;
 }
 function urlForm() {
   if (LIVE.on) return `<form id="nt-fetch" class="flex flex-col gap-3">
@@ -1419,9 +1428,10 @@ function urlForm() {
       <label class="flex flex-col gap-1 text-[13px] text-mute">Nombre del juego<div class="relative"><i data-lucide="search" class="w-4 h-4 text-mute absolute left-3 top-1/2 -translate-y-1/2"></i><input id="nt-url" type="text" autocomplete="off" required placeholder="Hades II" class="w-full bg-ink-800 border border-ink-600 rounded-xl pl-9 pr-3 py-2.5 text-[14px] text-fg placeholder:text-dim focus:outline-none focus:border-gold/70"></div></label>
       <label class="flex flex-col gap-1 text-[13px] text-mute">Plataforma<select id="nt-plat" class="bg-ink-800 border border-ink-600 rounded-xl px-3 py-2.5 text-[14px] text-fg">${LIVE_PLATFORMS.map(p => `<option>${p}</option>`).join('')}</select></label>
     </div>
-    <label class="inline-flex items-center gap-2 text-[13px]"><input id="nt-keys" type="checkbox" checked>Buscar también en Instant Gaming y Eneba (keys)</label>
-    <label class="flex flex-col gap-1 text-[13px] text-mute">Enlaces de otras tiendas <span class="text-[12px] text-dim">(opcional, uno por línea: Amazon, MediaMarkt, Fnac, El Corte Inglés, GAME, Impact o cualquier tienda)</span>
-      <textarea id="nt-links" rows="3" placeholder="https://www.amazon.es/dp/…&#10;https://www.game.es/…" class="bg-ink-800 border border-ink-600 rounded-xl px-3 py-2 text-[13px] text-fg font-mono placeholder:text-dim focus:outline-none focus:border-gold/70"></textarea></label>
+    ${shopPicker('nt-shop', [...LIVE_SHOPS.keys, ...LIVE_SHOPS.retail])}
+    <details><summary class="text-[13px] text-mute cursor-pointer select-none hover:text-fg">Añadir enlaces a mano (opcional)</summary>
+    <label class="flex flex-col gap-1 mt-2 text-[12px] text-dim">Para otra tienda, o si una búsqueda coge una versión que no es: el enlace manda sobre la búsqueda. Uno por línea.
+      <textarea id="nt-links" rows="3" placeholder="https://www.amazon.es/dp/…&#10;https://www.game.es/…" class="bg-ink-800 border border-ink-600 rounded-xl px-3 py-2 text-[13px] text-fg font-mono placeholder:text-dim focus:outline-none focus:border-gold/70"></textarea></label></details>
     <div class="flex flex-wrap gap-2 items-center"><button class="inline-flex items-center gap-1.5 rounded-xl bg-gold text-ink-950 font-semibold px-4 py-2 text-[13px]" ${nt.busy ? 'disabled' : ''}><i data-lucide="search" class="w-4 h-4"></i>Buscar precios</button>
     <span class="text-[12px] text-dim">Prueba con:</span>${LIVE_EXAMPLES.map(u => `<button type="button" data-action="nt-example" data-url="${esc(u)}" class="text-[12px] rounded-md border border-ink-600 px-2 py-0.5 text-mute hover:text-fg max-w-[220px] truncate">${esc(u)}</button>`).join('')}</div>
   </form>
@@ -1480,7 +1490,7 @@ function previewLive(m) {
         <div class="flex justify-end gap-2 pt-1"><button type="button" data-action="close-modal" class="rounded-xl border border-ink-500 px-3 py-2 text-[13px]">Cancelar</button><button id="nt-submit" class="inline-flex items-center gap-1.5 rounded-xl bg-gold text-ink-950 font-semibold px-4 py-2 text-[13px]"><i data-lucide="radar" class="w-4 h-4"></i>Crear tracker</button></div>
       </div>
     </div>
-    <p class="px-4 py-2.5 border-t border-ink-600 text-[11px] text-dim">Comprueba que cada tienda ha encontrado el juego correcto (pasa el ratón por encima para ver el motivo de los fallos). Las keys de Instant Gaming y Eneba son de la región España/Europa o global.</p>
+    <p class="px-4 py-2.5 border-t border-ink-600 text-[11px] text-dim">Debajo de cada tienda ves el producto que ha encontrado: comprueba que es la versión que quieres. Si alguna no lo es, después lo corriges desde la ficha pegando su enlace. Las keys de Instant Gaming y Eneba son de la región España/Europa o global.</p>
   </form>`;
 }
 async function createLive() {
@@ -1755,7 +1765,7 @@ document.addEventListener('submit', e => {
   if (f.id === 'cp-form') { const i = $('#cp-input'); ask(i.value); i.value = ''; }
   if (f.dataset.form === 'sources') {
     const links = $('#d-links').value.split(/\s+/).filter(Boolean);
-    api('PATCH', `/api/trackers/${f.dataset.id}`, { links, keys: $('#d-keys').checked }).then(t => { LIVE.upsert(t); rerenderDrawer(); toast({ tone: 'good', icon: 'store', title: 'Tiendas guardadas', body: `${esc(t.title)} · comprobando precios…`, ms: 3000 }); }).catch(err => toast({ tone: 'bad', icon: 'circle-alert', title: 'No se pudo guardar', body: esc(err.message) }));
+    api('PATCH', `/api/trackers/${f.dataset.id}`, { links, shops: checkedShops('d-shop') }).then(t => { LIVE.upsert(t); rerenderDrawer(); toast({ tone: 'good', icon: 'store', title: 'Tiendas guardadas', body: `${esc(t.title)} · comprobando precios…`, ms: 3000 }); }).catch(err => toast({ tone: 'bad', icon: 'circle-alert', title: 'No se pudo guardar', body: esc(err.message) }));
   }
   if (f.dataset.form === 'target') {
     const it = state.trackers.find(t => t.id === f.dataset.id), v = +$('#d-target').value;
@@ -1829,7 +1839,7 @@ window.addEventListener('hashchange', route);
 if (await LIVE.detect()) {
   LIVE.connect();
   $('#banner').remove();
-  $('#side-note').innerHTML = 'Precios reales de videojuegos en Instant Gaming, Eneba y las tiendas que enlaces (Amazon, MediaMarkt, GAME…). Productos y vuelos: próximas fases. IA con Gemini: Fase 3.';
+  $('#side-note').innerHTML = 'Precios reales de videojuegos en Instant Gaming, Eneba, Amazon, MediaMarkt, Fnac, El Corte Inglés, GAME e Impact. Productos y vuelos: próximas fases. IA con Gemini: Fase 3.';
   nt.cat = 'game';
   renderSoundBtn();
   setInterval(tickLive, 1000);

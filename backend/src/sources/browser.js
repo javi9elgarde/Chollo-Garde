@@ -4,7 +4,9 @@
 import path from 'node:path';
 import { config } from '../config.js';
 
-let ctxPromise = null, idle = null, queue = Promise.resolve();
+let ctxPromise = null, idle = null, active = 0;
+const waiting = [];
+const MAX_TABS = 3;
 const CHANNELS = (process.env.BROWSER_CHANNEL || 'msedge,chrome').split(',').map(s => s.trim()).filter(Boolean);
 
 async function context() {
@@ -36,9 +38,17 @@ function scheduleClose() {
   }, 90e3);
 }
 
-// Abre la página, espera a que cargue el precio y devuelve el HTML. Una página a la vez.
+// Como mucho 3 pestañas a la vez, para no cargar el PC ni las tiendas.
+async function slot(fn) {
+  if (active >= MAX_TABS) await new Promise(r => waiting.push(r)); else active++;
+  // Al terminar, la pestaña pasa directamente al siguiente en la cola.
+  try { return await fn(); } finally { const next = waiting.shift(); if (next) next(); else active--; }
+}
+
+// Abre la página, espera a que cargue el precio y devuelve el HTML.
 export function render(url, { waitFor = null, timeout = 30000 } = {}) {
-  const job = queue.then(async () => {
+  return slot(async () => {
+    clearTimeout(idle);
     const ctx = await context();
     const page = await ctx.newPage();
     try {
@@ -51,8 +61,6 @@ export function render(url, { waitFor = null, timeout = 30000 } = {}) {
       scheduleClose();
     }
   });
-  queue = job.catch(() => {});
-  return job;
 }
 
 export async function close() { clearTimeout(idle); const p = ctxPromise; ctxPromise = null; try { (await p)?.close(); } catch {} }

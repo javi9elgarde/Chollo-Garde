@@ -12,9 +12,9 @@ Rastreador de precios de vuelos, videojuegos y productos con análisis de IA y a
 
 **Qué es real y qué no, ahora mismo:**
 
-- **Videojuegos (PC, PS5, PS4, Switch, Xbox): precios reales en euros.**
-  - **Instant Gaming y Eneba** (keys): escribes el nombre y la plataforma y el servidor busca la ficha correcta, descartando DLC, bandas sonoras y keys de otras regiones.
-  - **Cualquier otra tienda** (Amazon, MediaMarkt, Fnac, El Corte Inglés, GAME, Impact…): pegas el enlace del producto y se vigila esa ficha. Se leen los datos que las tiendas publican para Google (schema.org) y, en Amazon, su propia página.
+- **Videojuegos (PC, PS5, PS4, Switch 2, Switch, Xbox): precios reales en euros.**
+  - **Búsqueda automática** en Instant Gaming y Eneba (keys) y en Amazon, MediaMarkt, Fnac, El Corte Inglés, GAME e Impact: escribes el nombre y la plataforma y el servidor elige la ficha correcta (plataforma, edición estándar antes que la de coleccionista, sin DLC, segunda mano, accesorios ni keys de otras regiones). La ficha encontrada se recuerda: en cada ciclo solo se relee su precio, y se vuelve a buscar si deja de valer.
+  - **Enlaces opcionales**: para cualquier otra tienda, o para corregir una búsqueda que haya cogido otra versión (el enlace manda sobre la búsqueda). Se leen los datos que las tiendas publican para Google (schema.org) y, en Amazon, su propia página.
   - **Steam España** (solo PC): precio oficial de referencia, reseñas y compatibilidad con Steam Deck.
   - Las tiendas con protección anti-bots (Amazon, MediaMarkt, Fnac, El Corte Inglés, Eneba) se abren con el **Edge** que ya tienes en Windows, en segundo plano. No hay que instalar nada más.
 - **Productos y vuelos:** todavía sin fuente real. En el panel aparecen como «próximamente».
@@ -80,7 +80,8 @@ backend/src/
   engine.js           Motor: revisa los trackers cada X minutos y dispara las alertas
   games.js            Vertical de videojuegos: junta todas las tiendas y elige el mejor precio
   sources/
-    keyshops.js       Búsqueda en Instant Gaming y Eneba
+    keyshops.js       Búsqueda en Instant Gaming y Eneba, y cómo se elige la versión correcta
+    retail.js         Búsqueda en Amazon, MediaMarkt, Fnac, El Corte Inglés, GAME e Impact
     web.js            Lector de fichas de producto de cualquier tienda
     browser.js        Edge/Chrome en segundo plano para las tiendas protegidas
     shops.js          Nombres y tipos de las tiendas conocidas
@@ -98,9 +99,10 @@ La alerta salta cuando `Precio_Actual <= Precio_Objetivo` y la alerta del tracke
 |---|---|---|
 | GET | `/api/state` | Trackers, alertas, ajustes (sin secretos), estado del motor, logs y fuentes |
 | GET | `/api/stream` | Server-Sent Events: `log`, `tracker`, `tracker-removed`, `alert`, `engine`, `settings` |
-| POST | `/api/fetch-meta` | `{ title, platform, keys, links }` → vista previa con el precio de cada tienda |
+| GET | `/api/shops` | Tiendas con búsqueda automática y plataformas |
+| POST | `/api/fetch-meta` | `{ title, platform, shops, links }` → vista previa con el precio de cada tienda |
 | POST | `/api/trackers` | `{ previewId, target, alert }` (o los mismos campos de la vista previa) → crea el tracker |
-| PATCH | `/api/trackers/:id` | `{ target }`, `{ alert }`, `{ links }` y/o `{ keys }`. Cambiar tiendas lanza una comprobación |
+| PATCH | `/api/trackers/:id` | `{ target }`, `{ alert }`, `{ links }` y/o `{ shops }`. Cambiar tiendas lanza una comprobación |
 | DELETE | `/api/trackers/:id` | Borra el tracker |
 | POST | `/api/trackers/:id/scan` | Rastrea ese tracker ahora |
 | POST | `/api/engine` | `{ action: "start" \| "stop" \| "run" }` |

@@ -1,4 +1,5 @@
-// Prueba de extremo a extremo con tiendas y APIs simuladas (Instant Gaming, Eneba, Amazon, Impact, Fnac, Steam, Telegram, Discord).
+// Prueba de extremo a extremo con tiendas y APIs simuladas (Instant Gaming, Eneba, Amazon, MediaMarkt, Fnac,
+// El Corte Inglés, GAME, Impact, Steam, Telegram y Discord).
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import http from 'node:http';
@@ -6,7 +7,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-const up = { steamEur: 29.5, eneba: 18.2, igDown: false, telegram: [], discord: [] };
+const up = { steamEur: 29.5, eneba: 18.2, igDown: false, telegram: [], discord: [], hits: [] };
 
 const upstream = http.createServer((req, res) => {
   const u = new URL(req.url, 'http://x');
@@ -31,16 +32,28 @@ const upstream = http.createServer((req, res) => {
 // Páginas de las tiendas tal y como las devolvería el navegador.
 const ld = o => `<script type="application/ld+json">${JSON.stringify(o)}</script>`;
 const pages = url => {
+  up.hits.push(url);
+  if (url.includes('instant-gaming.com') && up.igDown) throw new Error('ECONNRESET');
   if (url.startsWith('https://www.instant-gaming.com/es/busquedas/')) {
-    if (up.igDown) throw new Error('ECONNRESET');
     return `<div class="search listing-items">
       <div class="item"><a href="https://www.instant-gaming.com/es/5678-comprar-hades-ii-soundtrack-pc-steam/" title="Hades II - Soundtrack"></a><div class="price">4,99€</div></div>
       <div class="item"><a href="https://www.instant-gaming.com/es/1234-comprar-hades-ii-pc-juego-steam/" title="Hades II"></a><div class="price">19,49€</div></div>
       <div class="item"><a href="https://www.instant-gaming.com/es/9999-comprar-hades-ii-switch/" title="Hades II (Switch)"></a><div class="price">22,99€</div></div></div>`;
   }
+  if (url === 'https://www.instant-gaming.com/es/1234-comprar-hades-ii-pc-juego-steam/') return '<meta property="og:title" content="Comprar Hades II PC Steam"><meta itemprop="price" content="19.49">';
   if (url.startsWith('https://www.eneba.com/es/store/all')) return `<a href="/es/steam-hades-ii-pc-steam-key-united-states">US</a><a href="/es/steam-hades-ii-pc-steam-key-global">Global</a><a href="/es/store/games">Juegos</a>`;
   if (url === 'https://www.eneba.com/es/steam-hades-ii-pc-steam-key-global') return `<title>Hades II</title>` + ld({ '@type': 'Product', name: 'Hades II (PC) Steam Key GLOBAL', offers: { '@type': 'AggregateOffer', lowPrice: up.eneba, priceCurrency: 'EUR', availability: 'https://schema.org/InStock' } });
+  if (url.startsWith('https://www.amazon.es/s?')) return `<div data-component-type="s-search-result"><a class="a-link-normal" href="/Funda-Hades-II/dp/B0FUNDAAAA/ref=sr_1_1"><h2><span>Funda para Hades II PC</span></h2></a></div>
+    <div data-component-type="s-search-result"><a class="a-link-normal" href="/Hades-II-PS5/dp/B0PS5AAAAA/ref=sr_1_2"><h2><span>Hades II - PS5</span></h2></a></div>
+    <div data-component-type="s-search-result"><a class="a-link-normal" href="/Hades-II-Pc/dp/B0PCAAAAAA/ref=sr_1_3"><h2><span>Hades II (PC)</span></h2></a><a href="/Hades-II-Pc/dp/B0PCAAAAAA/ref=sr_1_3?th=1">PC</a></div>`;
   if (url.startsWith('https://www.amazon.es/')) return `<span id="productTitle"> Hades II - PC </span><div id="corePriceDisplay_desktop_feature_div"><span class="a-price"><span class="a-offscreen">24,95&nbsp;€</span></span></div><div id="availability"><span> En stock </span></div>`;
+  if (url.startsWith('https://www.mediamarkt.es/es/search.html')) return `<a href="/es/product/_hades-ii-pc-1234567.html"><p>Hades II PC</p></a><a href="/es/category/videojuegos-pc-123.html">Videojuegos PC</a>`;
+  if (url === 'https://www.mediamarkt.es/es/product/_hades-ii-pc-1234567.html') return ld({ '@type': 'Product', name: 'Hades II PC', offers: { '@type': 'Offer', price: 26.99, priceCurrency: 'EUR' } });
+  if (url.startsWith('https://www.elcorteingles.es/search-nwx/')) return '<div class="no-results">No hemos encontrado resultados</div>';
+  if (url.startsWith('https://www.game.es/buscar/')) return `<a href="https://www.game.es/VIDEOJUEGOS/ROL/PC/HADES-II-SEGUNDA-MANO/231236">HADES II PC Segunda mano</a>
+    <a href="https://www.game.es/VIDEOJUEGOS/ROL/PLAYSTATION-5/HADES-II/231235">HADES II PS5</a><a href="https://www.game.es/VIDEOJUEGOS/ROL/PC/HADES-II/231234">HADES II PC</a>`;
+  if (url === 'https://www.game.es/VIDEOJUEGOS/ROL/PC/HADES-II/231234') return '<meta property="og:title" content="HADES II PC"><meta itemprop="price" content="29,95">';
+  if (url.startsWith('https://impactgame.es/busqueda')) return `<a href="https://impactgame.es/carrito">Carrito</a><a href="https://impactgame.es/pc/9876-hades-ii-pc.html" title="Hades II PC"><img alt="Hades II PC"></a>`;
   if (url.startsWith('https://impactgame.es/')) return ld({ '@context': 'https://schema.org', '@graph': [{ '@type': 'Product', name: 'Hades II PC', image: 'https://impactgame.es/h.jpg', offers: { '@type': 'Offer', price: '17.00', priceCurrency: 'EUR', availability: 'https://schema.org/OutOfStock' } }] });
   if (url.startsWith('https://www.fnac.es/')) return '<html><script src="https://ct.captcha-delivery.com/c.js"></script></html>';
   return null;
@@ -73,7 +86,7 @@ const call = async (method, p, body) => {
 };
 const wait = async (fn, ms = 4000) => { const t = Date.now(); while (!(await fn())) { if (Date.now() - t > ms) throw new Error('timeout'); await new Promise(r => setTimeout(r, 50)); } };
 
-const LINKS = ['https://www.amazon.es/dp/B0TEST1234', 'impactgame.es/hades-ii-pc', 'https://www.fnac.es/a123/Hades-II'];
+const FNAC = 'https://www.fnac.es/a123/Hades-II';
 
 test('estado inicial y ajustes sin secretos', async () => {
   const { body } = await call('GET', '/api/state');
@@ -84,8 +97,8 @@ test('estado inicial y ajustes sin secretos', async () => {
 });
 
 let previewId;
-test('vista previa: busca en Instant Gaming y Eneba, lee los enlaces y elige la tienda más barata', async () => {
-  const { status, body } = await call('POST', '/api/fetch-meta', { title: 'Hades II', platform: 'PC', keys: true, links: LINKS.join('\n') });
+test('vista previa: busca sola en todas las tiendas, elige la versión correcta y la tienda más barata', async () => {
+  const { status, body } = await call('POST', '/api/fetch-meta', { title: 'Hades II', platform: 'PC', links: FNAC });
   assert.equal(status, 200, JSON.stringify(body));
   previewId = body.previewId;
   assert.equal(body.title, 'Hades II');
@@ -97,20 +110,27 @@ test('vista previa: busca en Instant Gaming y Eneba, lee los enlaces y elige la 
   assert.equal(by['Instant Gaming'].price, 19.49, 'descarta la banda sonora');
   assert.match(by['Instant Gaming'].url, /1234-comprar-hades-ii-pc/);
   assert.match(by.Eneba.url, /key-global$/, 'descarta la key de EE. UU.');
+  assert.equal(by.Amazon.url, 'https://www.amazon.es/dp/B0PCAAAAAA', 'ni la funda ni la de PS5');
   assert.equal(by.Amazon.price, 24.95);
+  assert.equal(by.MediaMarkt.price, 26.99);
+  assert.equal(by.GAME.url, 'https://www.game.es/VIDEOJUEGOS/ROL/PC/HADES-II/231234', 'ni segunda mano ni PS5');
+  assert.equal(by.GAME.price, 29.95);
   assert.equal(by.Impact.out, true, 'agotado: no cuenta como mejor precio');
+  assert.match(by['El Corte Inglés'].error, /no ha devuelto productos/);
   assert.match(by.Fnac.error, /captcha/);
+  assert.equal(by.Fnac.auto, undefined, 'el enlace pegado manda sobre la búsqueda');
+  assert.ok(!up.hits.some(u => u.includes('fnac.es/SearchResult')));
   assert.equal(by.Steam.type, 'official');
-  assert.equal(body.stores.at(-1).name, 'Fnac', 'las tiendas con error van al final');
+  assert.ok(['Fnac', 'El Corte Inglés'].includes(body.stores.at(-1).name), 'las tiendas con error van al final');
 });
 
 test('vista previa: errores claros', async () => {
   const none = await call('POST', '/api/fetch-meta', { title: '', keys: true });
   assert.equal(none.status, 400);
-  const ps5 = await call('POST', '/api/fetch-meta', { title: 'Hades II', platform: 'PS5', keys: false });
+  const ps5 = await call('POST', '/api/fetch-meta', { title: 'Hades II', platform: 'PS5', shops: [] });
   assert.equal(ps5.status, 400);
-  assert.match(ps5.body.error, /enlace/);
-  const nothing = await call('POST', '/api/fetch-meta', { title: 'Juego inventado', platform: 'Switch', keys: true });
+  assert.match(ps5.body.error, /tienda/);
+  const nothing = await call('POST', '/api/fetch-meta', { title: 'Juego inventado', platform: 'Switch', shops: ['Instant Gaming'] });
   assert.equal(nothing.status, 400);
   assert.match(nothing.body.error, /Instant Gaming: no encuentro/);
 });
@@ -122,12 +142,12 @@ test('crear tracker, detectar duplicado y rechazar categorías sin fuente', asyn
   id = r.body.id;
   assert.equal(r.body.current, 18.2);
   assert.equal(r.body.platform, 'PC');
-  assert.equal(r.body.links.length, 3);
-  assert.equal(r.body.links[1], 'https://impactgame.es/hades-ii-pc');
+  assert.deepEqual(r.body.links, [FNAC]);
+  assert.equal(r.body.shops.length, 8);
   assert.equal(r.body.deck, 'Verificado');
   assert.equal(r.body.reviews.rating, 4.8);
   assert.equal(r.body.history.length, 1);
-  assert.equal((await call('POST', '/api/trackers', { title: 'hades ii', platform: 'PC', keys: true, target: 10 })).status, 400);
+  assert.equal((await call('POST', '/api/trackers', { title: 'hades ii', platform: 'PC', shops: ['Eneba'], target: 10 })).status, 400);
   assert.equal((await call('POST', '/api/trackers', { cat: 'product', target: 10 })).status, 400);
   const src = (await call('GET', '/api/sources')).body.map(s => s.name);
   assert.ok(src.includes('Amazon') && src.includes('Impact') && src.includes('Instant Gaming'));
@@ -135,6 +155,7 @@ test('crear tracker, detectar duplicado y rechazar categorías sin fuente', asyn
 
 test('el motor actualiza el precio y dispara Telegram y Discord al llegar al objetivo', async () => {
   up.eneba = 14.0;
+  up.hits = [];
   const r = await call('POST', `/api/trackers/${id}/scan`);
   assert.equal(r.status, 200);
   await wait(async () => (await call('GET', '/api/state')).body.alerts.length === 1);
@@ -144,6 +165,9 @@ test('el motor actualiza el precio y dispara Telegram y Discord al llegar al obj
   assert.equal(it.alerted, true);
   assert.equal(it.history.length, 1, 'mismo día: se actualiza el punto, no se duplica');
   assert.match(it.lastError, /Fnac/);
+  // Las fichas ya encontradas no se vuelven a buscar: solo se relee su precio.
+  for (const search of ['instant-gaming.com/es/busquedas', 'eneba.com/es/store', 'amazon.es/s?', 'mediamarkt.es/es/search', 'game.es/buscar', 'impactgame.es/busqueda']) assert.ok(!up.hits.some(u => u.includes(search)), search);
+  assert.ok(up.hits.some(u => u.includes('elcorteingles.es/search')), 'la que no encontró nada se vuelve a buscar');
   assert.deepEqual(body.alerts[0].channels, { web: true, telegram: 'ok', discord: 'ok', email: 'off' });
   assert.equal(up.telegram.at(-1).method, 'sendPhoto');
   assert.match(up.telegram.at(-1).body.caption, /Hades II[\s\S]*Eneba/);
@@ -165,10 +189,11 @@ test('si una tienda falla se conserva su último precio, marcado como antiguo', 
 });
 
 test('cambiar enlaces y objetivo desde la ficha', async () => {
-  const l = await call('PATCH', `/api/trackers/${id}`, { links: [LINKS[0]], keys: false });
-  assert.deepEqual(l.body.links, [LINKS[0]]);
-  assert.equal(l.body.keys, false);
-  await wait(async () => { const t = (await call('GET', '/api/state')).body.trackers[0]; return !t.stores.some(s => s.type === 'key'); });
+  const amazon = 'https://www.amazon.es/dp/B0TEST1234';
+  const l = await call('PATCH', `/api/trackers/${id}`, { links: [amazon], shops: [] });
+  assert.deepEqual(l.body.links, [amazon]);
+  assert.deepEqual(l.body.shops, []);
+  await wait(async () => { const t = (await call('GET', '/api/state')).body.trackers[0]; return t.stores.length === 2 && t.stores.some(s => s.url === amazon); });
   const t = (await call('GET', '/api/state')).body.trackers[0];
   assert.deepEqual(t.stores.map(s => s.name).sort(), ['Amazon', 'Steam']);
   assert.equal(t.current, 24.95);
