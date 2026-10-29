@@ -9,6 +9,7 @@ Rastreador de precios de vuelos, videojuegos y productos con análisis de IA y a
 | 1 · Frontend | Dashboard SPA (Tailwind, Lucide, Chart.js) | Hecha |
 | 2 · Backend | Servidor en tu PC, precios reales de videojuegos, tiempo real y alertas por Telegram, Discord y correo | Hecha (videojuegos) |
 | 3 · IA | Gemini para Deal Index, predicción de compra, reseñas, comparador y copiloto | Hecha (con tu clave de Gemini) |
+| 4 · Vuelos | Rutas y fechas con precio real (Google Flights), fechas flexibles, histórico, alertas y análisis de Gemini | Hecha |
 
 **Qué es real y qué no, ahora mismo:**
 
@@ -17,7 +18,8 @@ Rastreador de precios de vuelos, videojuegos y productos con análisis de IA y a
   - **Enlaces opcionales**: para cualquier otra tienda, o para corregir una búsqueda que haya cogido otra versión (el enlace manda sobre la búsqueda). Se leen los datos que las tiendas publican para Google (schema.org) y, en Amazon, su propia página.
   - **Steam España** (solo PC): precio oficial de referencia, reseñas y compatibilidad con Steam Deck.
   - Las tiendas con protección anti-bots (Amazon, MediaMarkt, Fnac, El Corte Inglés, Eneba) se abren con el **Edge** que ya tienes en Windows, en segundo plano. No hay que instalar nada más.
-- **Productos y vuelos:** todavía sin fuente real. En el panel aparecen como «próximamente».
+- **Vuelos: precios reales en euros de Google Flights** (todas las aerolíneas, sin clave ni cuenta). Ver «Vuelos» más abajo.
+- **Productos:** todavía sin fuente real. En el panel aparecen como «próximamente».
 - **IA con Gemini** (si pones la clave, ver abajo): después de cada revisión de precios, Gemini calcula el Deal Index de cada juego, dice si comprar ya, esperar o si el precio está inflado (con el histórico propio y el precio de cada tienda), y resume los pros y contras de las reseñas (las de Steam en PC; en consola las busca con Google). El Co-Piloto y el comparador 1v1 también responden con Gemini. Sin clave, todo eso sigue funcionando con una heurística local.
 - **Demo:** si abres `frontend/index.html` directamente (sin servidor) ves la demo con 15 trackers de ejemplo y precios simulados.
 
@@ -74,6 +76,18 @@ En PC la referencia es Steam y en PS5 y PS4 la PlayStation Store. Su precio sale
 ### Chollometro
 
 Además de las tiendas, cada juego se busca en Chollometro. Si hay una oferta activa de ese juego y plataforma (de los últimos 45 días, sin caducar), aparece como una tienda más, con la tienda de la oferta, el código de descuento si lo lleva y los grados. Cuenta para el precio actual y para las alertas: si alguien publica el juego por debajo de tu objetivo, te avisa.
+
+### Vuelos
+
+Nuevo tracker → **Vuelo**: origen y destino con su código de aeropuerto de 3 letras (salen sugerencias al escribir: MAD, BCN, LIS…), ida y vuelta o solo ida, fechas, escalas máximas, pasajeros y tu precio objetivo (el total para todos los pasajeros).
+
+- Cada hora se busca en **Google Flights**, la misma búsqueda que harías en su web, en euros y desde España. No necesita clave, cuenta ni navegador, y responde bien desde GitHub.
+- **Fechas flexibles** (±1, ±2 o ±3 días): se buscan también los días de alrededor manteniendo la duración del viaje. El precio actual es el más barato de todos y la ficha enseña el precio de cada día y cuál es el mejor.
+- La ficha también enseña los **mejores vuelos** de ese momento (aerolínea, horario, duración y escalas) y lo que dice Google de la ruta: si los precios están **bajos, normales o altos** para esas fechas. El rango habitual de Google, cuando lo da, es el «precio medio de la ruta»; si no, la mediana del histórico propio.
+- **Alertas** por Telegram, Discord y correo como en los juegos, con la aerolínea, las fechas y el botón para abrir la búsqueda en Google Flights.
+- **Gemini** analiza cada vuelo con su propio prompt: días que faltan para salir, temporada (Navidad, Semana Santa, verano), nivel de precios de Google, calendario de fechas e histórico, y dice si comprar ya o esperar.
+- Google Flights no da el precio de la maleta (depende de la tarifa). Si la aerolínea es low cost (Ryanair, Vueling, easyJet, Wizz Air, Volotea…) la ficha lo avisa: la tarifa básica solo incluye un bolso pequeño.
+- Cuando la fecha de ida ya ha pasado, el tracker deja de rastrearse y sale como «Ya ha salido».
 
 ## Instalación en Windows (alternativa: en tu PC)
 
@@ -180,11 +194,12 @@ npm test       # pruebas de extremo a extremo con las tiendas y APIs simuladas
 - Si una tienda protegida falla a menudo, pon `BROWSER_VISIBLE=1` en `backend/.env`, reinicia y resuelve el captcha una vez en la ventana de Edge: las cookies se guardan en `data/navegador`.
 - Las keys de Instant Gaming y Eneba son de revendedores: revisa región y plataforma antes de comprar.
 - El histórico empieza el día que creas el tracker. Con pocos días, Gemini lo dice y baja la confianza de su recomendación.
+- Google Flights no tiene API pública: se lee su página de resultados. Si Google la cambia, el tracker sale con el error en la ficha y se conserva su último precio hasta que se arregle el lector (`backend/src/sources/flights.js`).
 - Gemini gratis tiene un límite diario: se analiza un juego solo cuando cambia su precio o pasa un día (como mucho 12 por ciclo) y las reseñas una vez por semana. Si se agota, ese ciclo se queda con el análisis anterior.
 
 ## Siguientes pasos
 
 - **eShop y Xbox Store** como referencia oficial en Switch y Xbox (la PS Store ya está).
 - **Productos:** Keepa para Amazon (de pago) y un scraper con navegador para PcComponentes, AliExpress y El Corte Inglés.
-- **Vuelos:** conector para Skyscanner, Google Flights o Kayak.
+- **Vuelos:** precio de la maleta por aerolínea y avisos de rutas desde varios aeropuertos a la vez.
 - **Acceso desde fuera de tu PC** (por ejemplo, para tu hermano): túnel de Cloudflare con contraseña (`DASHBOARD_PASSWORD`), o un VPS/Raspberry con el `docker-compose.yml` incluido.

@@ -1,10 +1,11 @@
 // CholloGarde en GitHub: GitHub Actions ejecuta este script cada hora (ciclo de precios) y cuando
 // el panel publicado en GitHub Pages pide algo (crear, editar o borrar un tracker, probar alertas…).
 // Lee y guarda los datos en DATA_DIR/db.json, que el workflow sube a la rama «datos».
-//   node src/cli.js <accion> [json]     acciones: ciclo, crear, editar, borrar, escanear, analizar, probar
+//   node src/cli.js <accion> [json]     acciones: ciclo, crear, editar, borrar, escanear, analizar, probar (y probar-vuelo, diagnostico)
 //   node src/cli.js pc                  (runner del PC, CG_MODO=pc) solo guarda pc.json
 import * as store from './store.js';
 import * as games from './games.js';
+import * as vuelos from './vuelos.js';
 import * as actions from './actions.js';
 import { engine } from './engine.js';
 import { bus } from './bus.js';
@@ -68,6 +69,12 @@ async function run() {
       for (const it of list) pc.set(it.id, await games.pcQuote(it));
       pc.save(db.trackers.map(t => t.id));
       return `${list.length} tracker${list.length === 1 ? '' : 's'} revisados desde tu PC`;
+    }
+    case 'probar-vuelo': {
+      // Solo para depurar: busca un vuelo como al crear el tracker y escribe en el registro lo que ha encontrado (no guarda nada).
+      const v = await vuelos.preview(datos);
+      console.log(JSON.stringify({ precio: v.price, mejor: { ida: v.best.depart, vuelta: v.best.ret, url: v.best.url, ...v.best.flight, label: undefined }, nivel: v.level, habitual: v.typical, calendario: v.calendar, opciones: v.options }, null, 1));
+      return `vuelo de prueba: ${v.price} €`;
     }
     case 'diagnostico':
       // Solo para depurar tiendas: abre cada dirección y escribe en el registro del workflow qué ha visto.

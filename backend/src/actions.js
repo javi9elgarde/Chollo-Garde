@@ -1,6 +1,7 @@
 // Operaciones sobre los trackers, compartidas por el servidor (panel en tu PC) y por la versión de GitHub.
 import * as store from './store.js';
 import * as games from './games.js';
+import * as vuelos from './vuelos.js';
 import { norm } from './sources/keyshops.js';
 import { bus, log } from './bus.js';
 import { dispatch } from './notify/index.js';
@@ -15,12 +16,13 @@ export class NotFound extends games.UserError {}
 
 // Crea el tracker. Devuelve el tracker y `notify`, que manda la alerta si ya está por debajo del objetivo.
 export async function addTracker(b = {}) {
-  if (b.cat && b.cat !== 'game') throw new games.UserError('De momento solo hay fuente real para videojuegos. Productos y vuelos llegarán en las próximas fases.');
-  const it = await games.createTracker(b);
-  const key = t => `${norm(t.title)}|${t.platform || 'PC'}`;
-  const dup = db().trackers.find(t => t.cat === 'game' && t.live && key(t) === key(it));
-  if (dup) throw new games.UserError(`Ya sigues «${dup.title}». Cambia su objetivo desde su ficha.`);
-  await games.addArt(it);
+  if (b.cat && b.cat !== 'game' && b.cat !== 'flight') throw new games.UserError('De momento hay fuente real para videojuegos y vuelos. Los productos llegarán en una próxima fase.');
+  const flight = b.cat === 'flight';
+  const it = await (flight ? vuelos.createTracker(b) : games.createTracker(b));
+  const key = t => (flight ? `${t.origin}|${t.dest}|${t.depart}|${t.ret || ''}|${t.maxStops ?? ''}|${t.adults || 1}` : `${norm(t.title)}|${t.platform || 'PC'}`);
+  const dup = db().trackers.find(t => t.cat === it.cat && t.live && !t.expired && key(t) === key(it));
+  if (dup) throw new games.UserError(flight ? `Ya sigues ${dup.title} para esas fechas. Cambia su objetivo desde su ficha.` : `Ya sigues «${dup.title}». Cambia su objetivo desde su ficha.`);
+  if (!flight) await games.addArt(it);
   db().trackers.unshift(it);
   store.save();
   log('ok', 'api', `tracker creado: «${it.title}» · objetivo ${it.target} €`);
@@ -41,8 +43,9 @@ export function editTracker(id, b = {}) {
     fire = true;
   }
   if (b.alert !== undefined) { it.alert = !!b.alert; if (it.alert) { it.alerted = false; fire = true; } }
-  const rescan = it.cat === 'game' && it.live && (b.links !== undefined || b.shops !== undefined || b.reject !== undefined);
+  let rescan = it.cat === 'game' && it.live && (b.links !== undefined || b.shops !== undefined || b.reject !== undefined);
   if (rescan) { games.updateSources(it, b); log('info', 'api', `«${it.title}»: tiendas actualizadas, comprobando precios`); }
+  if (it.cat === 'flight' && it.live && vuelos.updateSpec(it, b)) { rescan = true; log('info', 'api', `${it.title}: fechas o filtros cambiados, buscando vuelos`); }
   store.save();
   bus.emit('event', 'tracker', it);
   const notify = async () => { if (!rescan && fire && it.alert && it.current <= it.target) { it.alerted = true; store.save(); await dispatch(it); } };
@@ -75,6 +78,7 @@ export function sourceRows() {
     row('El Corte Inglés', 'navegador', 'Búsqueda automática', 'www.elcorteingles.es'),
     row('GAME', 'búsqueda', 'Búsqueda automática', 'www.game.es'),
     row('Impact', 'búsqueda', 'Búsqueda automática', 'impactgame.es'),
+    row('Google Flights', 'búsqueda', 'Vuelos · todas las aerolíneas', 'www.google.com'),
     row('Chollometro', 'búsqueda', 'Ofertas de la comunidad', 'www.chollometro.com'),
     row('Steam España', 'API web', 'Precio oficial de PC, reseñas, Steam Deck', new URL(config.steamStoreBase).hostname)
   ];

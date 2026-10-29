@@ -367,11 +367,11 @@ const officialStore = it => it.stores.find(s => s.type === 'official' && s.price
 const bestOf = it => it.cat === 'product' ? bestSeller(it) : bestStore(it);
 const offerUrl = (it, s) => s.url || (it.userUrl && it.url && s.name === it.fetchedFrom ? it.url : storeUrl(s.name, it.query || it.title));
 function buyUrl(it) {
-  if (it.cat === 'flight') return flightUrl(it);
+  if (it.cat === 'flight') return it.live && it.url ? it.url : flightUrl(it);
   return offerUrl(it, bestOf(it));
 }
 const isSearch = it => it.cat !== 'flight' && !bestOf(it).url && !(it.userUrl && bestOf(it).name === it.fetchedFrom);
-const buyStore = it => it.cat === 'flight' ? 'Skyscanner' : it.cat === 'product' ? bestSeller(it).name : bestStore(it).name;
+const buyStore = it => it.cat === 'flight' ? (it.live ? 'Google Flights' : 'Skyscanner') : it.cat === 'product' ? bestSeller(it).name : bestStore(it).name;
 const refPrice = it => it.cat === 'product' ? it.pvp : it.cat === 'game' ? it.msrp : it.routeAvg;
 // Puntos anteriores al precio actual (+ el mínimo histórico guardado por la versión anterior, si lo hay).
 const pastPts = it => { const p = it.history.slice(0, -1); if (it.atlEver) p.push(it.atlEver); return p; };
@@ -385,7 +385,11 @@ function subtitle(it) {
   return `${it.category} · mejor en ${bestSeller(it).name}`;
 }
 const approx = s => s && s.approx ? '≈ ' : '';
-const durTxt = m => `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, '0')} min`;
+const durTxt = m => m ? `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, '0')} min` : '—';
+// Equipaje: los vuelos reales no traen el precio de la maleta (depende de la tarifa); los de la demo, sí.
+const bagFee = x => x.baggage && x.baggage.hold === false && x.baggage.holdFee ? x.baggage.holdFee : 0;
+const bagTxt = x => !x.baggage ? '—' : x.baggage.hold ? 'Incluida' : x.baggage.holdFee ? `+${eur(x.baggage.holdFee, 0)}` : x.baggage.lowcost ? 'Aparte (low cost)' : 'Según la tarifa';
+const bagShort = x => !x.baggage ? '' : x.baggage.hold ? 'Maleta incl.' : x.baggage.hold === false ? 'Solo mano' : x.baggage.lowcost ? 'Low cost' : 'Ver equipaje';
 
 /* =====================================================================
    CG.ai · capa de IA (Fase 3: Gemini).
@@ -439,7 +443,8 @@ const AI = {
       minimo_historico: a.atl, precio_habitual: Math.round(a.baseline * 100) / 100, precio_referencia: refPrice(t) || null, dias_de_historico: new Set(t.history.map(h => isoLocal(new Date(h.t)))).size,
       deal_index: a.score, recomendacion: VERD[a.verdict].label, motivos: a.reasons,
       ...(t.reviews && t.reviews.pros && t.reviews.pros.length && { pros: t.reviews.pros, contras: t.reviews.cons }), ...(t.reviews && t.reviews.rating != null && { valoracion: t.reviews.rating }),
-      ...(t.specs && Object.keys(t.specs).length && { ficha: t.specs }) };
+      ...(t.specs && Object.keys(t.specs).length && { ficha: t.specs }),
+      ...(t.cat === 'flight' && { vuelo: { ruta: `${t.origin} → ${t.dest}`, ida: t.bestDepart || t.depart, vuelta: t.bestRet || t.ret || null, aerolinea: t.airline, escalas: t.stops, via: t.via || null, duracion_min: t.durMin, pasajeros: t.adults || 1, nivel_google: t.priceLevel || null, rango_habitual: t.typical || null, low_cost: !!(t.baggage && t.baggage.lowcost) } }) };
   },
   context(ctx) {
     const out = { hoy: isoLocal(new Date()), trackers: state.trackers.slice(0, 40).map(t => this.row(t)) };
@@ -525,15 +530,16 @@ const AI = {
     row('Recomendación', VERD[A.verdict].label, VERD[B.verdict].label, '');
     let verdict = '';
     if (a.cat === 'flight' && b.cat === 'flight') {
-      const ta = a.current + (a.baggage.hold ? 0 : a.baggage.holdFee), tb = b.current + (b.baggage.hold ? 0 : b.baggage.holdFee);
+      const ta = a.current + bagFee(a), tb = b.current + bagFee(b);
       row('Escalas', a.stops ? `${a.stops} (${a.via})` : 'Directo', b.stops ? `${b.stops} (${b.via})` : 'Directo', a.stops < b.stops ? 'a' : a.stops > b.stops ? 'b' : '=');
       row('Duración', durTxt(a.durMin), durTxt(b.durMin), a.durMin < b.durMin ? 'a' : 'b');
-      row('Maleta facturada', a.baggage.hold ? 'Incluida' : `+${eur(a.baggage.holdFee, 0)}`, b.baggage.hold ? 'Incluida' : `+${eur(b.baggage.holdFee, 0)}`, a.baggage.hold && !b.baggage.hold ? 'a' : b.baggage.hold && !a.baggage.hold ? 'b' : '=');
-      row('Precio con maleta', eur(ta, 0), eur(tb, 0), ta < tb ? 'a' : 'b');
-      row('Valoración aerolínea', a.reviews.rating + ' / 5', b.reviews.rating + ' / 5', a.reviews.rating > b.reviews.rating ? 'a' : 'b');
+      row('Maleta facturada', bagTxt(a), bagTxt(b), a.baggage && b.baggage && a.baggage.hold && !b.baggage.hold ? 'a' : a.baggage && b.baggage && b.baggage.hold && !a.baggage.hold ? 'b' : '=');
+      if (bagFee(a) || bagFee(b)) row('Precio con maleta', eur(ta, 0), eur(tb, 0), ta < tb ? 'a' : 'b');
+      if (rating(a) != null && rating(b) != null) row('Valoración aerolínea', rating(a) + ' / 5', rating(b) + ' / 5', rating(a) > rating(b) ? 'a' : 'b');
       const cheap = ta <= tb ? a : b, fast = a.durMin <= b.durMin ? a : b;
       const saving = Math.abs(ta - tb), extra = Math.abs(a.durMin - b.durMin);
       verdict = cheap === fast ? `${cheap.title} gana en precio y en tiempo. No hay dilema.`
+        : !(bagFee(a) || bagFee(b)) && (a.live || b.live) ? `${cheap.title} (${cheap.airline}) es ${eur(saving, 0)} más barato, pero tarda ${durTxt(extra)} más. ${a.baggage && a.baggage.lowcost || b.baggage && b.baggage.lowcost ? 'Ojo: en las low cost la maleta se paga aparte, compáralo con equipaje antes de decidir.' : 'Comprueba qué equipaje incluye cada tarifa antes de decidir.'}`
         : `Con maleta incluida, ${cheap.airline} ahorra ${eur(saving, 0)} a cambio de ${durTxt(extra)} más de viaje (unos ${eur(saving / (extra / 60), 0)} por cada hora extra). Si tu hora vale menos que eso o viajas con maleta, elige el de escala; si vas solo con mochila, el directo de ${fast.airline} compensa.`;
     } else if (a.cat === 'product' && b.cat === 'product') {
       const keys = [...new Set([...Object.keys(a.specs || {}), ...Object.keys(b.specs || {})])].filter(k => k !== 'Precio por GB');
@@ -590,6 +596,7 @@ const AI = {
       return `Deal Index de **${it.title}: ${a.score}/100**. ${a.inflated ? 'Detecto inflado de precio: ' : 'No detecto inflado de precio. '}${a.reasons.slice(0, 3).join(' ')}`;
     }
     if (it.cat === 'flight' && /escala|equipaje|maleta|directo|aerol/.test(s)) {
+      if (it.live) return `${it.title} con ${it.airline}: ${it.stops ? `${it.stops} escala${it.stops > 1 ? 's' : ''}${it.via ? ` en ${it.via}` : ''}` : 'vuelo directo'}, ${durTxt(it.durMin)}. ${it.baggage && it.baggage.lowcost ? 'Es low cost: la tarifa más barata solo incluye un bolso pequeño, la maleta se paga aparte.' : 'Google Flights no da el precio de la maleta: mira qué incluye la tarifa al reservar.'}${it.baggage && !it.baggage.cabin ? ' Esta tarifa no deja subir la maleta de mano al compartimento superior.' : ''}`;
       return `${it.title} con ${it.airline}: ${it.stops ? `${it.stops} escala en ${it.via}` : 'vuelo directo'}, ${durTxt(it.durMin)}. Maleta facturada ${it.baggage.hold ? 'incluida' : `no incluida (+${eur(it.baggage.holdFee, 0)})`}. Precio total con maleta: ${eur(it.current + (it.baggage.hold ? 0 : it.baggage.holdFee), 0)}.`;
     }
     return `**${it.title}** · ${money(it)} en ${buyStore(it)}. Deal Index ${a.score}/100 → **${VERD[a.verdict].label}**.\n${a.reasons.slice(0, 2).join(' ')}${firstPro(it) ? `\nLo mejor según los usuarios: ${firstPro(it).toLowerCase()}. Lo peor: ${firstPro(it, 'cons').toLowerCase()}.` : rating(it) != null ? `\nValoración en ${it.reviews.src}: ${rating(it)}/5.` : ''}`;
@@ -876,7 +883,7 @@ const GH = { on: false, owner: null, repo: null, pending: new Map(), seenAlerts:
     state.settings.canales = s.settings.canales;
     state.settings.ai = s.settings.ai;
     renderBadge();
-    if (['dashboard', 'juegos', 'ajustes'].includes(ui.view)) render();
+    if (['dashboard', 'juegos', 'vuelos', 'ajustes'].includes(ui.view)) render();
     if (this.pending.size) this.schedule(20e3);
   },
   schedule(ms) { clearTimeout(this.soon); this.soon = setTimeout(() => this.poll(), ms); },
@@ -893,7 +900,7 @@ const GH = { on: false, owner: null, repo: null, pending: new Map(), seenAlerts:
     if (!r.ok) throw new Error(`GitHub respondió ${r.status}`);
     this.pending.set(reqId, { accion, ...meta });
     engine.busy = true; renderEngineStatus(); tickLive();
-    if (['dashboard', 'juegos'].includes(ui.view)) render();
+    if (['dashboard', 'juegos', 'vuelos'].includes(ui.view)) render();
     this.schedule(45e3);
     return reqId;
   },
@@ -928,6 +935,9 @@ const GH = { on: false, owner: null, repo: null, pending: new Map(), seenAlerts:
     }
     if (m && method === 'DELETE') { await this.dispatch('borrar', { id: m[1] }, { label: `Borrando «${it ? it.title : ''}»`, okTitle: 'Tracker eliminado', okBody: () => esc(it ? it.title : '') }); return { ok: true }; }
     throw new Error('Esto no está disponible en la versión de GitHub.');
+  },
+  async createFlight(spec, route) {
+    await this.dispatch('crear', spec, { label: `Buscando vuelos ${route} en Google Flights`, okTitle: 'Tracker creado', okBody: (db, a) => { const t = (db.trackers || []).find(x => x.id === a.trackerId); return t ? `${esc(t.title)} · ${eur(t.current, 0)} con ${esc(t.airline)}` : ''; }, errTitle: `No se pudo crear ${route}` });
   },
   // Nuevo tracker: GitHub lo busca en las tiendas y aparece aquí en unos minutos.
   async create(spec) {
@@ -1125,7 +1135,7 @@ function card(it) {
         </div>
         ${spark(it)}
       </div>
-      <div class="flex flex-wrap items-center gap-1.5">${dealChip(a)}${verdPill(a)}${coupons ? `<span class="inline-flex items-center gap-1 rounded-md border border-ink-500 px-2 py-0.5 text-[12px] text-fg"><i data-lucide="ticket" class="w-3.5 h-3.5 text-gold"></i>${coupons} cupón${coupons > 1 ? 'es' : ''}</span>` : ''}${it.cat === 'game' && it.deck && it.deck !== 'No compatible' ? `<span class="inline-flex items-center gap-1 rounded-md border border-ink-500 px-2 py-0.5 text-[12px] text-mute"><i data-lucide="circle-check" class="w-3.5 h-3.5 text-good"></i>Deck</span>` : ''}${it.cat === 'flight' ? `<span class="inline-flex items-center gap-1 rounded-md border border-ink-500 px-2 py-0.5 text-[12px] text-mute"><i data-lucide="luggage" class="w-3.5 h-3.5"></i>${it.baggage.hold ? 'Maleta incl.' : 'Solo mano'}</span>` : ''}</div>
+      <div class="flex flex-wrap items-center gap-1.5">${dealChip(a)}${verdPill(a)}${coupons ? `<span class="inline-flex items-center gap-1 rounded-md border border-ink-500 px-2 py-0.5 text-[12px] text-fg"><i data-lucide="ticket" class="w-3.5 h-3.5 text-gold"></i>${coupons} cupón${coupons > 1 ? 'es' : ''}</span>` : ''}${it.cat === 'game' && it.deck && it.deck !== 'No compatible' ? `<span class="inline-flex items-center gap-1 rounded-md border border-ink-500 px-2 py-0.5 text-[12px] text-mute"><i data-lucide="circle-check" class="w-3.5 h-3.5 text-good"></i>Deck</span>` : ''}${it.cat === 'flight' ? `<span class="inline-flex items-center gap-1 rounded-md border border-ink-500 px-2 py-0.5 text-[12px] text-mute"><i data-lucide="luggage" class="w-3.5 h-3.5"></i>${bagShort(it)}</span>${it.expired ? '<span class="inline-flex items-center gap-1 rounded-md border border-ink-500 px-2 py-0.5 text-[12px] text-dim">Ya ha salido</span>' : ''}` : ''}</div>
       <div class="mt-auto">
         <div class="flex justify-between text-[12px] tnum"><span class="${reached ? 'text-good font-medium' : 'text-mute'}">${reached ? 'Objetivo alcanzado' : `Faltan ${money(it, gap)}`}</span><span class="text-dim">objetivo ${money(it, it.target)}</span></div>
         <div class="h-1.5 rounded-full bg-ink-700 mt-1.5 overflow-hidden"><div class="h-full rounded-full ${reached ? 'bg-good' : 'bg-gold'}" style="width:${prog}%"></div></div>
@@ -1252,13 +1262,14 @@ function viewGrid(catKey) {
   if (catKey === 'flight') extra = flightTable();
   if (catKey === 'game') extra = gameTable();
   if (catKey === 'product') extra = couponList();
-  if (LIVE.on && (catKey === 'flight' || catKey === 'product')) extra = `<section class="rounded-2xl border border-ai/25 bg-ai/[.05] p-4 flex gap-3 text-[13px]"><i data-lucide="construction" class="w-5 h-5 text-ai shrink-0"></i><div><div class="font-medium text-fg">${catKey === 'flight' ? 'Vuelos' : 'Productos'}: próximamente con precios reales</div><p class="text-mute mt-1">La primera fuente real son los videojuegos (Instant Gaming, Eneba, Amazon, MediaMarkt, Fnac, El Corte Inglés, GAME e Impact). ${catKey === 'flight' ? 'Los vuelos necesitan un conector propio (Skyscanner, Google Flights o Kayak).' : 'Amazon necesita Keepa (de pago) y PcComponentes, AliExpress y El Corte Inglés un scraper con navegador.'} Puedes ver cómo quedará abriendo <span class="font-mono">frontend/index.html</span> directamente, en modo demo.</p></div></section>`;
+  if (LIVE.on && catKey === 'flight' && !state.trackers.some(t => t.cat === 'flight')) extra = `<section class="rounded-2xl border border-ai/25 bg-ai/[.05] p-4 flex gap-3 text-[13px]"><i data-lucide="plane" class="w-5 h-5 text-ai shrink-0"></i><div><div class="font-medium text-fg">Vuelos con precio real</div><p class="text-mute mt-1">Elige ruta y fechas y cada hora se busca en Google Flights (todas las aerolíneas, precio total en euros). Con fechas flexibles se miran también los días de alrededor y te avisa del más barato.</p><button data-action="new" data-cat="flight" class="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-gold text-ink-950 font-semibold px-3 py-1.5 text-[12px]"><i data-lucide="plus" class="w-4 h-4"></i>Seguir un vuelo</button></div></section>`;
+  if (LIVE.on && catKey === 'product') extra = `<section class="rounded-2xl border border-ai/25 bg-ai/[.05] p-4 flex gap-3 text-[13px]"><i data-lucide="construction" class="w-5 h-5 text-ai shrink-0"></i><div><div class="font-medium text-fg">Productos: próximamente con precios reales</div><p class="text-mute mt-1">Ya hay fuente real para videojuegos (Instant Gaming, Eneba, Amazon, MediaMarkt, Fnac, El Corte Inglés, GAME e Impact) y vuelos (Google Flights). Amazon necesita Keepa (de pago) y PcComponentes, AliExpress y El Corte Inglés un scraper con navegador. Puedes ver cómo quedará abriendo <span class="font-mono">frontend/index.html</span> directamente, en modo demo.</p></div></section>`;
   const now = new Date();
   return `<div class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
     <div class="flex flex-col gap-5 min-w-0">
       <div class="flex flex-wrap items-end gap-3 justify-between">
         <div><p class="label">${isDash ? now.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' }) : 'Vertical'}</p><h1 class="font-display font-extrabold text-[30px] sm:text-[34px] leading-tight tracking-tight mt-1">${isDash ? 'Tus chollos, vigilados 24/7' : n.label}</h1></div>
-        ${LIVE.on ? '<span class="inline-flex items-center gap-1.5 text-[12px] text-good border border-good/30 rounded-lg px-2.5 py-1"><i data-lucide="radio" class="w-3.5 h-3.5"></i>Precios reales · 8 tiendas</span>' : '<span class="inline-flex items-center gap-1.5 text-[12px] text-mute border border-ink-600 rounded-lg px-2.5 py-1"><i data-lucide="flask-conical" class="w-3.5 h-3.5"></i>Datos simulados · demo</span>'}
+        ${LIVE.on ? `<span class="inline-flex items-center gap-1.5 text-[12px] text-good border border-good/30 rounded-lg px-2.5 py-1"><i data-lucide="radio" class="w-3.5 h-3.5"></i>Precios reales · ${catKey === 'flight' ? 'Google Flights' : isDash ? '8 tiendas y Google Flights' : '8 tiendas'}</span>` : '<span class="inline-flex items-center gap-1.5 text-[12px] text-mute border border-ink-600 rounded-lg px-2.5 py-1"><i data-lucide="flask-conical" class="w-3.5 h-3.5"></i>Datos simulados · demo</span>'}
       </div>
       ${isDash ? kpis() + featured() : ''}
       ${GH.on ? ghPendingHtml() : ''}
@@ -1271,6 +1282,7 @@ function viewGrid(catKey) {
 }
 function flightTable() {
   const F = state.trackers.filter(t => t.cat === 'flight');
+  if (!F.length) return '';
   return `<section class="rounded-2xl bg-ink-800/70 border border-ink-600/80 overflow-hidden"><div class="px-4 pt-4 pb-2 flex items-center gap-2"><i data-lucide="route" class="w-4 h-4 text-ai"></i><h2 class="font-display font-bold text-[15px]">Rutas frente a su promedio histórico</h2></div>
   <div class="overflow-x-auto"><table class="w-full text-[13px] tnum min-w-[640px]"><thead><tr class="text-left text-mute border-b border-ink-600"><th class="font-medium px-4 py-2">Ruta</th><th class="font-medium px-4 py-2">Fechas</th><th class="font-medium px-4 py-2">Aerolínea</th><th class="font-medium px-4 py-2 text-right">Actual</th><th class="font-medium px-4 py-2 text-right">Media ruta</th><th class="font-medium px-4 py-2 text-right">Diferencia</th></tr></thead>
   <tbody>${F.map(t => `<tr class="border-b border-ink-700 last:border-0 hover:bg-ink-700/40 cursor-pointer" data-action="open" data-id="${t.id}"><td class="px-4 py-2.5 font-mono">${t.origin} → ${t.dest}</td><td class="px-4 py-2.5 text-mute">${fmtDate(t.depart)}${t.ret ? ' – ' + fmtDate(t.ret) : ' (ida)'}</td><td class="px-4 py-2.5">${esc(t.airline)}</td><td class="px-4 py-2.5 text-right font-medium">${money(t)}</td><td class="px-4 py-2.5 text-right text-mute">${money(t, t.routeAvg)}</td><td class="px-4 py-2.5 text-right ${t.current < t.routeAvg ? 'text-good' : 'text-bad'}">${pct(t.current / t.routeAvg - 1)}</td></tr>`).join('')}</tbody></table></div></section>`;
@@ -1536,7 +1548,7 @@ function drawerBody(it, a) {
         <button data-action="ask" data-id="${it.id}" class="inline-flex items-center gap-1.5 rounded-xl border border-ai/40 text-ai px-3 py-2.5 text-[13px] hover:bg-ai/10"><i data-lucide="bot" class="w-4 h-4"></i>Preguntar</button>
         <button data-action="compare" data-id="${it.id}" class="inline-flex items-center gap-1.5 rounded-xl border border-ink-500 px-3 py-2.5 text-[13px] hover:border-ai/60"><i data-lucide="scale" class="w-4 h-4"></i>Comparar</button>
       </div>
-      <p class="text-[12px] text-dim -mt-1">${it.live ? `Abre la ficha del juego en ${esc(bestOf(it).name)}.` : isSearch(it) ? 'Datos simulados: abre la búsqueda del producto en la tienda. Con un scraper real este botón irá directo a la ficha exacta.' : 'Abre la oferta directamente en la tienda, sin intermediarios ni enlaces de afiliado.'}</p>
+      <p class="text-[12px] text-dim -mt-1">${it.live && it.cat === 'flight' ? `Abre la búsqueda en Google Flights con ${it.bestDepart && it.bestDepart !== it.depart ? 'tus fechas' : 'estas fechas'}; allí eliges vuelo y tarifa.` : it.live ? `Abre la ficha del juego en ${esc(bestOf(it).name)}.` : isSearch(it) ? 'Datos simulados: abre la búsqueda del producto en la tienda. Con un scraper real este botón irá directo a la ficha exacta.' : 'Abre la oferta directamente en la tienda, sin intermediarios ni enlaces de afiliado.'}</p>
     </header>
 
     <section class="rounded-2xl bg-ink-800/70 border border-ink-600/80 p-4">
@@ -1585,16 +1597,17 @@ function aiBlock(it, a) {
       <ul class="mt-3 flex flex-col gap-2 text-[13px] leading-relaxed">${a.reasons.map(x => `<li class="flex gap-2"><i data-lucide="chevron-right" class="w-4 h-4 text-ai shrink-0 mt-0.5"></i><span>${esc(x)}</span></li>`).join('')}</ul>
     </div>
   </div>
-  <div class="mt-5 pt-4 border-t border-ink-600/70">
+  ${it.cat === 'flight' && it.live ? '' : `<div class="mt-5 pt-4 border-t border-ink-600/70">
     <div class="flex flex-wrap items-center gap-2 mb-3"><h4 class="font-medium text-[14px]">Opiniones de usuarios</h4>${r.rating != null ? `<span class="inline-flex items-center gap-1 text-[12px] text-gold tnum"><i data-lucide="star" class="w-3.5 h-3.5"></i>${r.rating} / 5</span>` : ''}<span class="text-[12px] text-mute">· ${r.n ? r.n.toLocaleString('es-ES') + ' reseñas · ' : ''}${esc(r.src)}</span></div>
     ${!r.pros.length ? `<p class="text-[13px] text-mute">${!it.live ? 'Sin reseñas en este ejemplo.' : gOn ? 'Gemini resumirá los pros y contras en uno de los próximos ciclos.' : 'Con Gemini configurado verás aquí un resumen de pros y contras de las reseñas.'}</p>` : ''}
     <div class="grid sm:grid-cols-2 gap-3">
       <ul class="flex flex-col gap-1.5 text-[13px]">${r.pros.map(p => `<li class="flex gap-2"><i data-lucide="thumbs-up" class="w-4 h-4 text-good shrink-0 mt-0.5"></i><span>${esc(p)}</span></li>`).join('')}</ul>
       <ul class="flex flex-col gap-1.5 text-[13px]">${r.cons.map(p => `<li class="flex gap-2"><i data-lucide="thumbs-down" class="w-4 h-4 text-bad shrink-0 mt-0.5"></i><span>${esc(p)}</span></li>`).join('')}</ul>
     </div>
-  </div>`;
+  </div>`}`;
 }
 function flightBlock(it) {
+  if (it.live) return flightBlockLive(it);
   const start = pd(it.depart); start.setDate(start.getDate() - ((start.getDay() + 6) % 7) - 7);
   const r = rng(it.id + ':m'), W = [.98, .9, .92, 1.02, 1.15, 1.08, 1.12];
   const cells = [];
@@ -1615,6 +1628,27 @@ function flightBlock(it) {
       <p class="text-[12px] text-mute mt-3">Día más barato: <span class="text-good">${fmtDateL(cheapest.d)} · ${eur(cheapest.p, 0)}</span>. El borde dorado marca tu fecha.</p></div>
     <div class="rounded-2xl bg-ink-800/70 border border-ink-600/80 p-4"><h3 class="font-display font-bold text-[15px] mb-1">Detalles del vuelo</h3><div class="grid sm:grid-cols-2 sm:gap-x-6">
       ${kv('Aerolínea', esc(it.airline))}${kv('Escalas', it.stops ? `${it.stops} · ${esc(it.via)}` : 'Directo')}${kv('Máx. escalas', it.maxStops)}${kv('Duración', durTxt(it.durMin))}${kv('Ida', fmtDateL(it.depart))}${kv('Vuelta', it.ret ? fmtDateL(it.ret) : 'Solo ida')}${kv('Equipaje de mano', it.baggage.cabin ? '<span class="text-good">Incluido</span>' : 'No')}${kv('Maleta facturada', it.baggage.hold ? '<span class="text-good">Incluida</span>' : `<span class="text-warn">+${eur(it.baggage.holdFee, 0)}</span>`)}${kv('Fuentes', 'Skyscanner, Google Flights, Kayak')}</div></div>
+  </section>`;
+}
+const LEVEL = { low: ['bajos', 'text-good'], typical: ['normales', 'text-mute'], high: ['altos', 'text-bad'] };
+const fdate = iso => pd(iso).toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' });
+function flightBlockLive(it) {
+  const kv = (k, v) => `<div class="flex justify-between gap-3 py-2 border-b border-ink-700 last:border-0 text-[13px]"><span class="text-mute">${k}</span><span class="text-right">${v}</span></div>`;
+  const cal = (it.calendar || []), priced = cal.filter(c => c.price), mn = priced.length ? Math.min(...priced.map(c => c.price)) : 0, mx = priced.length ? Math.max(...priced.map(c => c.price)) : 0;
+  const col = p => { const k = (p - mn) / ((mx - mn) || 1); return `hsl(${Math.round(140 - k * 120)} 45% ${22 + (1 - k) * 6}%)`; };
+  const lv = LEVEL[it.priceLevel];
+  const calHtml = cal.length > 1 ? `<div class="rounded-2xl bg-ink-800/70 border border-ink-600/80 p-4 min-w-0"><div class="flex items-center gap-2 mb-3"><i data-lucide="calendar" class="w-4 h-4 text-mute"></i><h3 class="font-display font-bold text-[15px]">Precio por fecha de salida</h3><span class="text-[11px] text-mute ml-auto">±${it.flex} día${it.flex > 1 ? 's' : ''}${it.ret ? ' · misma duración' : ''}</span></div>
+      <div class="grid grid-cols-[repeat(auto-fill,minmax(92px,1fr))] gap-1.5">${cal.map(c => `<div class="rounded-lg px-2 py-1.5 text-center ${c.depart === it.depart ? 'ring-2 ring-gold' : c.price === mn ? 'ring-1 ring-good' : ''}" style="background:${c.price ? col(c.price) : '#151D31'}" title="${c.error ? esc(c.error) : c.airline ? esc(c.airline) : ''}"><div class="text-[11px] text-white/75">${fdate(c.depart)}</div><div class="text-[13px] font-medium tnum ${c.price ? 'text-white' : 'text-dim'}">${c.price ? eur(c.price, 0) : c.error ? 'error' : 'sin vuelos'}</div></div>`).join('')}</div>
+      <p class="text-[12px] text-mute mt-3">${it.bestDepart && it.bestDepart !== it.depart ? `Más barato saliendo el <span class="text-good">${fmtDateL(pd(it.bestDepart))}</span>${it.bestRet ? ` y volviendo el ${fmtDateL(pd(it.bestRet))}` : ''}: ${eur(mn, 0)}.` : 'Tu fecha es la más barata de las que se miran.'} El borde dorado marca tu fecha.</p></div>` : '';
+  const opts = (it.options || []).length ? `<div class="rounded-2xl bg-ink-800/70 border border-ink-600/80 overflow-hidden"><div class="px-4 pt-4 pb-2 flex items-center gap-2"><i data-lucide="plane-takeoff" class="w-4 h-4 text-mute"></i><h3 class="font-display font-bold text-[15px]">Mejores vuelos ahora</h3><span class="text-[11px] text-mute ml-auto">${it.bestDepart ? fdate(it.bestDepart) : ''}${it.bestRet ? ' – ' + fdate(it.bestRet) : ''}</span></div>
+      <ul class="px-4 pb-3 text-[13px] flex flex-col">${it.options.map((o, i) => `<li class="flex items-center gap-3 py-2 border-b border-ink-700 last:border-0"><div class="min-w-0 flex-1"><div class="truncate ${i ? '' : 'font-medium'}">${esc(o.airline)}</div><div class="text-[12px] text-mute tnum">${o.depTime || ''}${o.arrTime ? ' → ' + o.arrTime : ''} · ${durTxt(o.durMin)} · ${o.stops ? `${o.stops} escala${o.stops > 1 ? 's' : ''}${o.via ? ' (' + esc(o.via) + ')' : ''}` : 'directo'}${o.noCabinBag ? ' · sin maleta de mano' : ''}</div></div><div class="tnum ${i ? '' : 'text-good font-medium'}">${eur(o.price, 0)}</div></li>`).join('')}</ul></div>` : '';
+  return `<section class="flex flex-col gap-3">
+    ${it.expired ? '<div class="rounded-2xl border border-ink-500 p-3 text-[13px] text-mute">Este vuelo ya ha salido: ya no se rastrea. Puedes borrarlo o crear otro con fechas nuevas.</div>' : ''}
+    ${lv ? `<div class="rounded-2xl bg-ink-800/70 border border-ink-600/80 p-4 text-[13px] flex gap-3"><i data-lucide="chart-no-axes-column" class="w-5 h-5 text-mute shrink-0"></i><div>Según Google, los precios de esta ruta están <b class="${lv[1]}">${lv[0]}</b> para estas fechas${it.typical ? `: lo habitual es entre ${eur(it.typical.lo, 0)} y ${eur(it.typical.hi, 0)}` : ''}.</div></div>` : ''}
+    ${calHtml}${opts}
+    <div class="rounded-2xl bg-ink-800/70 border border-ink-600/80 p-4"><h3 class="font-display font-bold text-[15px] mb-1">Detalles del vuelo</h3><div class="grid sm:grid-cols-2 sm:gap-x-6">
+      ${kv('Aerolínea', esc(it.airline || '—'))}${kv('Escalas', it.stops ? `${it.stops}${it.via ? ' · ' + esc(it.via) : ''}` : 'Directo')}${kv('Máx. escalas', it.maxStops == null ? 'Cualquiera' : it.maxStops === 0 ? 'Directo' : it.maxStops)}${kv('Duración', durTxt(it.durMin))}${kv('Ida', fmtDateL(pd(it.depart)))}${kv('Vuelta', it.ret ? fmtDateL(pd(it.ret)) : 'Solo ida')}${kv('Pasajeros', `${it.adults || 1} adulto${(it.adults || 1) > 1 ? 's' : ''} · precio total`)}${kv('Fechas flexibles', it.flex ? `±${it.flex} día${it.flex > 1 ? 's' : ''}` : 'No')}${kv('Equipaje', it.baggage && it.baggage.lowcost ? '<span class="text-warn">Low cost: maleta aparte</span>' : 'Según la tarifa')}${kv('Fuente', `<a href="${esc(it.url)}" target="_blank" rel="noopener noreferrer" class="text-gold hover:underline">Google Flights</a>`)}</div>
+      ${it.lastError ? `<p class="text-[12px] text-warn mt-2">Última revisión con avisos: ${esc(it.lastError)}</p>` : ''}</div>
   </section>`;
 }
 function gameBlock(it) {
@@ -1729,7 +1763,7 @@ function newHtml() {
   return `<div class="p-5 sm:p-6 flex flex-col gap-5">
     <div class="flex items-start gap-3"><div><h2 class="font-display font-extrabold text-[24px] leading-tight">Nuevo tracker</h2><p class="text-[13px] text-mute mt-1">${LIVE.on && nt.cat === 'game' ? 'Escribe el juego y su plataforma: lo buscamos solo en Instant Gaming, Eneba, Amazon, MediaMarkt, Fnac, El Corte Inglés, GAME e Impact, y elegimos la versión que corresponde.' : nt.cat === 'flight' ? 'Define la ruta y te avisamos cuando baje de tu precio.' : 'Pega un enlace y extraemos portada, título, precio y envío.'}</p></div><button data-action="close-modal" class="ml-auto w-9 h-9 grid place-items-center rounded-xl hover:bg-ink-700" aria-label="Cerrar"><i data-lucide="x" class="w-4 h-4"></i></button></div>
     <div class="inline-flex self-start p-1 rounded-xl bg-ink-800 border border-ink-600" role="tablist">${tabs.map(([k, l, i]) => `<button role="tab" aria-selected="${nt.cat === k}" data-action="nt-cat" data-cat="${k}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] ${nt.cat === k ? 'bg-ink-600 text-fg' : 'text-mute hover:text-fg'}"><i data-lucide="${i}" class="w-4 h-4"></i>${l}</button>`).join('')}</div>
-    <div id="nt-body">${LIVE.on && nt.cat !== 'game' ? soonHtml() : nt.cat === 'flight' ? flightForm() : urlForm()}</div>
+    <div id="nt-body">${LIVE.on && nt.cat === 'product' ? soonHtml() : nt.cat === 'flight' ? flightForm() : urlForm()}</div>
   </div>`;
 }
 function soonHtml() {
@@ -1862,7 +1896,62 @@ async function createLive() {
     if (location.hash === '#juegos') render(); else location.hash = 'juegos';
   } catch (e) { btn.disabled = false; toast({ tone: 'bad', icon: 'circle-alert', title: 'No se pudo crear', body: esc(e.message) }); }
 }
+const FL_AIRPORTS = { ...AIRPORTS, ALC: 'Alicante', PMI: 'Palma de Mallorca', IBZ: 'Ibiza', MAH: 'Menorca', TFN: 'Tenerife Norte', TFS: 'Tenerife Sur', LPA: 'Gran Canaria', ACE: 'Lanzarote', FUE: 'Fuerteventura', SCQ: 'Santiago', VGO: 'Vigo', LCG: 'A Coruña', OVD: 'Asturias', SDR: 'Santander', ZAZ: 'Zaragoza', GRX: 'Granada', XRY: 'Jerez', RMU: 'Murcia', OPO: 'Oporto', FAO: 'Faro', LGW: 'Londres Gatwick', STN: 'Londres Stansted', ORY: 'París Orly', MXP: 'Milán', BGY: 'Bérgamo', VCE: 'Venecia', NAP: 'Nápoles', AMS: 'Ámsterdam', BRU: 'Bruselas', BER: 'Berlín', MUC: 'Múnich', FRA: 'Fráncfort', DUB: 'Dublín', EDI: 'Edimburgo', ZRH: 'Zúrich', VIE: 'Viena', PRG: 'Praga', BUD: 'Budapest', KRK: 'Cracovia', CPH: 'Copenhague', ATH: 'Atenas', IST: 'Estambul', RAK: 'Marrakech', MIA: 'Miami', LAX: 'Los Ángeles', CUN: 'Cancún', BOG: 'Bogotá', LIM: 'Lima', GRU: 'São Paulo', DXB: 'Dubái', NRT: 'Tokio Narita' };
+// Vuelos reales: cualquier aeropuerto por su código de 3 letras (con sugerencias), pasajeros y fechas flexibles.
+function flightFormLive() {
+  const d1 = isoLocal(dOff(45)), d2 = isoLocal(dOff(52));
+  const sel = 'bg-ink-800 border border-ink-600 rounded-xl px-3 py-2.5 text-[14px] text-fg focus:outline-none focus:border-gold/70';
+  const ap = (id, v) => `<input id="${id}" list="fl-airports" required maxlength="3" autocomplete="off" value="${v}" placeholder="MAD" class="${sel} font-mono uppercase">`;
+  return `<form id="nt-flight" class="flex flex-col gap-4">
+    <datalist id="fl-airports">${Object.entries(FL_AIRPORTS).map(([k, v]) => `<option value="${k}">${esc(v)}</option>`).join('')}</datalist>
+    <div class="grid grid-cols-2 gap-3">
+      <label class="flex flex-col gap-1.5 text-[13px] text-mute">Origen (código del aeropuerto)${ap('fl-o', 'MAD')}</label>
+      <label class="flex flex-col gap-1.5 text-[13px] text-mute">Destino${ap('fl-d', '').replace('placeholder="MAD"', 'placeholder="LIS"')}</label>
+    </div>
+    <div class="flex gap-4 text-[13px]"><label class="inline-flex items-center gap-1.5"><input type="radio" name="fl-trip" value="roundtrip" checked class="accent-[#F2B544]">Ida y vuelta</label><label class="inline-flex items-center gap-1.5"><input type="radio" name="fl-trip" value="oneway" class="accent-[#F2B544]">Solo ida</label></div>
+    <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+      <label class="flex flex-col gap-1.5 text-[13px] text-mute">Ida<input id="fl-dep" type="date" min="${isoLocal(dOff(0))}" value="${d1}" class="${sel}"></label>
+      <label class="flex flex-col gap-1.5 text-[13px] text-mute">Vuelta<input id="fl-ret" type="date" min="${isoLocal(dOff(0))}" value="${d2}" class="${sel}"></label>
+      <label class="flex flex-col gap-1.5 text-[13px] text-mute">Fechas<select id="fl-flex" class="${sel}"><option value="0">Exactas</option><option value="1">±1 día</option><option value="2">±2 días</option><option value="3">±3 días</option></select></label>
+      <label class="flex flex-col gap-1.5 text-[13px] text-mute">Escalas<select id="fl-stops" class="${sel}"><option value="">Cualquiera</option><option value="0">Solo directos</option><option value="1">1 como mucho</option></select></label>
+      <label class="flex flex-col gap-1.5 text-[13px] text-mute">Pasajeros<select id="fl-adults" class="${sel}">${[1, 2, 3, 4, 5, 6].map(n => `<option value="${n}">${n} adulto${n > 1 ? 's' : ''}</option>`).join('')}</select></label>
+      <label class="flex flex-col gap-1.5 text-[13px] text-mute">Precio objetivo (€, total)<input id="fl-target" type="number" min="1" step="1" required placeholder="150" class="${sel} tnum border-gold/50"></label>
+    </div>
+    <label class="inline-flex items-center gap-2 text-[13px]"><input id="fl-alert" type="checkbox" checked>Activar alerta</label>
+    <p class="text-[12px] text-dim">Se busca en Google Flights cada hora: todas las aerolíneas, precio total en euros. Con fechas flexibles se miran también los días de alrededor manteniendo la duración del viaje.</p>
+    <div id="nt-progress"></div>
+    <div class="flex justify-end gap-2"><button type="button" data-action="close-modal" class="rounded-xl border border-ink-500 px-3 py-2 text-[13px]">Cancelar</button><button id="fl-submit" class="inline-flex items-center gap-1.5 rounded-xl bg-gold text-ink-950 font-semibold px-4 py-2 text-[13px]"><i data-lucide="search" class="w-4 h-4"></i>Buscar y crear tracker</button></div>
+  </form>`;
+}
+async function createFlightLive() {
+  const code = id => $(id).value.trim().toUpperCase();
+  const trip = $('input[name="fl-trip"]:checked').value;
+  const spec = { cat: 'flight', origin: code('#fl-o'), dest: code('#fl-d'), trip, depart: $('#fl-dep').value, ret: trip === 'roundtrip' ? $('#fl-ret').value : null,
+    flex: +$('#fl-flex').value, maxStops: $('#fl-stops').value === '' ? null : +$('#fl-stops').value, adults: +$('#fl-adults').value, target: +$('#fl-target').value, alert: $('#fl-alert').checked };
+  const bad = (title, body) => toast({ tone: 'bad', icon: 'circle-alert', title, body });
+  if (!/^[A-Z]{3}$/.test(spec.origin) || !/^[A-Z]{3}$/.test(spec.dest)) return bad('Revisa los aeropuertos', 'Usa el código de 3 letras (MAD, BCN, LIS…). Al escribir salen sugerencias.');
+  if (spec.origin === spec.dest) return bad('Origen y destino iguales', 'Elige dos aeropuertos distintos.');
+  if (!spec.depart || (spec.ret && spec.ret < spec.depart)) return bad('Revisa las fechas', 'La vuelta debe ser el mismo día o posterior a la ida.');
+  if (!(spec.target > 0)) return bad('Falta el objetivo', 'Indica a qué precio total quieres que te avise.');
+  const btn = $('#fl-submit'); btn.disabled = true;
+  const route = `${FL_AIRPORTS[spec.origin] || spec.origin} → ${FL_AIRPORTS[spec.dest] || spec.dest}`;
+  try {
+    if (GH.on) {
+      await GH.createFlight(spec, route);
+      closeModal();
+      toast({ tone: 'ai', icon: 'github', title: 'Enviado a GitHub', body: `Buscando vuelos ${esc(route)} en Google Flights. Tarda 2–5 minutos y aparecerá aquí solo.`, ms: 8000 });
+    } else {
+      $('#nt-progress').innerHTML = progressHtml(0, [`Buscando en Google Flights${spec.flex ? ` (${spec.flex * 2 + 1} fechas)` : ''}`]); icons();
+      const t = await api('POST', '/api/trackers', spec);
+      if (!state.trackers.some(x => x.id === t.id)) state.trackers.unshift(t);
+      closeModal();
+      toast({ tone: 'good', icon: 'plane', title: 'Tracker creado', body: `${esc(t.title)} · ${money(t)} con ${esc(t.airline)}${t.current <= t.target ? ' · ya está por debajo de tu objetivo' : ''}`, actionLabel: 'Ver', action: () => openDrawer(t.id) });
+    }
+    if (location.hash === '#vuelos') render(); else location.hash = 'vuelos';
+  } catch (e) { btn.disabled = false; $('#nt-progress').innerHTML = ''; bad('No se pudo crear', esc(e.message)); }
+}
 function flightForm() {
+  if (LIVE.on) return flightFormLive();
   const opts = sel => Object.entries(AIRPORTS).map(([k, v]) => `<option value="${k}" ${k === sel ? 'selected' : ''}>${k} · ${v}</option>`).join('');
   const d1 = isoLocal(dOff(45)), d2 = isoLocal(dOff(52));
   const sel = 'bg-ink-800 border border-ink-600 rounded-xl px-3 py-2.5 text-[14px] text-fg focus:outline-none focus:border-gold/70';
@@ -2053,7 +2142,7 @@ document.addEventListener('click', async e => {
     case 'open': e.preventDefault(); openDrawer(id); break;
     case 'close': closeDrawer(); break;
     case 'close-modal': closeModal(); break;
-    case 'new': openNew(); break;
+    case 'new': openNew(el.dataset.cat || ({ vuelos: 'flight', juegos: 'game', productos: 'product' })[ui.view] || nt.cat); break;
     case 'compare': openCompare(id); break;
     case 'copilot': toggleCp(); break;
     case 'cat': ui.cat = el.dataset.cat; render(); break;
@@ -2163,7 +2252,7 @@ document.addEventListener('submit', e => {
   if (f.id === 'nt-fetch') GH.on ? ghCreate() : doFetch(LIVE.on ? liveSpec() : $('#nt-url').value.trim());
   if (f.id === 'gh-token-form') saveGhToken();
   if (f.id === 'nt-create') LIVE.on ? createLive() : createFromForm();
-  if (f.id === 'nt-flight') createFlight();
+  if (f.id === 'nt-flight') LIVE.on ? createFlightLive() : createFlight();
   if (f.id === 'cp-form') { const i = $('#cp-input'); ask(i.value); i.value = ''; }
   if (f.dataset.form === 'sources') {
     const links = $('#d-links').value.split(/\s+/).filter(Boolean);
@@ -2241,7 +2330,7 @@ window.addEventListener('hashchange', route);
 if (await LIVE.detect() || await GH.detect()) {
   if (!GH.on) LIVE.connect();
   $('#banner').remove();
-  $('#side-note').innerHTML = 'Precios reales de videojuegos en Instant Gaming, Eneba, Amazon, MediaMarkt, Fnac, El Corte Inglés, GAME e Impact, más las ofertas de Chollometro. Productos y vuelos: próximas fases. IA: ' + (state.settings.ai && state.settings.ai.on ? 'Gemini.' : 'heurística local (Gemini sin configurar).');
+  $('#side-note').innerHTML = 'Precios reales de videojuegos en Instant Gaming, Eneba, Amazon, MediaMarkt, Fnac, El Corte Inglés, GAME e Impact, más las ofertas de Chollometro, y de vuelos en Google Flights. Productos: próxima fase. IA: ' + (state.settings.ai && state.settings.ai.on ? 'Gemini.' : 'heurística local (Gemini sin configurar).');
   nt.cat = 'game';
   renderSoundBtn();
   setInterval(tickLive, 1000);

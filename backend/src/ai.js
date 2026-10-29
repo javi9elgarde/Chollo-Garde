@@ -1,4 +1,4 @@
-// Fase 3 · IA con Gemini. En cada ciclo, para cada juego:
+// Fase 3 · IA con Gemini. En cada ciclo, para cada juego (y cada vuelo, con su propio prompt):
 // - Deal Index y recomendación (comprar ya, esperar o precio inflado) con el histórico propio y los precios de cada tienda.
 // - Pros y contras de las reseñas: las de Steam en PC; en consola, Gemini las busca con Google.
 // El Co-Piloto y el comparador llaman a `chat()` (servidor del PC) o directamente a Gemini desde el panel (GitHub).
@@ -30,6 +30,16 @@ Reglas:
 - Con menos de 7 días de histórico, dilo y baja la confianza.
 - Escribe en español de España, frases cortas con cifras en euros (formato 12,34 €).
 Devuelve SOLO JSON: {"score": entero 1-100 (100 = chollo real), "inflado": bool, "descuento_real": número 0-1 frente al precio habitual, "recomendacion": "COMPRAR_AHORA" | "ESPERAR_BAJADA" | "PRECIO_INFLADO", "confianza": número 0-1, "motivos": [2 a 4 frases], "proxima_bajada": frase corta sobre cuándo podría bajar, o null}`,
+  flight: `Eres el auditor de precios de vuelos de CholloGarde, para un viajero que sale desde España.
+Recibes en JSON una ruta con sus fechas, el precio actual más barato (Google Flights, total para los pasajeros indicados), el objetivo del usuario, el nivel que da Google para esa ruta («low», «typical» o «high») con su rango habitual si lo hay, los precios de los días de alrededor si las fechas son flexibles, las mejores opciones de vuelo de hoy y el histórico propio (el precio más bajo de cada día).
+Reglas:
+- Usa solo las cifras que recibes. Nunca inventes precios, aerolíneas ni fechas.
+- Ten en cuenta los días que faltan para salir: en Europa los precios suelen subir en las últimas 3 semanas y en largo radio en los últimos 2 meses; reservar con mucha antelación no siempre es más barato.
+- Ten en cuenta la temporada: Navidad, Semana Santa, puentes y verano (julio y agosto) son temporada alta desde España.
+- Si las aerolíneas son low cost (Ryanair, Vueling, easyJet, Wizz Air, Volotea…), recuerda que la tarifa básica no incluye maleta.
+- Con menos de 7 días de histórico, dilo y baja la confianza.
+- Escribe en español de España, frases cortas con cifras en euros (formato 123 €).
+Devuelve SOLO JSON: {"score": entero 1-100 (100 = chollo real), "inflado": bool (precio claramente por encima de lo habitual), "descuento_real": número -1 a 1 frente al precio habitual de la ruta, "recomendacion": "COMPRAR_AHORA" | "ESPERAR_BAJADA" | "PRECIO_INFLADO", "confianza": número 0-1, "motivos": [2 a 4 frases], "proxima_bajada": frase corta sobre si conviene esperar y hasta cuándo, o null}`,
   reviews: `Resume en español de España lo que opinan los jugadores del juego que se indica, a partir de las reseñas que recibes. No inventes nada que no aparezca en ellas.
 Devuelve SOLO JSON: {"pros": [3 frases cortas], "contras": [3 frases cortas], "nota": número 0-5 con un decimal}`,
   reviewsSearch: `Busca en Google reseñas de usuarios y de prensa del videojuego que se indica, en la plataforma indicada, y resume lo que se dice. No inventes nada que no encuentres.
@@ -135,6 +145,24 @@ export function dealPayload(it, now = Date.now()) {
   };
 }
 
+export function flightPayload(it, now = Date.now()) {
+  const hist = daily(it);
+  return {
+    hoy: dayKey(now),
+    ruta: `${it.origin} → ${it.dest} (${it.title})`, viaje: it.trip === 'roundtrip' ? 'ida y vuelta' : 'solo ida',
+    ida: it.depart, vuelta: it.ret || null, dias_hasta_salir: Math.round((new Date(it.depart + 'T12:00:00') - now) / DAY),
+    pasajeros: it.adults || 1, escalas_maximas: it.maxStops ?? 'cualquiera', fechas_flexibles_dias: it.flex || 0,
+    precio_actual: it.current, objetivo_del_usuario: it.target,
+    mejor_fecha: it.bestDepart ? { ida: it.bestDepart, vuelta: it.bestRet || null } : null,
+    nivel_google: it.priceLevel || null, rango_habitual_google: it.typical || null,
+    minimo_registrado: hist.length ? Math.min(...hist.map(h => h.precio)) : it.current,
+    dias_de_historico: hist.length,
+    calendario: (it.calendar || []).filter(c => c.price).map(c => ({ ida: c.depart, vuelta: c.ret, precio: c.price, aerolinea: c.airline })),
+    opciones_hoy: (it.options || []).slice(0, 5).map(o => ({ precio: o.price, aerolinea: o.airline, escalas: o.stops, duracion_min: o.durMin, salida: o.depTime })),
+    historico: hist
+  };
+}
+
 function cleanDeal(d) {
   const rec = RECS.includes(d.recomendacion) ? d.recomendacion : d.inflado ? 'PRECIO_INFLADO' : 'ESPERAR_BAJADA';
   const motivos = strs(d.motivos, 4);
@@ -147,7 +175,8 @@ function cleanDeal(d) {
 }
 
 export async function analyzeDeal(it) {
-  const r = await generate({ system: PROMPTS.deal, prompt: JSON.stringify(dealPayload(it)) });
+  const flight = it.cat === 'flight';
+  const r = await generate({ system: flight ? PROMPTS.flight : PROMPTS.deal, prompt: JSON.stringify(flight ? flightPayload(it) : dealPayload(it)) });
   it.ai = { ...cleanDeal(r.data), price: it.current, at: Date.now(), model: r.model, v: VERSION };
   return it.ai;
 }
@@ -198,7 +227,8 @@ export async function refresh(list, { force = false } = {}) {
   const db = get(), now = Date.now();
   if (!enabled()) { db.ai = { on: false }; return null; }
   const games = list.filter(t => t.cat === 'game' && t.live && t.current);
-  const deals = games.filter(t => force || needsDeal(t, now)).slice(0, LIMITS.deals);
+  const flights = list.filter(t => t.cat === 'flight' && t.live && t.current && !t.expired);
+  const deals = [...games, ...flights].filter(t => force || needsDeal(t, now)).slice(0, LIMITS.deals);
   const reviews = games.filter(t => force || needsReviews(t, now)).slice(0, LIMITS.reviews);
   const res = { ok: 0, failed: 0, error: null };
   const step = async (it, fn, what) => {
