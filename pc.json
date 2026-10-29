@@ -1,8 +1,8 @@
 {
- "updated": 1793205855830,
+ "updated": 1793269466021,
  "trackers": {
   "g-e0948d2d": {
-   "t": 1793205814659,
+   "t": 1793269426410,
    "stores": [
     {
      "name": "Amazon",
@@ -17,12 +17,12 @@
     {
      "name": "Fnac",
      "type": "retail",
+     "auto": true,
      "url": "https://www.fnac.es/Metal-Gear-Solid-Master-Collection-Vol-2-Day-One-Edition-PS5-Videojuego-PS5/a12881390",
      "price": 46.9,
      "out": false,
      "pre": false,
-     "match": "Metal Gear Solid: Master Collection Vol. 2 Day One Edition PS5",
-     "auto": true
+     "match": "Metal Gear Solid: Master Collection Vol. 2 Day One Edition PS5"
     },
     {
      "name": "El Corte Inglés",
@@ -47,7 +47,7 @@
    ]
   },
   "g-d3e2e138": {
-   "t": 1793205833920,
+   "t": 1793269446392,
    "stores": [
     {
      "name": "Amazon",
@@ -82,12 +82,17 @@
     {
      "name": "PS Store",
      "type": "official",
-     "error": "la tienda ha pedido un captcha; se reintentará en el próximo ciclo"
+     "url": "https://store.playstation.com/es-es/product/UP9000-PPSA03671_00-MARVELSWOLVERINE",
+     "price": 79.99,
+     "initial": 79.99,
+     "out": false,
+     "pre": false,
+     "match": "Marvel: Lobezno"
     }
    ]
   },
   "g-9cf05a92": {
-   "t": 1793205855829,
+   "t": 1793269466021,
    "stores": [
     {
      "name": "El Corte Inglés",
@@ -102,19 +107,19 @@
     {
      "name": "Fnac",
      "type": "retail",
+     "auto": true,
      "url": "https://www.fnac.es/EA-Sports-FC-27-PS5-Videojuego-PS5/a13332466",
      "price": 71.5,
      "out": false,
      "pre": false,
-     "match": "EA Sports FC 27 PS5",
-     "auto": true
+     "match": "EA Sports FC 27 PS5"
     },
     {
      "name": "Amazon",
      "type": "retail",
      "auto": true,
      "url": "https://www.amazon.es/dp/B0HHFDTZMW",
-     "price": 87.04,
+     "price": 79.31,
      "out": false,
      "pre": false,
      "match": "EA Sports FC 27 - PS5"
@@ -122,7 +127,39 @@
     {
      "name": "PS Store",
      "type": "official",
-     "error": "la tienda ha pedido un captcha; se reintentará en el próximo ciclo"
+     "url": "https://store.playstation.com/es-es/product/UP0006-PPSA34015_00-27STANDARDBUNDLE",
+     "price": 79.99,
+     "initial": 79.99,
+     "out": false,
+     "pre": false,
+     "match": "EA SPORTS FC™ 27 Standard Edition para PS4 y PS5"
+    }
+   ]
+  },
+  "g-e770c9a3": {
+   "t": 1793269391930,
+   "stores": [
+    {
+     "name": "Amazon",
+     "type": "retail",
+     "url": "https://www.amazon.es/dp/B0GJNKQBR9",
+     "price": 37.39,
+     "out": false,
+     "pre": false,
+     "match": "Aramox Medidor de Agua para PC, Medidor de Refrigeración Líquida con Pantalla LCD Acrílica con Interfaz de 3 Pines para un Rendimiento óptimo de la PC (SILVER)",
+     "auto": true
+    },
+    {
+     "name": "Fnac",
+     "type": "retail",
+     "auto": true,
+     "error": "no encuentro «Silver Pines» para PC entre 1 resultados"
+    },
+    {
+     "name": "El Corte Inglés",
+     "type": "retail",
+     "auto": true,
+     "error": "el buscador de la tienda no ha devuelto productos"
     }
    ]
   }
