@@ -1,6 +1,110 @@
 {
  "trackers": [
   {
+   "id": "f-343e75ca",
+   "cat": "flight",
+   "live": true,
+   "source": "Google Flights",
+   "title": "Madrid → Edimburgo",
+   "origin": "MAD",
+   "dest": "EDI",
+   "depart": "2027-03-25",
+   "ret": "2027-03-30",
+   "trip": "roundtrip",
+   "maxStops": 0,
+   "adults": 1,
+   "flex": 0,
+   "target": 150,
+   "alert": true,
+   "alerted": false,
+   "createdAt": 1793237550114,
+   "lastCheck": 1793237550114,
+   "lastError": null,
+   "history": [
+    {
+     "t": 1793237550114,
+     "p": 194
+    }
+   ],
+   "coupons": [],
+   "reviews": {
+    "rating": null,
+    "n": 0,
+    "src": "sin reseñas",
+    "pros": [],
+    "cons": []
+   },
+   "current": 194,
+   "url": "https://www.google.com/travel/flights?tfs=CBwQAhogEgoyMDI3LTAzLTI1KABqBwgBEgNNQURyBwgBEgNFREkaIBIKMjAyNy0wMy0zMCgAagcIARIDRURJcgcIARIDTUFEQgEBSAGYAQE%3D&hl=es&gl=ES&curr=EUR",
+   "bestDepart": "2027-03-25",
+   "bestRet": "2027-03-30",
+   "airline": "easyJet",
+   "stops": 0,
+   "via": null,
+   "durMin": 180,
+   "depTime": "19:55",
+   "arrTime": "21:55",
+   "baggage": {
+    "cabin": false,
+    "hold": null,
+    "holdFee": null,
+    "lowcost": true
+   },
+   "options": [
+    {
+     "price": 194,
+     "airline": "easyJet",
+     "stops": 0,
+     "via": null,
+     "durMin": 180,
+     "depTime": "19:55",
+     "arrTime": "21:55",
+     "noCabinBag": true
+    },
+    {
+     "price": 317,
+     "airline": "Ryanair",
+     "stops": 0,
+     "via": null,
+     "durMin": 175,
+     "depTime": "19:10",
+     "arrTime": "21:05",
+     "noCabinBag": true
+    },
+    {
+     "price": 344,
+     "airline": "Ryanair",
+     "stops": 0,
+     "via": null,
+     "durMin": 175,
+     "depTime": "05:50",
+     "arrTime": "07:45",
+     "noCabinBag": true
+    }
+   ],
+   "calendar": [
+    {
+     "depart": "2027-03-25",
+     "ret": "2027-03-30",
+     "price": 194,
+     "airline": "easyJet",
+     "stops": 0
+    }
+   ],
+   "priceLevel": "typical",
+   "typical": null,
+   "stores": [
+    {
+     "name": "Google Flights",
+     "type": "official",
+     "price": 194,
+     "url": "https://www.google.com/travel/flights?tfs=CBwQAhogEgoyMDI3LTAzLTI1KABqBwgBEgNNQURyBwgBEgNFREkaIBIKMjAyNy0wMy0zMCgAagcIARIDRURJcgcIARIDTUFEQgEBSAGYAQE%3D&hl=es&gl=ES&curr=EUR",
+     "match": "easyJet · directo · 2027-03-25"
+    }
+   ],
+   "routeAvg": 194
+  },
+  {
    "id": "g-e770c9a3",
    "cat": "game",
    "live": true,
@@ -688,21 +792,9 @@
  },
  "stats": {
   "cycles": 26,
-  "requests": 1149
+  "requests": 1152
  },
  "logs": [
-  {
-   "t": 1793221678718,
-   "level": "info",
-   "src": "GAME",
-   "msg": "EA Sports FC 27 (PS5): 79.99 € · EA Sports FC 27 PS5"
-  },
-  {
-   "t": 1793221678718,
-   "level": "info",
-   "src": "Impact",
-   "msg": "EA Sports FC 27 (PS5): 72.9 € · EA Sports FC27 – Impact Game"
-  },
   {
    "t": 1793221678718,
    "level": "info",
@@ -2490,9 +2582,30 @@
    "level": "warn",
    "src": "gemini",
    "msg": "Silver Pines: reseñas · Cuota de Gemini agotada por ahora; se reintenta en el siguiente ciclo"
+  },
+  {
+   "t": 1793237550115,
+   "level": "ok",
+   "src": "api",
+   "msg": "tracker creado: «Madrid → Edimburgo» · objetivo 150 €"
+  },
+  {
+   "t": 1793237733287,
+   "level": "warn",
+   "src": "gemini",
+   "msg": "Madrid → Edimburgo: Deal Index · Sin respuesta de Gemini: The operation was aborted due to timeout"
   }
  ],
  "acciones": [
+  {
+   "id": "rmvsvbv22vamf",
+   "accion": "crear",
+   "ok": true,
+   "error": null,
+   "at": 1793237733288,
+   "secs": 184,
+   "trackerId": "f-343e75ca"
+  },
   {
    "id": "rmvsp44z08kus",
    "accion": "crear",
@@ -2703,11 +2816,11 @@
    "kind": "búsqueda",
    "covers": "Vuelos · todas las aerolíneas",
    "host": "www.google.com",
-   "ok": null,
-   "lat": null,
-   "last": null,
-   "status": "idle",
-   "runs": 0
+   "ok": 100,
+   "lat": 354,
+   "last": 1793237550114,
+   "status": "ok",
+   "runs": 1
   },
   {
    "name": "Chollometro",
@@ -2737,17 +2850,9 @@
   "busy": false,
   "intervalMin": 60,
   "cycles": 26,
-  "requests": 1149,
-  "lastRun": 1793237477774,
-  "lastAction": "ciclo"
+  "requests": 1152,
+  "lastRun": 1793237733288,
+  "lastAction": "crear"
  },
- "version": "github",
- "ai": {
-  "on": true,
-  "model": "gemini-3.8-flash",
-  "lastRun": 1793237433946,
-  "ok": 0,
-  "failed": 2,
-  "error": "Cuota de Gemini agotada por ahora; se reintenta en el siguiente ciclo"
- }
+ "version": "github"
 }
