@@ -1,53 +1,53 @@
 {
- "updated": 1793316460703,
+ "updated": 1793353912189,
  "trackers": {
   "g-e0948d2d": {
-   "t": 1793316304931,
+   "t": 1793353872322,
    "stores": [
     {
      "name": "Amazon",
      "type": "retail",
+     "auto": true,
      "url": "https://www.amazon.es/dp/B0GNKRMWMS",
      "price": 40.99,
      "out": false,
      "pre": false,
-     "match": "Metal Gear Solid: Master Collection Volume 2 – Day One Edition - PS5",
-     "auto": true
+     "match": "Metal Gear Solid: Master Collection Volume 2 – Day One Edition - PS5"
     },
     {
      "name": "Fnac",
      "type": "retail",
      "auto": true,
-     "error": "la tienda ha pedido un captcha; se reintentará en el próximo ciclo",
-     "price": 46.9,
      "url": "https://www.fnac.es/Metal-Gear-Solid-Master-Collection-Vol-2-Day-One-Edition-PS5-Videojuego-PS5/a12881390",
-     "match": "Metal Gear Solid: Master Collection Vol. 2 Day One Edition PS5",
-     "stale": true
+     "price": 46.9,
+     "out": false,
+     "pre": false,
+     "match": "Metal Gear Solid: Master Collection Vol. 2 Day One Edition PS5"
     },
     {
      "name": "El Corte Inglés",
      "type": "retail",
      "auto": true,
-     "error": "page.goto: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"https://www.elcorteingles.es/search-nwx/1/?s=Metal%20Gear%20Solid%20Master%20Collection%20Vol.%202%20PS5\", waiting until \"domcontentloaded\"\u001b[22m\n",
-     "price": 49.9,
      "url": "https://www.elcorteingles.es/videojuegos/A200300114-metal-gear-solid-master-collection-vol2-day-1-edition-playstation-5/",
-     "match": "Metal Gear Solid: Master Collection Vol.2 Day 1 Edition PlayStation 5",
-     "stale": true
+     "price": 49.9,
+     "out": false,
+     "pre": false,
+     "match": "Metal Gear Solid: Master Collection Vol.2 Day 1 Edition PlayStation 5"
     },
     {
      "name": "PS Store",
      "type": "official",
-     "error": "el buscador no ha devuelto productos",
-     "price": 49.99,
      "url": "https://store.playstation.com/es-es/product/UP0101-PPSA18194_00-MGSCOLLECTION002",
-     "match": "METAL GEAR SOLID: MASTER COLLECTION Vol.2",
-     "stale": true,
-     "initial": 49.99
+     "price": 49.99,
+     "initial": 49.99,
+     "out": false,
+     "pre": false,
+     "match": "METAL GEAR SOLID: MASTER COLLECTION Vol.2"
     }
    ]
   },
   "g-d3e2e138": {
-   "t": 1793316387760,
+   "t": 1793353893082,
    "stores": [
     {
      "name": "Amazon",
@@ -60,6 +60,16 @@
      "match": "Marvel's Wolverine - PS5"
     },
     {
+     "name": "Fnac",
+     "type": "retail",
+     "auto": true,
+     "url": "https://www.fnac.es/Marvel-Lobezno-PS5-Videojuego-PS5/a12684310",
+     "price": 73.5,
+     "out": false,
+     "pre": false,
+     "match": "Marvel: Lobezno PS5"
+    },
+    {
      "name": "El Corte Inglés",
      "type": "retail",
      "auto": true,
@@ -70,29 +80,19 @@
      "match": "Marvel Lobezno PlayStation 5"
     },
     {
-     "name": "Fnac",
-     "type": "retail",
-     "auto": true,
-     "error": "la tienda ha pedido un captcha; se reintentará en el próximo ciclo",
-     "price": 73.5,
-     "url": "https://www.fnac.es/Marvel-Lobezno-PS5-Videojuego-PS5/a12684310",
-     "match": "Marvel: Lobezno PS5",
-     "stale": true
-    },
-    {
      "name": "PS Store",
      "type": "official",
-     "error": "el buscador no ha devuelto productos",
-     "price": 79.99,
      "url": "https://store.playstation.com/es-es/product/UP9000-PPSA03671_00-MARVELSWOLVERINE",
-     "match": "Marvel: Lobezno",
-     "stale": true,
-     "initial": 79.99
+     "price": 79.99,
+     "initial": 79.99,
+     "out": false,
+     "pre": false,
+     "match": "Marvel: Lobezno"
     }
    ]
   },
   "g-9cf05a92": {
-   "t": 1793316460702,
+   "t": 1793353912189,
    "stores": [
     {
      "name": "El Corte Inglés",
@@ -103,6 +103,16 @@
      "out": false,
      "pre": false,
      "match": "EA Sports FC27 PlayStation 5"
+    },
+    {
+     "name": "Fnac",
+     "type": "retail",
+     "auto": true,
+     "url": "https://www.fnac.es/EA-Sports-FC-27-PS5-Videojuego-PS5/a13332466",
+     "price": 71.5,
+     "out": false,
+     "pre": false,
+     "match": "EA Sports FC 27 PS5"
     },
     {
      "name": "Amazon",
@@ -123,43 +133,33 @@
      "out": false,
      "pre": false,
      "match": "EA SPORTS FC™ 27 Standard Edition para PS4 y PS5"
-    },
-    {
-     "name": "Fnac",
-     "type": "retail",
-     "auto": true,
-     "error": "page.goto: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"https://www.fnac.es/SearchResult/ResultList.aspx?Search=EA%20Sports%20FC%2027%20PS5\", waiting until \"domcontentloaded\"\u001b[22m\n",
-     "price": 71.5,
-     "url": "https://www.fnac.es/EA-Sports-FC-27-PS5-Videojuego-PS5/a13332466",
-     "match": "EA Sports FC 27 PS5",
-     "stale": true
     }
    ]
   },
   "g-e770c9a3": {
-   "t": 1793316091468,
+   "t": 1793353852886,
    "stores": [
     {
      "name": "Amazon",
      "type": "retail",
      "auto": true,
-     "error": "page.goto: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"https://www.amazon.es/s?k=Silver%20Pines%20PC&i=videogames\", waiting until \"domcontentloaded\"\u001b[22m\n",
-     "price": 37.39,
      "url": "https://www.amazon.es/dp/B0GJNKQBR9",
-     "match": "Aramox Medidor de Agua para PC, Medidor de Refrigeración Líquida con Pantalla LCD Acrílica con Interfaz de 3 Pines para un Rendimiento óptimo de la PC (SILVER)",
-     "stale": true
+     "price": 37.39,
+     "out": false,
+     "pre": false,
+     "match": "Aramox Medidor de Agua para PC, Medidor de Refrigeración Líquida con Pantalla LCD Acrílica con Interfaz de 3 Pines para un Rendimiento óptimo de la PC (SILVER)"
     },
     {
      "name": "Fnac",
      "type": "retail",
      "auto": true,
-     "error": "la tienda ha pedido un captcha; se reintentará en el próximo ciclo"
+     "error": "no encuentro «Silver Pines» para PC entre 1 resultados"
     },
     {
      "name": "El Corte Inglés",
      "type": "retail",
      "auto": true,
-     "error": "page.goto: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"https://www.elcorteingles.es/search-nwx/1/?s=Silver%20Pines%20PC\", waiting until \"domcontentloaded\"\u001b[22m\n"
+     "error": "el buscador de la tienda no ha devuelto productos"
     }
    ]
   }
