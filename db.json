@@ -18,7 +18,7 @@
    "alert": true,
    "alerted": false,
    "createdAt": 1793237550114,
-   "lastCheck": 1793357703083,
+   "lastCheck": 1793361250307,
    "lastError": null,
    "history": [
     {
@@ -26,7 +26,7 @@
      "p": 181
     },
     {
-     "t": 1793357703083,
+     "t": 1793361250307,
      "p": 181
     }
    ],
@@ -156,7 +156,7 @@
    "alert": true,
    "alerted": false,
    "createdAt": 1793227153732,
-   "lastCheck": 1793357755048,
+   "lastCheck": 1793361294382,
    "lastError": "Instant Gaming: no encuentro «Silver Pines» para PC · MediaMarkt: no encuentro «Silver Pines» para PC entre 12 resultados · Fnac: la tienda ha pedido un captcha; se reintentará en el próximo ciclo · El Corte Inglés: el buscador de la tienda no ha devuelto productos · GAME: no encuentro «Silver Pines» para PC entre 10 resultados · Impact: no encuentro «Silver Pines» para PC entre 5 resultados",
    "stores": [
     {
@@ -246,7 +246,7 @@
      "p": 24.99
     },
     {
-     "t": 1793357755048,
+     "t": 1793361294382,
      "p": 24.99
     }
    ],
@@ -316,7 +316,7 @@
    "alert": true,
    "alerted": false,
    "createdAt": 1793201960375,
-   "lastCheck": 1793357772501,
+   "lastCheck": 1793361313605,
    "lastError": "Instant Gaming: no encuentro «Metal Gear Solid Master Collection Vol. 2» para PS5 · Eneba: la ficha no tiene precio ahora mismo (sin vendedores o sin stock) · Impact: no encuentro «Metal Gear Solid Master Collection Vol. 2» para PS5 entre 1 resultados",
    "stores": [
     {
@@ -413,7 +413,7 @@
      "p": 44.99
     },
     {
-     "t": 1793357772501,
+     "t": 1793361313605,
      "p": 40.99
     }
    ],
@@ -434,19 +434,19 @@
    "art": "https://images.igdb.com/igdb/image/upload/t_1080p/ar5geu.jpg",
    "igdb": 392677,
    "ai": {
-    "score": 35,
+    "score": 38,
     "inflado": false,
-    "descuento_real": 0.1,
+    "descuento_real": 0.18,
     "recomendacion": "ESPERAR_BAJADA",
-    "confianza": 0.35,
+    "confianza": 0.3,
     "motivos": [
-     "Solo disponemos de 3 días de histórico, por lo que la confianza en los datos es baja.",
-     "El precio actual de 44,99 € queda lejos de tu objetivo de 30,00 € y supera el mínimo de 33,88 € registrado hace dos días.",
-     "Apenas supone un 10 % de descuento frente al precio de referencia de 49,99 €."
+     "Solo hay 3 días de histórico registrados, por lo que la fiabilidad del análisis es baja.",
+     "El precio actual de 40,99 € supera el mínimo de 33,88 € visto hace dos días y queda lejos de tu objetivo de 30,00 €.",
+     "Representa una rebaja de solo el 18 % respecto al precio de referencia de 49,99 €."
     ],
-    "proxima_bajada": "Black Friday a finales de noviembre",
-    "price": 44.99,
-    "at": 1793350884992,
+    "proxima_bajada": "Podría bajar en el Black Friday a finales de noviembre.",
+    "price": 40.99,
+    "at": 1793361381502,
     "model": "gemini-3.8-flash",
     "v": 1
    }
@@ -481,7 +481,7 @@
    "alert": true,
    "alerted": false,
    "createdAt": 1793184187081,
-   "lastCheck": 1793357801897,
+   "lastCheck": 1793361343638,
    "lastError": "Instant Gaming: no encuentro «Marvel's Wolverine» para PS5 · MediaMarkt: no encuentro el precio en la página (¿es la ficha de un producto?)",
    "stores": [
     {
@@ -582,7 +582,7 @@
      "p": 74.9
     },
     {
-     "t": 1793357801897,
+     "t": 1793361343638,
      "p": 67.99
     }
    ],
@@ -651,7 +651,7 @@
    "alert": false,
    "alerted": false,
    "createdAt": 1793152333341,
-   "lastCheck": 1793357812607,
+   "lastCheck": 1793361355486,
    "lastError": "Instant Gaming: no vende «EA Sports FC 27» para PS5, solo para otras plataformas · Eneba: la ficha no tiene precio ahora mismo (sin vendedores o sin stock)",
    "stores": [
     {
@@ -760,7 +760,7 @@
      "p": 58.6
     },
     {
-     "t": 1793357812607,
+     "t": 1793361355486,
      "p": 58.6
     }
    ],
@@ -847,286 +847,10 @@
   "intervalMin": 60
  },
  "stats": {
-  "cycles": 65,
-  "requests": 3681
+  "cycles": 66,
+  "requests": 3727
  },
  "logs": [
-  {
-   "t": 1793340188744,
-   "level": "info",
-   "src": "MediaMarkt",
-   "msg": "EA Sports FC 27 (PS5): 69.99 € · PS5 EA SPORTS FC™ 27 | MediaMarkt"
-  },
-  {
-   "t": 1793340188744,
-   "level": "warn",
-   "src": "Fnac",
-   "msg": "EA Sports FC 27 (PS5): la tienda ha pedido un captcha; se reintentará en el próximo ciclo"
-  },
-  {
-   "t": 1793340188744,
-   "level": "info",
-   "src": "El Corte Inglés",
-   "msg": "EA Sports FC 27 (PS5): 69.9 € · EA Sports FC27 PlayStation 5"
-  },
-  {
-   "t": 1793340188744,
-   "level": "info",
-   "src": "GAME",
-   "msg": "EA Sports FC 27 (PS5): 79.99 € · EA Sports FC 27 PS5"
-  },
-  {
-   "t": 1793340188744,
-   "level": "info",
-   "src": "Impact",
-   "msg": "EA Sports FC 27 (PS5): 72.9 € · EA Sports FC27 – Impact Game"
-  },
-  {
-   "t": 1793340188744,
-   "level": "info",
-   "src": "Chollometro",
-   "msg": "EA Sports FC 27 (PS5): 58.6 € · PS5 EA SPORTS FC 27 (MediaMarkt · código descuento app · 310°)"
-  },
-  {
-   "t": 1793340188744,
-   "level": "info",
-   "src": "PS Store",
-   "msg": "EA Sports FC 27 (PS5): 79.99 € · EA SPORTS FC™ 27 Standard Edition para PS4 y PS5"
-  },
-  {
-   "t": 1793340188744,
-   "level": "info",
-   "src": "parser",
-   "msg": "EA Sports FC 27: sin cambios (58,60 € en Chollometro) · 45.68 s"
-  },
-  {
-   "t": 1793340329623,
-   "level": "ai",
-   "src": "gemini",
-   "msg": "Marvel's Wolverine: Deal Index 35/100 · esperar bajada (30 %)"
-  },
-  {
-   "t": 1793340345625,
-   "level": "warn",
-   "src": "gemini",
-   "msg": "Silver Pines: reseñas · Cuota de Gemini agotada por ahora; se reintenta en el siguiente ciclo"
-  },
-  {
-   "t": 1793343537215,
-   "level": "info",
-   "src": "cron",
-   "msg": "ciclo #60 · 5 trackers"
-  },
-  {
-   "t": 1793343537749,
-   "level": "info",
-   "src": "Google Flights",
-   "msg": "MAD→EDI 2027-03-25/2027-03-30: 181 € · easyJet"
-  },
-  {
-   "t": 1793343537750,
-   "level": "info",
-   "src": "parser",
-   "msg": "Madrid → Edimburgo: sin cambios (181,00 € en Google Flights) · 0.53 s"
-  },
-  {
-   "t": 1793343582764,
-   "level": "info",
-   "src": "Steam",
-   "msg": "Silver Pines (PC): 24.99 € · https://store.steampowered.com/app/2333000/"
-  },
-  {
-   "t": 1793343582764,
-   "level": "warn",
-   "src": "Instant Gaming",
-   "msg": "Silver Pines (PC): no encuentro «Silver Pines» para PC"
-  },
-  {
-   "t": 1793343582764,
-   "level": "info",
-   "src": "Eneba",
-   "msg": "Silver Pines (PC): 18.15 € · Silver Pines Steam Key (PC) GLOBAL · dudoso, 2 opciones para elegir"
-  },
-  {
-   "t": 1793343582764,
-   "level": "warn",
-   "src": "Amazon",
-   "msg": "Silver Pines (PC): la tienda ha pedido un captcha; se reintentará en el próximo ciclo"
-  },
-  {
-   "t": 1793343582764,
-   "level": "warn",
-   "src": "MediaMarkt",
-   "msg": "Silver Pines (PC): no encuentro «Silver Pines» para PC entre 12 resultados"
-  },
-  {
-   "t": 1793343582764,
-   "level": "warn",
-   "src": "Fnac",
-   "msg": "Silver Pines (PC): la tienda ha pedido un captcha; se reintentará en el próximo ciclo"
-  },
-  {
-   "t": 1793343582764,
-   "level": "warn",
-   "src": "El Corte Inglés",
-   "msg": "Silver Pines (PC): el buscador de la tienda no ha devuelto productos"
-  },
-  {
-   "t": 1793343582764,
-   "level": "warn",
-   "src": "GAME",
-   "msg": "Silver Pines (PC): no encuentro «Silver Pines» para PC entre 10 resultados"
-  },
-  {
-   "t": 1793343582765,
-   "level": "warn",
-   "src": "Impact",
-   "msg": "Silver Pines (PC): no encuentro «Silver Pines» para PC entre 5 resultados"
-  },
-  {
-   "t": 1793343583035,
-   "level": "info",
-   "src": "parser",
-   "msg": "Silver Pines: sin cambios (24,99 € en Steam) · 44.08 s"
-  },
-  {
-   "t": 1793343626793,
-   "level": "warn",
-   "src": "Instant Gaming",
-   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): no encuentro «Metal Gear Solid Master Collection Vol. 2» para PS5"
-  },
-  {
-   "t": 1793343626793,
-   "level": "warn",
-   "src": "Eneba",
-   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): la ficha no tiene precio ahora mismo (sin vendedores o sin stock)"
-  },
-  {
-   "t": 1793343626793,
-   "level": "info",
-   "src": "Amazon",
-   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): 33.88 € · Metal Gear Solid: Master Collection Volume 2 – Day One Edition - PS5"
-  },
-  {
-   "t": 1793343626793,
-   "level": "info",
-   "src": "MediaMarkt",
-   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): 44.99 € · PS5 Metal Gear Solid: Master Collection Volume 2 | MediaMarkt"
-  },
-  {
-   "t": 1793343626793,
-   "level": "warn",
-   "src": "Fnac",
-   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): la tienda ha pedido un captcha; se reintentará en el próximo ciclo"
-  },
-  {
-   "t": 1793343626793,
-   "level": "info",
-   "src": "El Corte Inglés",
-   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): 49.9 € · Metal Gear Solid: Master Collection Vol.2 Day 1 Edition PlayStation 5"
-  },
-  {
-   "t": 1793343626793,
-   "level": "info",
-   "src": "GAME",
-   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): 49.99 € · Metal Gear Solid Master Collection Vol. 2 PS5"
-  },
-  {
-   "t": 1793343626793,
-   "level": "warn",
-   "src": "Impact",
-   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): no encuentro «Metal Gear Solid Master Collection Vol. 2» para PS5 entre 1 resultados"
-  },
-  {
-   "t": 1793343626793,
-   "level": "info",
-   "src": "PS Store",
-   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): 49.99 € · METAL GEAR SOLID: MASTER COLLECTION Vol.2"
-  },
-  {
-   "t": 1793343626793,
-   "level": "ok",
-   "src": "parser",
-   "msg": "Metal Gear Solid Master Collection Vol. 2: 44,99 € → 33,88 € en Amazon · 42.56 s"
-  },
-  {
-   "t": 1793343626793,
-   "level": "ok",
-   "src": "parser",
-   "msg": "nuevo mínimo histórico: Metal Gear Solid Master Collection Vol. 2 a 33,88 €"
-  },
-  {
-   "t": 1793343676938,
-   "level": "warn",
-   "src": "Instant Gaming",
-   "msg": "Marvel's Wolverine (PS5): no encuentro «Marvel's Wolverine» para PS5"
-  },
-  {
-   "t": 1793343676938,
-   "level": "info",
-   "src": "Eneba",
-   "msg": "Marvel's Wolverine (PS5): 75 € · Marvel’s Wolverine (PS5) PSN Key EUROPE"
-  },
-  {
-   "t": 1793343676938,
-   "level": "info",
-   "src": "Amazon",
-   "msg": "Marvel's Wolverine (PS5): 70.83 € · Marvel's Wolverine - PS5"
-  },
-  {
-   "t": 1793343676938,
-   "level": "warn",
-   "src": "MediaMarkt",
-   "msg": "Marvel's Wolverine (PS5): no encuentro el precio en la página (¿es la ficha de un producto?)"
-  },
-  {
-   "t": 1793343676938,
-   "level": "warn",
-   "src": "Fnac",
-   "msg": "Marvel's Wolverine (PS5): la tienda ha pedido un captcha; se reintentará en el próximo ciclo"
-  },
-  {
-   "t": 1793343676938,
-   "level": "info",
-   "src": "El Corte Inglés",
-   "msg": "Marvel's Wolverine (PS5): 74.9 € · Marvel Lobezno PlayStation 5"
-  },
-  {
-   "t": 1793343676938,
-   "level": "info",
-   "src": "GAME",
-   "msg": "Marvel's Wolverine (PS5): 79.99 € · Marvel: Lobezno PS5"
-  },
-  {
-   "t": 1793343676938,
-   "level": "info",
-   "src": "Impact",
-   "msg": "Marvel's Wolverine (PS5): 74.9 € · Marvel Wolverine Lobezno PS5"
-  },
-  {
-   "t": 1793343676938,
-   "level": "info",
-   "src": "PS Store",
-   "msg": "Marvel's Wolverine (PS5): 79.99 € · Marvel: Lobezno"
-  },
-  {
-   "t": 1793343676939,
-   "level": "info",
-   "src": "parser",
-   "msg": "Marvel's Wolverine: sin cambios (70,83 € en Amazon) · 48.95 s"
-  },
-  {
-   "t": 1793343716575,
-   "level": "warn",
-   "src": "Instant Gaming",
-   "msg": "EA Sports FC 27 (PS5): no vende «EA Sports FC 27» para PS5, solo para otras plataformas"
-  },
-  {
-   "t": 1793343716575,
-   "level": "warn",
-   "src": "Eneba",
-   "msg": "EA Sports FC 27 (PS5): la ficha no tiene precio ahora mismo (sin vendedores o sin stock)"
-  },
   {
    "t": 1793343716575,
    "level": "info",
@@ -2650,6 +2374,282 @@
    "level": "warn",
    "src": "gemini",
    "msg": "Silver Pines: reseñas · Cuota de Gemini agotada por ahora; se reintenta en el siguiente ciclo"
+  },
+  {
+   "t": 1793361250300,
+   "level": "info",
+   "src": "cron",
+   "msg": "ciclo #66 · 5 trackers"
+  },
+  {
+   "t": 1793361250764,
+   "level": "info",
+   "src": "Google Flights",
+   "msg": "MAD→EDI 2027-03-25/2027-03-30: 181 € · easyJet"
+  },
+  {
+   "t": 1793361250764,
+   "level": "info",
+   "src": "parser",
+   "msg": "Madrid → Edimburgo: sin cambios (181,00 € en Google Flights) · 0.46 s"
+  },
+  {
+   "t": 1793361294381,
+   "level": "info",
+   "src": "Steam",
+   "msg": "Silver Pines (PC): 24.99 € · https://store.steampowered.com/app/2333000/"
+  },
+  {
+   "t": 1793361294381,
+   "level": "info",
+   "src": "Amazon",
+   "msg": "Silver Pines (PC): 37.39 € · Aramox Medidor de Agua para PC, Medidor de Refrigeración Líquida con Pantalla LCD Acrílica con Interfaz de 3 Pines para un Rendimiento óptimo de la PC (SILVER) · leído desde tu PC"
+  },
+  {
+   "t": 1793361294381,
+   "level": "warn",
+   "src": "Instant Gaming",
+   "msg": "Silver Pines (PC): no encuentro «Silver Pines» para PC"
+  },
+  {
+   "t": 1793361294381,
+   "level": "info",
+   "src": "Eneba",
+   "msg": "Silver Pines (PC): 18.15 € · Silver Pines Steam Key (PC) GLOBAL · dudoso, 2 opciones para elegir"
+  },
+  {
+   "t": 1793361294381,
+   "level": "warn",
+   "src": "MediaMarkt",
+   "msg": "Silver Pines (PC): no encuentro «Silver Pines» para PC entre 12 resultados"
+  },
+  {
+   "t": 1793361294381,
+   "level": "warn",
+   "src": "Fnac",
+   "msg": "Silver Pines (PC): la tienda ha pedido un captcha; se reintentará en el próximo ciclo"
+  },
+  {
+   "t": 1793361294381,
+   "level": "warn",
+   "src": "El Corte Inglés",
+   "msg": "Silver Pines (PC): el buscador de la tienda no ha devuelto productos"
+  },
+  {
+   "t": 1793361294381,
+   "level": "warn",
+   "src": "GAME",
+   "msg": "Silver Pines (PC): no encuentro «Silver Pines» para PC entre 10 resultados"
+  },
+  {
+   "t": 1793361294381,
+   "level": "warn",
+   "src": "Impact",
+   "msg": "Silver Pines (PC): no encuentro «Silver Pines» para PC entre 5 resultados"
+  },
+  {
+   "t": 1793361294850,
+   "level": "info",
+   "src": "parser",
+   "msg": "Silver Pines: sin cambios (24,99 € en Steam) · 42.88 s"
+  },
+  {
+   "t": 1793361313605,
+   "level": "info",
+   "src": "Amazon",
+   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): 40.99 € · Metal Gear Solid: Master Collection Volume 2 – Day One Edition - PS5 · leído desde tu PC"
+  },
+  {
+   "t": 1793361313605,
+   "level": "info",
+   "src": "Fnac",
+   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): 46.9 € · Metal Gear Solid: Master Collection Vol. 2 Day One Edition PS5 · leído desde tu PC"
+  },
+  {
+   "t": 1793361313605,
+   "level": "info",
+   "src": "El Corte Inglés",
+   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): 49.9 € · Metal Gear Solid: Master Collection Vol.2 Day 1 Edition PlayStation 5 · leído desde tu PC"
+  },
+  {
+   "t": 1793361313605,
+   "level": "info",
+   "src": "PS Store",
+   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): 49.99 € · METAL GEAR SOLID: MASTER COLLECTION Vol.2 · leído desde tu PC"
+  },
+  {
+   "t": 1793361313605,
+   "level": "warn",
+   "src": "Instant Gaming",
+   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): no encuentro «Metal Gear Solid Master Collection Vol. 2» para PS5"
+  },
+  {
+   "t": 1793361313605,
+   "level": "warn",
+   "src": "Eneba",
+   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): la ficha no tiene precio ahora mismo (sin vendedores o sin stock)"
+  },
+  {
+   "t": 1793361313605,
+   "level": "info",
+   "src": "MediaMarkt",
+   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): 44.99 € · PS5 Metal Gear Solid: Master Collection Volume 2 | MediaMarkt"
+  },
+  {
+   "t": 1793361313605,
+   "level": "info",
+   "src": "GAME",
+   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): 49.99 € · Metal Gear Solid Master Collection Vol. 2 PS5"
+  },
+  {
+   "t": 1793361313605,
+   "level": "warn",
+   "src": "Impact",
+   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): no encuentro «Metal Gear Solid Master Collection Vol. 2» para PS5 entre 1 resultados"
+  },
+  {
+   "t": 1793361313605,
+   "level": "info",
+   "src": "parser",
+   "msg": "Metal Gear Solid Master Collection Vol. 2: sin cambios (40,99 € en Amazon) · 17.55 s"
+  },
+  {
+   "t": 1793361343638,
+   "level": "info",
+   "src": "Amazon",
+   "msg": "Marvel's Wolverine (PS5): 67.99 € · Marvel's Wolverine - PS5 · leído desde tu PC"
+  },
+  {
+   "t": 1793361343638,
+   "level": "info",
+   "src": "Fnac",
+   "msg": "Marvel's Wolverine (PS5): 73.5 € · Marvel: Lobezno PS5 · leído desde tu PC"
+  },
+  {
+   "t": 1793361343638,
+   "level": "info",
+   "src": "El Corte Inglés",
+   "msg": "Marvel's Wolverine (PS5): 74.9 € · Marvel Lobezno PlayStation 5 · leído desde tu PC"
+  },
+  {
+   "t": 1793361343638,
+   "level": "info",
+   "src": "PS Store",
+   "msg": "Marvel's Wolverine (PS5): 79.99 € · Marvel: Lobezno · leído desde tu PC"
+  },
+  {
+   "t": 1793361343638,
+   "level": "warn",
+   "src": "Instant Gaming",
+   "msg": "Marvel's Wolverine (PS5): no encuentro «Marvel's Wolverine» para PS5"
+  },
+  {
+   "t": 1793361343638,
+   "level": "info",
+   "src": "Eneba",
+   "msg": "Marvel's Wolverine (PS5): 75 € · Marvel’s Wolverine (PS5) PSN Key EUROPE"
+  },
+  {
+   "t": 1793361343638,
+   "level": "warn",
+   "src": "MediaMarkt",
+   "msg": "Marvel's Wolverine (PS5): no encuentro el precio en la página (¿es la ficha de un producto?)"
+  },
+  {
+   "t": 1793361343638,
+   "level": "info",
+   "src": "GAME",
+   "msg": "Marvel's Wolverine (PS5): 79.99 € · Marvel: Lobezno PS5"
+  },
+  {
+   "t": 1793361343638,
+   "level": "info",
+   "src": "Impact",
+   "msg": "Marvel's Wolverine (PS5): 74.9 € · Marvel Wolverine Lobezno PS5"
+  },
+  {
+   "t": 1793361343638,
+   "level": "info",
+   "src": "parser",
+   "msg": "Marvel's Wolverine: sin cambios (67,99 € en Amazon) · 28.83 s"
+  },
+  {
+   "t": 1793361355486,
+   "level": "info",
+   "src": "El Corte Inglés",
+   "msg": "EA Sports FC 27 (PS5): 69.9 € · EA Sports FC27 PlayStation 5 · leído desde tu PC"
+  },
+  {
+   "t": 1793361355486,
+   "level": "info",
+   "src": "Fnac",
+   "msg": "EA Sports FC 27 (PS5): 71.5 € · EA Sports FC 27 PS5 · leído desde tu PC"
+  },
+  {
+   "t": 1793361355486,
+   "level": "info",
+   "src": "Amazon",
+   "msg": "EA Sports FC 27 (PS5): 79.31 € · EA Sports FC 27 - PS5 · leído desde tu PC"
+  },
+  {
+   "t": 1793361355486,
+   "level": "info",
+   "src": "PS Store",
+   "msg": "EA Sports FC 27 (PS5): 79.99 € · EA SPORTS FC™ 27 Standard Edition para PS4 y PS5 · leído desde tu PC"
+  },
+  {
+   "t": 1793361355486,
+   "level": "warn",
+   "src": "Instant Gaming",
+   "msg": "EA Sports FC 27 (PS5): no vende «EA Sports FC 27» para PS5, solo para otras plataformas"
+  },
+  {
+   "t": 1793361355486,
+   "level": "warn",
+   "src": "Eneba",
+   "msg": "EA Sports FC 27 (PS5): la ficha no tiene precio ahora mismo (sin vendedores o sin stock)"
+  },
+  {
+   "t": 1793361355486,
+   "level": "info",
+   "src": "MediaMarkt",
+   "msg": "EA Sports FC 27 (PS5): 69.99 € · PS5 EA SPORTS FC™ 27 | MediaMarkt"
+  },
+  {
+   "t": 1793361355486,
+   "level": "info",
+   "src": "GAME",
+   "msg": "EA Sports FC 27 (PS5): 79.99 € · EA Sports FC 27 PS5"
+  },
+  {
+   "t": 1793361355486,
+   "level": "info",
+   "src": "Impact",
+   "msg": "EA Sports FC 27 (PS5): 72.9 € · EA Sports FC27 – Impact Game"
+  },
+  {
+   "t": 1793361355486,
+   "level": "info",
+   "src": "Chollometro",
+   "msg": "EA Sports FC 27 (PS5): 58.6 € · PS5 EA SPORTS FC 27 (MediaMarkt · código descuento app · 310°)"
+  },
+  {
+   "t": 1793361355487,
+   "level": "info",
+   "src": "parser",
+   "msg": "EA Sports FC 27: sin cambios (58,60 € en Chollometro) · 10.65 s"
+  },
+  {
+   "t": 1793361381502,
+   "level": "ai",
+   "src": "gemini",
+   "msg": "Metal Gear Solid Master Collection Vol. 2: Deal Index 38/100 · esperar bajada (30 %)"
+  },
+  {
+   "t": 1793361381575,
+   "level": "warn",
+   "src": "gemini",
+   "msg": "Marvel's Wolverine: Deal Index · Cuota de Gemini agotada por ahora; se reintenta en el siguiente ciclo"
   }
  ],
  "acciones": [
@@ -2785,8 +2785,8 @@
    "covers": "Keys · búsqueda automática",
    "host": "www.instant-gaming.com",
    "ok": 100,
-   "lat": 8599,
-   "last": 1793357812605,
+   "lat": 6662,
+   "last": 1793361355482,
    "status": "ok",
    "runs": 7
   },
@@ -2796,8 +2796,8 @@
    "covers": "Keys · búsqueda automática",
    "host": "www.eneba.com",
    "ok": 100,
-   "lat": 7064,
-   "last": 1793357807732,
+   "lat": 4853,
+   "last": 1793361349937,
    "status": "ok",
    "runs": 6
   },
@@ -2818,8 +2818,8 @@
    "covers": "Búsqueda automática",
    "host": "www.mediamarkt.es",
    "ok": 100,
-   "lat": 10549,
-   "last": 1793357812523,
+   "lat": 15048,
+   "last": 1793361354157,
    "status": "ok",
    "runs": 7
   },
@@ -2829,8 +2829,8 @@
    "covers": "Búsqueda automática",
    "host": "www.fnac.es",
    "ok": 0,
-   "lat": 19294,
-   "last": 1793357740759,
+   "lat": 13617,
+   "last": 1793361282614,
    "status": "warn",
    "runs": 2
   },
@@ -2840,8 +2840,8 @@
    "covers": "Búsqueda automática",
    "host": "www.elcorteingles.es",
    "ok": 100,
-   "lat": 29789,
-   "last": 1793357755044,
+   "lat": 24001,
+   "last": 1793361294376,
    "status": "ok",
    "runs": 2
   },
@@ -2851,8 +2851,8 @@
    "covers": "Búsqueda automática",
    "host": "www.game.es",
    "ok": 100,
-   "lat": 8861,
-   "last": 1793357803878,
+   "lat": 8974,
+   "last": 1793361345767,
    "status": "ok",
    "runs": 5
   },
@@ -2862,8 +2862,8 @@
    "covers": "Búsqueda automática",
    "host": "impactgame.es",
    "ok": 100,
-   "lat": 2946,
-   "last": 1793357805554,
+   "lat": 2788,
+   "last": 1793361347308,
    "status": "ok",
    "runs": 6
   },
@@ -2873,8 +2873,8 @@
    "covers": "Vuelos · todas las aerolíneas",
    "host": "www.google.com",
    "ok": 100,
-   "lat": 589,
-   "last": 1793357703673,
+   "lat": 454,
+   "last": 1793361250763,
    "status": "ok",
    "runs": 1
   },
@@ -2884,8 +2884,8 @@
    "covers": "Ofertas de la comunidad",
    "host": "www.chollometro.com",
    "ok": 100,
-   "lat": 469,
-   "last": 1793357803497,
+   "lat": 678,
+   "last": 1793361345302,
    "status": "ok",
    "runs": 6
   },
@@ -2895,8 +2895,8 @@
    "covers": "Precio oficial de PC, reseñas, Steam Deck",
    "host": "store.steampowered.com",
    "ok": 100,
-   "lat": 224,
-   "last": 1793357755490,
+   "lat": 235,
+   "last": 1793361294807,
    "status": "ok",
    "runs": 2
   }
@@ -2905,18 +2905,18 @@
   "running": true,
   "busy": false,
   "intervalMin": 60,
-  "cycles": 65,
-  "requests": 3681,
-  "lastRun": 1793358109699,
+  "cycles": 66,
+  "requests": 3727,
+  "lastRun": 1793361381575,
   "lastAction": "ciclo"
  },
  "version": "github",
  "ai": {
   "on": true,
   "model": "gemini-3.8-flash",
-  "lastRun": 1793357812608,
-  "ok": 0,
-  "failed": 3,
-  "error": "Cuota de Gemini agotada por ahora; se reintenta en el siguiente ciclo"
+  "lastRun": 1793361355487,
+  "ok": 1,
+  "failed": 1,
+  "error": null
  }
 }
