@@ -150,39 +150,29 @@
     "GAME",
     "Impact"
    ],
-   "links": [],
+   "links": [
+    "https://www.eneba.com/es/steam-silver-pines-steam-key-pc-europe?currency=EUR"
+   ],
    "steamAppID": "2333000",
    "image": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/2333000/2ce661be5b6e60b8fcc92ecdf3f9dc2dca2a9037/header.jpg?t=1792490698",
-   "url": "https://store.steampowered.com/app/2333000/",
+   "url": "https://www.eneba.com/es/steam-silver-pines-steam-key-pc-europe?currency=EUR",
    "deck": "Verificado",
    "msrp": 24.99,
    "target": 15,
    "alert": true,
    "alerted": false,
    "createdAt": 1793227153732,
-   "lastCheck": 1793439245207,
-   "lastError": "Amazon: la tienda ha pedido un captcha; se reintentará en el próximo ciclo · Instant Gaming: no encuentro «Silver Pines» para PC · MediaMarkt: no encuentro «Silver Pines» para PC entre 12 resultados · Fnac: la tienda ha pedido un captcha; se reintentará en el próximo ciclo · El Corte Inglés: el buscador de la tienda no ha devuelto productos · GAME: no encuentro «Silver Pines» para PC entre 10 resultados · Impact: no encuentro «Silver Pines» para PC entre 5 resultados",
+   "lastCheck": 1793440043399,
+   "lastError": "Instant Gaming: no encuentro «Silver Pines» para PC · MediaMarkt: no encuentro «Silver Pines» para PC entre 12 resultados · Fnac: la tienda ha pedido un captcha; se reintentará en el próximo ciclo · El Corte Inglés: el buscador de la tienda no ha devuelto productos · GAME: no encuentro «Silver Pines» para PC entre 10 resultados · Impact: no encuentro «Silver Pines» para PC entre 5 resultados",
    "stores": [
     {
      "name": "Eneba",
      "type": "key",
-     "auto": true,
-     "url": "https://www.eneba.com/es/steam-silver-pines-steam-key-pc-global?currency=EUR",
-     "price": 17.95,
+     "price": 18.35,
      "out": false,
      "pre": false,
-     "match": "Silver Pines Steam Key (PC) GLOBAL",
-     "doubt": true,
-     "options": [
-      {
-       "url": "https://www.eneba.com/es/steam-silver-pines-steam-key-pc-global?currency=EUR",
-       "title": "steam silver pines steam key pc global"
-      },
-      {
-       "url": "https://www.eneba.com/es/steam-silver-pines-steam-key-pc-europe?currency=EUR",
-       "title": "steam silver pines steam key pc europe"
-      }
-     ]
+     "url": "https://www.eneba.com/es/steam-silver-pines-steam-key-pc-europe?currency=EUR",
+     "match": "Silver Pines Steam Key (PC) EUROPE"
     },
     {
      "name": "Steam",
@@ -195,11 +185,12 @@
      "name": "Amazon",
      "type": "retail",
      "auto": true,
-     "error": "la tienda ha pedido un captcha; se reintentará en el próximo ciclo",
-     "price": 37.39,
      "url": "https://www.amazon.es/dp/B0GJNKQBR9",
+     "price": 37.39,
+     "out": false,
+     "pre": false,
      "match": "Aramox Medidor de Agua para PC, Medidor de Refrigeración Líquida con Pantalla LCD Acrílica con Interfaz de 3 Pines para un Rendimiento óptimo de la PC (SILVER)",
-     "stale": true
+     "via": "pc"
     },
     {
      "name": "Instant Gaming",
@@ -238,7 +229,7 @@
      "error": "no encuentro «Silver Pines» para PC entre 5 resultados"
     }
    ],
-   "current": 24.99,
+   "current": 18.35,
    "history": [
     {
      "t": 1793227153732,
@@ -253,8 +244,8 @@
      "p": 24.99
     },
     {
-     "t": 1793439245207,
-     "p": 24.99
+     "t": 1793440043399,
+     "p": 18.35
     }
    ],
    "coupons": [],
@@ -853,100 +844,10 @@
   "intervalMin": 60
  },
  "stats": {
-  "cycles": 92,
-  "requests": 5445
+  "cycles": 93,
+  "requests": 5464
  },
  "logs": [
-  {
-   "t": 1793421656251,
-   "level": "info",
-   "src": "El Corte Inglés",
-   "msg": "EA Sports FC 27 (PS5): 69.9 € · EA Sports FC27 PlayStation 5"
-  },
-  {
-   "t": 1793421656251,
-   "level": "info",
-   "src": "GAME",
-   "msg": "EA Sports FC 27 (PS5): 79.99 € · EA Sports FC 27 PS5"
-  },
-  {
-   "t": 1793421656251,
-   "level": "info",
-   "src": "Impact",
-   "msg": "EA Sports FC 27 (PS5): 72.9 € · EA Sports FC27 – Impact Game"
-  },
-  {
-   "t": 1793421656251,
-   "level": "info",
-   "src": "Chollometro",
-   "msg": "EA Sports FC 27 (PS5): 58.6 € · PS5 EA SPORTS FC 27 (MediaMarkt · código descuento app · 310°)"
-  },
-  {
-   "t": 1793421656251,
-   "level": "info",
-   "src": "PS Store",
-   "msg": "EA Sports FC 27 (PS5): 79.99 € · EA SPORTS FC™ 27 Standard Edition para PS4 y PS5"
-  },
-  {
-   "t": 1793421656252,
-   "level": "info",
-   "src": "parser",
-   "msg": "EA Sports FC 27: sin cambios (58,60 € en Chollometro) · 36.84 s"
-  },
-  {
-   "t": 1793421675482,
-   "level": "warn",
-   "src": "gemini",
-   "msg": "Marvel's Wolverine: Deal Index · Gemini: This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later."
-  },
-  {
-   "t": 1793421675482,
-   "level": "ai",
-   "src": "gemini",
-   "msg": "Marvel's Wolverine: Deal Index 38/100 · esperar bajada (30 %)"
-  },
-  {
-   "t": 1793421675607,
-   "level": "warn",
-   "src": "gemini",
-   "msg": "Madrid → Edimburgo: Deal Index · Cuota de Gemini agotada por ahora; se reintenta en el siguiente ciclo"
-  },
-  {
-   "t": 1793425020315,
-   "level": "info",
-   "src": "cron",
-   "msg": "ciclo #87 · 5 trackers"
-  },
-  {
-   "t": 1793425020753,
-   "level": "info",
-   "src": "Google Flights",
-   "msg": "MAD→EDI 2027-03-25/2027-03-30: 181 € · easyJet"
-  },
-  {
-   "t": 1793425020753,
-   "level": "info",
-   "src": "parser",
-   "msg": "Madrid → Edimburgo: sin cambios (181,00 € en Google Flights) · 0.43 s"
-  },
-  {
-   "t": 1793425063335,
-   "level": "info",
-   "src": "Steam",
-   "msg": "Silver Pines (PC): 24.99 € · https://store.steampowered.com/app/2333000/"
-  },
-  {
-   "t": 1793425063335,
-   "level": "warn",
-   "src": "Instant Gaming",
-   "msg": "Silver Pines (PC): no encuentro «Silver Pines» para PC"
-  },
-  {
-   "t": 1793425063335,
-   "level": "info",
-   "src": "Eneba",
-   "msg": "Silver Pines (PC): 17.95 € · Silver Pines Steam Key (PC) GLOBAL · dudoso, 2 opciones para elegir"
-  },
   {
    "t": 1793425063335,
    "level": "warn",
@@ -2656,9 +2557,108 @@
    "level": "warn",
    "src": "gemini",
    "msg": "Silver Pines: reseñas · Cuota de Gemini agotada por ahora; se reintenta en el siguiente ciclo"
+  },
+  {
+   "t": 1793439994743,
+   "level": "info",
+   "src": "api",
+   "msg": "«Silver Pines»: tiendas actualizadas, comprobando precios"
+  },
+  {
+   "t": 1793439994788,
+   "level": "info",
+   "src": "cron",
+   "msg": "ciclo #93 · 1 tracker"
+  },
+  {
+   "t": 1793440043398,
+   "level": "info",
+   "src": "Steam",
+   "msg": "Silver Pines (PC): 24.99 € · https://store.steampowered.com/app/2333000/"
+  },
+  {
+   "t": 1793440043398,
+   "level": "info",
+   "src": "Amazon",
+   "msg": "Silver Pines (PC): 37.39 € · Aramox Medidor de Agua para PC, Medidor de Refrigeración Líquida con Pantalla LCD Acrílica con Interfaz de 3 Pines para un Rendimiento óptimo de la PC (SILVER) · leído desde tu PC"
+  },
+  {
+   "t": 1793440043398,
+   "level": "warn",
+   "src": "Instant Gaming",
+   "msg": "Silver Pines (PC): no encuentro «Silver Pines» para PC"
+  },
+  {
+   "t": 1793440043398,
+   "level": "warn",
+   "src": "MediaMarkt",
+   "msg": "Silver Pines (PC): no encuentro «Silver Pines» para PC entre 12 resultados"
+  },
+  {
+   "t": 1793440043398,
+   "level": "warn",
+   "src": "Fnac",
+   "msg": "Silver Pines (PC): la tienda ha pedido un captcha; se reintentará en el próximo ciclo"
+  },
+  {
+   "t": 1793440043398,
+   "level": "warn",
+   "src": "El Corte Inglés",
+   "msg": "Silver Pines (PC): el buscador de la tienda no ha devuelto productos"
+  },
+  {
+   "t": 1793440043398,
+   "level": "warn",
+   "src": "GAME",
+   "msg": "Silver Pines (PC): no encuentro «Silver Pines» para PC entre 10 resultados"
+  },
+  {
+   "t": 1793440043398,
+   "level": "warn",
+   "src": "Impact",
+   "msg": "Silver Pines (PC): no encuentro «Silver Pines» para PC entre 5 resultados"
+  },
+  {
+   "t": 1793440043398,
+   "level": "info",
+   "src": "Eneba",
+   "msg": "Silver Pines (PC): 18.35 € · Silver Pines Steam Key (PC) EUROPE"
+  },
+  {
+   "t": 1793440043798,
+   "level": "ok",
+   "src": "parser",
+   "msg": "Silver Pines: 24,99 € → 18,35 € en Eneba · 49.01 s"
+  },
+  {
+   "t": 1793440067054,
+   "level": "warn",
+   "src": "gemini",
+   "msg": "Silver Pines: Deal Index · Gemini: This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later."
+  },
+  {
+   "t": 1793440067054,
+   "level": "ai",
+   "src": "gemini",
+   "msg": "Silver Pines: Deal Index 20/100 · esperar bajada (35 %)"
+  },
+  {
+   "t": 1793440083012,
+   "level": "warn",
+   "src": "gemini",
+   "msg": "Silver Pines: reseñas · Cuota de Gemini agotada por ahora; se reintenta en el siguiente ciclo"
   }
  ],
  "acciones": [
+  {
+   "id": "rmvw7uxjd906m",
+   "accion": "editar",
+   "ok": true,
+   "error": null,
+   "at": 1793440083013,
+   "secs": 88,
+   "trackerId": "g-e770c9a3"
+  },
   {
    "id": "rmvsvbv22vamf",
    "accion": "crear",
@@ -2791,10 +2791,10 @@
    "covers": "Keys · búsqueda automática",
    "host": "www.instant-gaming.com",
    "ok": 100,
-   "lat": 10709,
-   "last": 1793439367288,
+   "lat": 13503,
+   "last": 1793440008606,
    "status": "ok",
-   "runs": 7
+   "runs": 1
   },
   {
    "name": "Eneba",
@@ -2802,10 +2802,10 @@
    "covers": "Keys · búsqueda automática",
    "host": "www.eneba.com",
    "ok": 100,
-   "lat": 9441,
-   "last": 1793439365375,
+   "lat": 14936,
+   "last": 1793440010038,
    "status": "ok",
-   "runs": 6
+   "runs": 1
   },
   {
    "name": "Amazon",
@@ -2824,10 +2824,10 @@
    "covers": "Búsqueda automática",
    "host": "www.mediamarkt.es",
    "ok": 100,
-   "lat": 14351,
-   "last": 1793439366373,
+   "lat": 17176,
+   "last": 1793440021655,
    "status": "ok",
-   "runs": 7
+   "runs": 2
   },
   {
    "name": "Fnac",
@@ -2835,10 +2835,10 @@
    "covers": "Búsqueda automática",
    "host": "www.fnac.es",
    "ok": 0,
-   "lat": 12039,
-   "last": 1793439388027,
+   "lat": 18516,
+   "last": 1793440029548,
    "status": "warn",
-   "runs": 11
+   "runs": 2
   },
   {
    "name": "El Corte Inglés",
@@ -2846,10 +2846,10 @@
    "covers": "Búsqueda automática",
    "host": "www.elcorteingles.es",
    "ok": 100,
-   "lat": 26111,
-   "last": 1793439371866,
+   "lat": 28702,
+   "last": 1793440043393,
    "status": "ok",
-   "runs": 5
+   "runs": 2
   },
   {
    "name": "GAME",
@@ -2857,10 +2857,10 @@
    "covers": "Búsqueda automática",
    "host": "www.game.es",
    "ok": 100,
-   "lat": 9037,
-   "last": 1793439350443,
+   "lat": 19850,
+   "last": 1793440021628,
    "status": "ok",
-   "runs": 5
+   "runs": 2
   },
   {
    "name": "Impact",
@@ -2868,10 +2868,10 @@
    "covers": "Búsqueda automática",
    "host": "impactgame.es",
    "ok": 100,
-   "lat": 2661,
-   "last": 1793439352204,
+   "lat": 3128,
+   "last": 1793440001016,
    "status": "ok",
-   "runs": 6
+   "runs": 2
   },
   {
    "name": "Google Flights",
@@ -2890,10 +2890,10 @@
    "covers": "Ofertas de la comunidad",
    "host": "www.chollometro.com",
    "ok": 100,
-   "lat": 498,
-   "last": 1793439350305,
+   "lat": 690,
+   "last": 1793439995790,
    "status": "ok",
-   "runs": 6
+   "runs": 1
   },
   {
    "name": "Steam España",
@@ -2901,8 +2901,8 @@
    "covers": "Precio oficial de PC, reseñas, Steam Deck",
    "host": "store.steampowered.com",
    "ok": 100,
-   "lat": 170,
-   "last": 1793439245510,
+   "lat": 318,
+   "last": 1793440043762,
    "status": "ok",
    "runs": 2
   }
@@ -2911,18 +2911,18 @@
   "running": true,
   "busy": false,
   "intervalMin": 60,
-  "cycles": 92,
-  "requests": 5445,
-  "lastRun": 1793439452144,
-  "lastAction": "ciclo"
+  "cycles": 93,
+  "requests": 5464,
+  "lastRun": 1793440083013,
+  "lastAction": "editar"
  },
  "version": "github",
  "ai": {
   "on": true,
   "model": "gemini-3.8-flash",
-  "lastRun": 1793439388028,
+  "lastRun": 1793440043798,
   "ok": 0,
-  "failed": 4,
+  "failed": 2,
   "error": "Cuota de Gemini agotada por ahora; se reintenta en el siguiente ciclo"
  }
 }
