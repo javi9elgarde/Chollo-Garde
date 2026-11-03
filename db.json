@@ -2530,6 +2530,14 @@
  ],
  "acciones": [
   {
+   "id": "rmvzxgezmj70x",
+   "accion": "borrar",
+   "ok": false,
+   "error": "Ese tracker no existe",
+   "at": 1793664394800,
+   "secs": 0
+  },
+  {
    "id": "rmvzxgdnqd29k",
    "accion": "borrar",
    "ok": true,
@@ -2801,7 +2809,7 @@
   "intervalMin": 60,
   "cycles": 167,
   "requests": 10233,
-  "lastRun": 1793664383590,
+  "lastRun": 1793664394800,
   "lastAction": "borrar"
  },
  "version": "github"
