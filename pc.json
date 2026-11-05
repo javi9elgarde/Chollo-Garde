@@ -1,120 +1,120 @@
 {
- "updated": 1793900462043,
+ "updated": 1793900633701,
  "trackers": {
   "g-e0948d2d": {
-   "t": 1793900431985,
+   "t": 1793900633592,
    "stores": [
     {
      "name": "Amazon",
      "type": "retail",
      "auto": true,
+     "error": "page.goto: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"https://www.amazon.es/s?k=Metal%20Gear%20Solid%20Master%20Collection%20Vol.%202%20PS5&i=videogames\", waiting until \"domcontentloaded\"\u001b[22m\n",
+     "price": 33.88,
      "url": "https://www.amazon.es/dp/B0GNKRMWMS",
-     "price": 40.99,
-     "out": false,
-     "pre": false,
-     "match": "Metal Gear Solid: Master Collection Volume 2 – Day One Edition - PS5"
+     "match": "Metal Gear Solid: Master Collection Volume 2 – Day One Edition - PS5",
+     "stale": true
     },
     {
      "name": "Fnac",
      "type": "retail",
      "auto": true,
-     "url": "https://www.fnac.es/Metal-Gear-Solid-Master-Collection-Vol-2-Day-One-Edition-PS5-Videojuego-PS5/a12881390",
+     "error": "page.goto: net::ERR_ABORTED; maybe frame was detached?\nCall log:\n\u001b[2m  - navigating to \"https://www.fnac.es/SearchResult/ResultList.aspx?Search=Metal%20Gear%20Solid%20Master%20Collection%20Vol.%202%20PS5\", waiting until \"domcontentloaded\"\u001b[22m\n",
      "price": 46.9,
-     "out": false,
-     "pre": false,
-     "match": "Metal Gear Solid: Master Collection Vol. 2 Day One Edition PS5"
+     "url": "https://www.fnac.es/Metal-Gear-Solid-Master-Collection-Vol-2-Day-One-Edition-PS5-Videojuego-PS5/a12881390",
+     "match": "Metal Gear Solid: Master Collection Vol. 2 Day One Edition PS5",
+     "stale": true
     },
     {
      "name": "El Corte Inglés",
      "type": "retail",
      "auto": true,
-     "url": "https://www.elcorteingles.es/videojuegos/A200300114-metal-gear-solid-master-collection-vol2-day-1-edition-playstation-5/",
+     "error": "page.goto: net::ERR_ABORTED; maybe frame was detached?\nCall log:\n\u001b[2m  - navigating to \"https://www.elcorteingles.es/search-nwx/1/?s=Metal%20Gear%20Solid%20Master%20Collection%20Vol.%202%20PS5\", waiting until \"domcontentloaded\"\u001b[22m\n",
      "price": 49.9,
-     "out": false,
-     "pre": false,
-     "match": "Metal Gear Solid: Master Collection Vol.2 Day 1 Edition PlayStation 5"
+     "url": "https://www.elcorteingles.es/videojuegos/A200300114-metal-gear-solid-master-collection-vol2-day-1-edition-playstation-5/",
+     "match": "Metal Gear Solid: Master Collection Vol.2 Day 1 Edition PlayStation 5",
+     "stale": true
     },
     {
      "name": "PS Store",
      "type": "official",
-     "url": "https://store.playstation.com/es-es/product/UP0101-PPSA18194_00-MGSCOLLECTION002",
+     "error": "page.goto: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"https://store.playstation.com/es-es/search/Metal%20Gear%20Solid%20Master%20Collection%20Vol.%202\", waiting until \"domcontentloaded\"\u001b[22m\n",
      "price": 49.99,
-     "initial": 49.99,
-     "out": false,
-     "pre": false,
-     "match": "METAL GEAR SOLID: MASTER COLLECTION Vol.2"
+     "url": "https://store.playstation.com/es-es/product/UP0101-PPSA18194_00-MGSCOLLECTION002",
+     "match": "METAL GEAR SOLID: MASTER COLLECTION Vol.2",
+     "stale": true,
+     "initial": 49.99
     }
    ]
   },
   "g-d3e2e138": {
-   "t": 1793900462043,
+   "t": 1793900633701,
    "stores": [
-    {
-     "name": "Fnac",
-     "type": "retail",
-     "auto": true,
-     "url": "https://www.fnac.es/Marvel-Lobezno-PS5-Videojuego-PS5/a12684310",
-     "price": 73.5,
-     "out": false,
-     "pre": false,
-     "match": "Marvel: Lobezno PS5"
-    },
-    {
-     "name": "El Corte Inglés",
-     "type": "retail",
-     "auto": true,
-     "url": "https://www.elcorteingles.es/videojuegos/A200949644-marvel-lobezno-playstation-5/",
-     "price": 74.9,
-     "out": false,
-     "pre": false,
-     "match": "Marvel Lobezno PlayStation 5"
-    },
-    {
-     "name": "PS Store",
-     "type": "official",
-     "url": "https://store.playstation.com/es-es/product/UP9000-PPSA03671_00-MARVELSWOLVERINE",
-     "price": 79.99,
-     "initial": 79.99,
-     "out": false,
-     "pre": false,
-     "match": "Marvel: Lobezno"
-    },
     {
      "name": "Amazon",
      "type": "retail",
      "auto": true,
-     "error": "no encuentro el precio en la página (¿es la ficha de un producto?)",
+     "error": "browserContext.newPage: Target page, context or browser has been closed\nBrowser logs:\n\n<launching> C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-extensions --disable-features=AcceptCHFrame,AvoidUnnecessaryBeforeUnloadCheckSync,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,Translate,AutoDeElevate,RenderDocument --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --enable-automation --no-sandbox --disable-blink-features=AutomationControlled --window-position=-32000,-32000 --user-data-dir=C:\\actions-runner\\_work\\Chollo-Garde\\Chollo-Garde\\datos\\navegador --remote-debugging-pipe about:blank\n<launched> pid=28572\n[pid=28572][err] [28572:23236:1105/184141.001:ERROR:chrome\\elevation_service\\edge_elevation_service_browser_helper.cc:94] LaunchUpdateCmdElevatedAndWait:  hr = 80070002 with exit code: 32\n[pid=28572][err] [28572:14864:1105/184205.638:ERROR:chrome\\browser\\edge_dual_engine\\sitelist_downloader.cc:254] Sitelist download failed: ERR_TIMED_OUT url=https://go.microsoft.com/fwlink/?linkid=2133855&bucket=78 cid=N/A status=-7\n[pid=28572][err] [28572:14864:1105/184225.596:ERROR:chrome\\browser\\task_manager\\providers\\fallback_task_provider.cc:126] Every renderer should have at least one task provided by a primary task provider. If a \"Renderer\" fallback task is shown, it is a bug. If you have repro steps, please file a new bug and tag it as a dependency of crbug.com/40528867.",
      "price": 67.99,
      "url": "https://www.amazon.es/dp/B0HHFLGFV8",
      "match": "Marvel's Wolverine - PS5",
      "stale": true
-    }
-   ]
-  },
-  "g-e770c9a3": {
-   "t": 1793900409924,
-   "stores": [
-    {
-     "name": "Amazon",
-     "type": "retail",
-     "auto": true,
-     "url": "https://www.amazon.es/dp/B0GJNKQBR9",
-     "price": 37.39,
-     "out": false,
-     "pre": false,
-     "match": "Aramox Medidor de Agua para PC, Medidor de Refrigeración Líquida con Pantalla LCD Acrílica con Interfaz de 3 Pines para un Rendimiento óptimo de la PC (SILVER)"
     },
     {
      "name": "Fnac",
      "type": "retail",
      "auto": true,
-     "error": "no encuentro «Silver Pines» para PC entre 1 resultados"
+     "error": "browserContext.newPage: Target page, context or browser has been closed\nBrowser logs:\n\n<launching> C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-extensions --disable-features=AcceptCHFrame,AvoidUnnecessaryBeforeUnloadCheckSync,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,Translate,AutoDeElevate,RenderDocument --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --enable-automation --no-sandbox --disable-blink-features=AutomationControlled --window-position=-32000,-32000 --user-data-dir=C:\\actions-runner\\_work\\Chollo-Garde\\Chollo-Garde\\datos\\navegador --remote-debugging-pipe about:blank\n<launched> pid=28572\n[pid=28572][err] [28572:23236:1105/184141.001:ERROR:chrome\\elevation_service\\edge_elevation_service_browser_helper.cc:94] LaunchUpdateCmdElevatedAndWait:  hr = 80070002 with exit code: 32\n[pid=28572][err] [28572:14864:1105/184205.638:ERROR:chrome\\browser\\edge_dual_engine\\sitelist_downloader.cc:254] Sitelist download failed: ERR_TIMED_OUT url=https://go.microsoft.com/fwlink/?linkid=2133855&bucket=78 cid=N/A status=-7\n[pid=28572][err] [28572:14864:1105/184225.596:ERROR:chrome\\browser\\task_manager\\providers\\fallback_task_provider.cc:126] Every renderer should have at least one task provided by a primary task provider. If a \"Renderer\" fallback task is shown, it is a bug. If you have repro steps, please file a new bug and tag it as a dependency of crbug.com/40528867.",
+     "price": 73.5,
+     "url": "https://www.fnac.es/Marvel-Lobezno-PS5-Videojuego-PS5/a12684310",
+     "match": "Marvel: Lobezno PS5",
+     "stale": true
     },
     {
      "name": "El Corte Inglés",
      "type": "retail",
      "auto": true,
-     "error": "el buscador de la tienda no ha devuelto productos"
+     "error": "browserContext.newPage: Target page, context or browser has been closed",
+     "price": 74.9,
+     "url": "https://www.elcorteingles.es/videojuegos/A200949644-marvel-lobezno-playstation-5/",
+     "match": "Marvel Lobezno PlayStation 5",
+     "stale": true
+    },
+    {
+     "name": "PS Store",
+     "type": "official",
+     "error": "browserContext.newPage: Protocol error (Target.createTarget): Failed to open a new tab",
+     "price": 79.99,
+     "url": "https://store.playstation.com/es-es/product/UP9000-PPSA03671_00-MARVELSWOLVERINE",
+     "match": "Marvel: Lobezno",
+     "stale": true,
+     "initial": 79.99
+    }
+   ]
+  },
+  "g-e770c9a3": {
+   "t": 1793900555994,
+   "stores": [
+    {
+     "name": "Amazon",
+     "type": "retail",
+     "auto": true,
+     "error": "page.goto: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"https://www.amazon.es/s?k=Silver%20Pines%20PC&i=videogames\", waiting until \"domcontentloaded\"\u001b[22m\n",
+     "price": 37.39,
+     "url": "https://www.amazon.es/dp/B0GJNKQBR9",
+     "match": "Aramox Medidor de Agua para PC, Medidor de Refrigeración Líquida con Pantalla LCD Acrílica con Interfaz de 3 Pines para un Rendimiento óptimo de la PC (SILVER)",
+     "stale": true
+    },
+    {
+     "name": "Fnac",
+     "type": "retail",
+     "auto": true,
+     "error": "page.goto: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"https://www.fnac.es/SearchResult/ResultList.aspx?Search=Silver%20Pines%20PC\", waiting until \"domcontentloaded\"\u001b[22m\n"
+    },
+    {
+     "name": "El Corte Inglés",
+     "type": "retail",
+     "auto": true,
+     "error": "page.goto: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"https://www.elcorteingles.es/search-nwx/1/?s=Silver%20Pines%20PC\", waiting until \"domcontentloaded\"\u001b[22m\n"
     }
    ]
   }
