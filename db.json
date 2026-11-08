@@ -1,168 +1,6 @@
 {
  "trackers": [
   {
-   "id": "f-343e75ca",
-   "cat": "flight",
-   "live": true,
-   "source": "Google Flights",
-   "title": "Madrid → Edimburgo",
-   "origin": "MAD",
-   "dest": "EDI",
-   "depart": "2027-03-25",
-   "ret": "2027-03-30",
-   "trip": "roundtrip",
-   "maxStops": 0,
-   "adults": 1,
-   "flex": 0,
-   "target": 150,
-   "alert": true,
-   "alerted": false,
-   "createdAt": 1793237550114,
-   "lastCheck": 1794157407725,
-   "lastError": null,
-   "history": [
-    {
-     "t": 1793311648318,
-     "p": 181
-    },
-    {
-     "t": 1793400224615,
-     "p": 180
-    },
-    {
-     "t": 1793485251874,
-     "p": 180
-    },
-    {
-     "t": 1793572758695,
-     "p": 181
-    },
-    {
-     "t": 1793657802582,
-     "p": 181
-    },
-    {
-     "t": 1793746391283,
-     "p": 181
-    },
-    {
-     "t": 1793831975096,
-     "p": 181
-    },
-    {
-     "t": 1793916482497,
-     "p": 181
-    },
-    {
-     "t": 1794005060250,
-     "p": 181
-    },
-    {
-     "t": 1794090088670,
-     "p": 181
-    },
-    {
-     "t": 1794157407725,
-     "p": 181
-    }
-   ],
-   "coupons": [],
-   "reviews": {
-    "rating": null,
-    "n": 0,
-    "src": "sin reseñas",
-    "pros": [],
-    "cons": []
-   },
-   "current": 181,
-   "url": "https://www.google.com/travel/flights?tfs=CBwQAhogEgoyMDI3LTAzLTI1KABqBwgBEgNNQURyBwgBEgNFREkaIBIKMjAyNy0wMy0zMCgAagcIARIDRURJcgcIARIDTUFEQgEBSAGYAQE%3D&hl=es&gl=ES&curr=EUR",
-   "bestDepart": "2027-03-25",
-   "bestRet": "2027-03-30",
-   "airline": "easyJet",
-   "stops": 0,
-   "via": null,
-   "durMin": 180,
-   "depTime": "19:55",
-   "arrTime": "21:55",
-   "baggage": {
-    "cabin": false,
-    "hold": null,
-    "holdFee": null,
-    "lowcost": true
-   },
-   "options": [
-    {
-     "price": 181,
-     "airline": "easyJet",
-     "stops": 0,
-     "via": null,
-     "durMin": 180,
-     "depTime": "19:55",
-     "arrTime": "21:55",
-     "noCabinBag": true
-    },
-    {
-     "price": 194,
-     "airline": "Ryanair",
-     "stops": 0,
-     "via": null,
-     "durMin": 175,
-     "depTime": "19:10",
-     "arrTime": "21:05",
-     "noCabinBag": true
-    },
-    {
-     "price": 238,
-     "airline": "Ryanair",
-     "stops": 0,
-     "via": null,
-     "durMin": 175,
-     "depTime": "05:50",
-     "arrTime": "07:45",
-     "noCabinBag": true
-    }
-   ],
-   "calendar": [
-    {
-     "depart": "2027-03-25",
-     "ret": "2027-03-30",
-     "price": 181,
-     "airline": "easyJet",
-     "stops": 0
-    }
-   ],
-   "priceLevel": "typical",
-   "typical": null,
-   "stores": [
-    {
-     "name": "Google Flights",
-     "type": "official",
-     "price": 181,
-     "url": "https://www.google.com/travel/flights?tfs=CBwQAhogEgoyMDI3LTAzLTI1KABqBwgBEgNNQURyBwgBEgNFREkaIBIKMjAyNy0wMy0zMCgAagcIARIDRURJcgcIARIDTUFEQgEBSAGYAQE%3D&hl=es&gl=ES&curr=EUR",
-     "match": "easyJet · directo · 2027-03-25"
-    }
-   ],
-   "routeAvg": 181,
-   "ai": {
-    "score": 52,
-    "inflado": false,
-    "descuento_real": 0,
-    "recomendacion": "ESPERAR_BAJADA",
-    "confianza": 0.75,
-    "motivos": [
-     "El precio de 181 € con easyJet se encuentra en niveles habituales según Google Flights.",
-     "Las fechas coinciden con la Semana Santa, temporada muy demandada desde España.",
-     "Quedan 138 días para el viaje, por lo que aún hay margen para promociones puntuales antes de las últimas semanas.",
-     "La tarifa de easyJet y Ryanair no incluye maleta en cabina ni facturada."
-    ],
-    "proxima_bajada": "Conviene esperar y monitorizar hasta enero (a 60-90 días de la salida) por si se acerca a tus 150 €.",
-    "price": 181,
-    "at": 1794040865071,
-    "model": "gemini-3.8-flash",
-    "v": 1
-   }
-  },
-  {
    "id": "g-e770c9a3",
    "cat": "game",
    "live": true,
@@ -808,12 +646,6 @@
   "requests": 19282
  },
  "logs": [
-  {
-   "t": 1794132695206,
-   "level": "warn",
-   "src": "Impact",
-   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): no encuentro «Metal Gear Solid Master Collection Vol. 2» para PS5 entre 1 resultados"
-  },
   {
    "t": 1794132695206,
    "level": "info",
@@ -2607,9 +2439,24 @@
    "level": "warn",
    "src": "gemini",
    "msg": "Marvel's Wolverine: Deal Index · Cuota de Gemini agotada por ahora; se reintenta en el siguiente ciclo"
+  },
+  {
+   "t": 1794158257829,
+   "level": "warn",
+   "src": "api",
+   "msg": "tracker eliminado: «Madrid → Edimburgo»"
   }
  ],
  "acciones": [
+  {
+   "id": "rmw83hvmihrge",
+   "accion": "borrar",
+   "ok": true,
+   "error": null,
+   "at": 1794158257843,
+   "secs": 0,
+   "trackerId": "f-343e75ca"
+  },
   {
    "id": "rmvzxgezmj70x",
    "accion": "borrar",
@@ -2890,16 +2737,8 @@
   "intervalMin": 60,
   "cycles": 327,
   "requests": 19282,
-  "lastRun": 1794157594438,
-  "lastAction": "ciclo"
+  "lastRun": 1794158257843,
+  "lastAction": "borrar"
  },
- "version": "github",
- "ai": {
-  "on": true,
-  "model": "gemini-3.8-flash",
-  "lastRun": 1794157501170,
-  "ok": 0,
-  "failed": 1,
-  "error": "Cuota de Gemini agotada por ahora; se reintenta en el siguiente ciclo"
- }
+ "version": "github"
 }
