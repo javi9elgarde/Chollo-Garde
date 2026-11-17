@@ -23,45 +23,45 @@
    "links": [],
    "steamAppID": null,
    "image": "https://imgproxy.eneba.games/UwjyIXHG6Kx_HFFvZa02kjGR3YGI9OvMJGFUPBe_-lw/rs:fit:300/ar:1/czM6Ly9wcm9kdWN0/cy5lbmViYS5nYW1l/cy9wcm9kdWN0cy9K/cmM0Wk02UzMzNC12/VWxMTUh4eWM4OUhL/NUZibjZUalhaWFJv/Tm5nUThNLmpwZWc",
-   "url": "https://www.amazon.es/dp/B07V4S2W94",
+   "url": "https://www.game.es/the-legend-of-zelda-links-awakening-switch/170260",
    "deck": null,
    "msrp": 59.99,
    "target": 40,
    "alert": true,
    "alerted": false,
    "createdAt": 1794932585140,
-   "lastCheck": 1794932585140,
-   "lastError": null,
+   "lastCheck": 1794932681893,
+   "lastError": "Amazon: la tienda ha pedido un captcha; se reintentará en el próximo ciclo · Instant Gaming: no encuentro «The Legend of Zelda: Link's Awakening» para Switch · MediaMarkt: no encuentro el precio en la página (¿es la ficha de un producto?) · Fnac: la tienda ha pedido un captcha; se reintentará en el próximo ciclo · El Corte Inglés: el buscador de la tienda no ha devuelto productos · Impact: no encuentro «The Legend of Zelda: Link's Awakening» para Switch entre 5 resultados",
    "stores": [
-    {
-     "name": "Amazon",
-     "type": "retail",
-     "url": "https://www.amazon.es/dp/B07V4S2W94",
-     "price": 59.99,
-     "out": false,
-     "pre": false,
-     "match": "The Legend of Zelda: Link’s Awakening | Switch - Download Code",
-     "auto": true
-    },
     {
      "name": "GAME",
      "type": "retail",
+     "auto": true,
      "url": "https://www.game.es/the-legend-of-zelda-links-awakening-switch/170260",
      "price": 59.99,
      "out": false,
      "pre": false,
-     "match": "The Legend of Zelda Link’s Awakening - Switch",
-     "auto": true
+     "match": "The Legend of Zelda Link’s Awakening - Switch"
     },
     {
      "name": "Eneba",
      "type": "key",
+     "auto": true,
      "url": "https://www.eneba.com/es/nintendo-the-legend-of-zelda-links-awakening-nintendo-switch-eshop-key-europe?currency=EUR",
      "price": 60.64,
      "out": false,
      "pre": false,
-     "match": "The Legend of Zelda: Link's Awakening (Nintendo Switch) eShop Clave EUROPA",
-     "auto": true
+     "match": "The Legend of Zelda: Link's Awakening (Nintendo Switch) eShop Clave EUROPA"
+    },
+    {
+     "name": "Amazon",
+     "type": "retail",
+     "auto": true,
+     "error": "la tienda ha pedido un captcha; se reintentará en el próximo ciclo",
+     "price": 59.99,
+     "url": "https://www.amazon.es/dp/B07V4S2W94",
+     "match": "The Legend of Zelda: Link’s Awakening | Switch - Download Code",
+     "stale": true
     },
     {
      "name": "Instant Gaming",
@@ -97,7 +97,7 @@
    "current": 59.99,
    "history": [
     {
-     "t": 1794932585140,
+     "t": 1794932681893,
      "p": 59.99
     }
    ],
@@ -116,7 +116,24 @@
    },
    "artTried": 1794932585141,
    "art": "https://images.igdb.com/igdb/image/upload/t_1080p/ara2s.jpg",
-   "igdb": 115284
+   "igdb": 115284,
+   "ai": {
+    "score": 15,
+    "inflado": false,
+    "descuento_real": 0,
+    "recomendacion": "ESPERAR_BAJADA",
+    "confianza": 0.2,
+    "motivos": [
+     "Solo contamos con 1 día de histórico registrado, por lo que la confianza es muy baja.",
+     "El juego está a su precio de referencia oficial de 59,99 € sin rebaja alguna.",
+     "El precio actual queda muy lejos de tu objetivo de 40,00 €."
+    ],
+    "proxima_bajada": "Podría bajar a finales de noviembre con las ofertas de Black Friday.",
+    "price": 59.99,
+    "at": 1794932720408,
+    "model": "gemini-3.8-flash",
+    "v": 1
+   }
   },
   {
    "id": "g-e0948d2d",
@@ -637,82 +654,10 @@
   "intervalMin": 60
  },
  "stats": {
-  "cycles": 576,
-  "requests": 29265
+  "cycles": 577,
+  "requests": 29285
  },
  "logs": [
-  {
-   "t": 1794890973352,
-   "level": "info",
-   "src": "parser",
-   "msg": "Marvel's Wolverine: sin cambios (43,79 € en Amazon) · 43.53 s"
-  },
-  {
-   "t": 1794891066662,
-   "level": "warn",
-   "src": "gemini",
-   "msg": "Metal Gear Solid Master Collection Vol. 2: Deal Index · Cuota de Gemini agotada por ahora; se reintenta en el siguiente ciclo"
-  },
-  {
-   "t": 1794894400527,
-   "level": "info",
-   "src": "cron",
-   "msg": "ciclo #565 · 2 trackers"
-  },
-  {
-   "t": 1794894447889,
-   "level": "warn",
-   "src": "Instant Gaming",
-   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): no encuentro «Metal Gear Solid Master Collection Vol. 2» para PS5"
-  },
-  {
-   "t": 1794894447889,
-   "level": "warn",
-   "src": "Eneba",
-   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): la ficha no tiene precio ahora mismo (sin vendedores o sin stock)"
-  },
-  {
-   "t": 1794894447889,
-   "level": "warn",
-   "src": "Amazon",
-   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): la tienda ha pedido un captcha; se reintentará en el próximo ciclo"
-  },
-  {
-   "t": 1794894447889,
-   "level": "info",
-   "src": "MediaMarkt",
-   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): 44.99 € · PS5 Metal Gear Solid: Master Collection Volume 2 | MediaMarkt"
-  },
-  {
-   "t": 1794894447889,
-   "level": "warn",
-   "src": "Fnac",
-   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): la tienda ha pedido un captcha; se reintentará en el próximo ciclo"
-  },
-  {
-   "t": 1794894447889,
-   "level": "info",
-   "src": "El Corte Inglés",
-   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): 49.9 € · Metal Gear Solid: Master Collection Vol.2 Day 1 Edition PlayStation 5"
-  },
-  {
-   "t": 1794894447889,
-   "level": "info",
-   "src": "GAME",
-   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): 49.99 € · Metal Gear Solid Master Collection Vol. 2 PS5"
-  },
-  {
-   "t": 1794894447889,
-   "level": "warn",
-   "src": "Impact",
-   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): no encuentro «Metal Gear Solid Master Collection Vol. 2» para PS5 entre 1 resultados"
-  },
-  {
-   "t": 1794894447889,
-   "level": "info",
-   "src": "PS Store",
-   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): 39.99 € · METAL GEAR SOLID: MASTER COLLECTION Vol.2"
-  },
   {
    "t": 1794894447891,
    "level": "info",
@@ -2440,9 +2385,90 @@
    "level": "warn",
    "src": "gemini",
    "msg": "The Legend of Zelda: Link's Awakening: Deal Index · Gemini: This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later."
+  },
+  {
+   "t": 1794932638146,
+   "level": "info",
+   "src": "cron",
+   "msg": "ciclo #577 · 1 tracker"
+  },
+  {
+   "t": 1794932681892,
+   "level": "warn",
+   "src": "Instant Gaming",
+   "msg": "The Legend of Zelda: Link's Awakening (Switch): no encuentro «The Legend of Zelda: Link's Awakening» para Switch"
+  },
+  {
+   "t": 1794932681893,
+   "level": "info",
+   "src": "Eneba",
+   "msg": "The Legend of Zelda: Link's Awakening (Switch): 60.64 € · The Legend of Zelda: Link's Awakening (Nintendo Switch) eShop Clave EUROPA"
+  },
+  {
+   "t": 1794932681893,
+   "level": "warn",
+   "src": "Amazon",
+   "msg": "The Legend of Zelda: Link's Awakening (Switch): la tienda ha pedido un captcha; se reintentará en el próximo ciclo"
+  },
+  {
+   "t": 1794932681893,
+   "level": "warn",
+   "src": "MediaMarkt",
+   "msg": "The Legend of Zelda: Link's Awakening (Switch): no encuentro el precio en la página (¿es la ficha de un producto?)"
+  },
+  {
+   "t": 1794932681893,
+   "level": "warn",
+   "src": "Fnac",
+   "msg": "The Legend of Zelda: Link's Awakening (Switch): la tienda ha pedido un captcha; se reintentará en el próximo ciclo"
+  },
+  {
+   "t": 1794932681893,
+   "level": "warn",
+   "src": "El Corte Inglés",
+   "msg": "The Legend of Zelda: Link's Awakening (Switch): el buscador de la tienda no ha devuelto productos"
+  },
+  {
+   "t": 1794932681893,
+   "level": "info",
+   "src": "GAME",
+   "msg": "The Legend of Zelda: Link's Awakening (Switch): 59.99 € · The Legend of Zelda Link’s Awakening - Switch"
+  },
+  {
+   "t": 1794932681893,
+   "level": "warn",
+   "src": "Impact",
+   "msg": "The Legend of Zelda: Link's Awakening (Switch): no encuentro «The Legend of Zelda: Link's Awakening» para Switch entre 5 resultados"
+  },
+  {
+   "t": 1794932681894,
+   "level": "info",
+   "src": "parser",
+   "msg": "The Legend of Zelda: Link's Awakening: sin cambios (59,99 € en GAME) · 43.74 s"
+  },
+  {
+   "t": 1794932720408,
+   "level": "ai",
+   "src": "gemini",
+   "msg": "The Legend of Zelda: Link's Awakening: Deal Index 15/100 · esperar bajada (20 %)"
+  },
+  {
+   "t": 1794932735632,
+   "level": "warn",
+   "src": "gemini",
+   "msg": "The Legend of Zelda: Link's Awakening: reseñas · Cuota de Gemini agotada por ahora; se reintenta en el siguiente ciclo"
   }
  ],
  "acciones": [
+  {
+   "id": "rmwkwjjt1f4za",
+   "accion": "escanear",
+   "ok": true,
+   "error": null,
+   "at": 1794932735633,
+   "secs": 97,
+   "trackerId": "g-ffedbd54"
+  },
   {
    "id": "rmwkwheh9b54w",
    "accion": "crear",
@@ -2628,8 +2654,8 @@
    "covers": "Keys · búsqueda automática",
    "host": "www.instant-gaming.com",
    "ok": 100,
-   "lat": 12618,
-   "last": 1794932569512,
+   "lat": 12454,
+   "last": 1794932663549,
    "status": "ok",
    "runs": 2
   },
@@ -2639,21 +2665,21 @@
    "covers": "Keys · búsqueda automática",
    "host": "www.eneba.com",
    "ok": 100,
-   "lat": 9068,
-   "last": 1794932563187,
+   "lat": 7826,
+   "last": 1794932646022,
    "status": "ok",
-   "runs": 2
+   "runs": 1
   },
   {
    "name": "Amazon",
    "kind": "navegador",
    "covers": "Búsqueda automática",
    "host": "www.amazon.es",
-   "ok": 100,
-   "lat": 13710,
-   "last": 1794932573225,
-   "status": "ok",
-   "runs": 2
+   "ok": 0,
+   "lat": 9664,
+   "last": 1794932675791,
+   "status": "warn",
+   "runs": 3
   },
   {
    "name": "MediaMarkt",
@@ -2661,8 +2687,8 @@
    "covers": "Búsqueda automática",
    "host": "www.mediamarkt.es",
    "ok": 100,
-   "lat": 17849,
-   "last": 1794932576300,
+   "lat": 16333,
+   "last": 1794932670144,
    "status": "ok",
    "runs": 2
   },
@@ -2672,8 +2698,8 @@
    "covers": "Búsqueda automática",
    "host": "www.fnac.es",
    "ok": 0,
-   "lat": 18268,
-   "last": 1794932580283,
+   "lat": 15391,
+   "last": 1794932670987,
    "status": "warn",
    "runs": 2
   },
@@ -2683,8 +2709,8 @@
    "covers": "Búsqueda automática",
    "host": "www.elcorteingles.es",
    "ok": 100,
-   "lat": 26540,
-   "last": 1794932585126,
+   "lat": 27268,
+   "last": 1794932681885,
    "status": "ok",
    "runs": 2
   },
@@ -2694,10 +2720,10 @@
    "covers": "Búsqueda automática",
    "host": "www.game.es",
    "ok": 100,
-   "lat": 16276,
-   "last": 1794932573881,
+   "lat": 1172,
+   "last": 1794932639369,
    "status": "ok",
-   "runs": 3
+   "runs": 1
   },
   {
    "name": "Impact",
@@ -2705,8 +2731,8 @@
    "covers": "Búsqueda automática",
    "host": "impactgame.es",
    "ok": 100,
-   "lat": 2786,
-   "last": 1794932544025,
+   "lat": 697,
+   "last": 1794932639167,
    "status": "ok",
    "runs": 2
   },
@@ -2727,8 +2753,8 @@
    "covers": "Ofertas de la comunidad",
    "host": "www.chollometro.com",
    "ok": 100,
-   "lat": 1210,
-   "last": 1794932540747,
+   "lat": 641,
+   "last": 1794932639300,
    "status": "ok",
    "runs": 2
   },
@@ -2748,10 +2774,18 @@
   "running": true,
   "busy": false,
   "intervalMin": 60,
-  "cycles": 576,
-  "requests": 29265,
-  "lastRun": 1794932609108,
-  "lastAction": "crear"
+  "cycles": 577,
+  "requests": 29285,
+  "lastRun": 1794932735633,
+  "lastAction": "escanear"
  },
- "version": "github"
+ "version": "github",
+ "ai": {
+  "on": true,
+  "model": "gemini-3.8-flash",
+  "lastRun": 1794932681895,
+  "ok": 1,
+  "failed": 1,
+  "error": null
+ }
 }
