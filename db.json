@@ -1,141 +1,6 @@
 {
  "trackers": [
   {
-   "id": "g-ffedbd54",
-   "cat": "game",
-   "live": true,
-   "kind": "multi",
-   "source": "tiendas",
-   "title": "The Legend of Zelda: Link's Awakening",
-   "query": "The Legend of Zelda: Link's Awakening",
-   "platform": "Switch",
-   "format": "Cualquiera",
-   "shops": [
-    "Instant Gaming",
-    "Eneba",
-    "Amazon",
-    "MediaMarkt",
-    "Fnac",
-    "El Corte Inglés",
-    "GAME",
-    "Impact"
-   ],
-   "links": [],
-   "steamAppID": null,
-   "image": "https://imgproxy.eneba.games/UwjyIXHG6Kx_HFFvZa02kjGR3YGI9OvMJGFUPBe_-lw/rs:fit:300/ar:1/czM6Ly9wcm9kdWN0/cy5lbmViYS5nYW1l/cy9wcm9kdWN0cy9K/cmM0Wk02UzMzNC12/VWxMTUh4eWM4OUhL/NUZibjZUalhaWFJv/Tm5nUThNLmpwZWc",
-   "url": "https://www.game.es/the-legend-of-zelda-links-awakening-switch/170260",
-   "deck": null,
-   "msrp": 59.99,
-   "target": 40,
-   "alert": true,
-   "alerted": false,
-   "createdAt": 1794932585140,
-   "lastCheck": 1794932681893,
-   "lastError": "Amazon: la tienda ha pedido un captcha; se reintentará en el próximo ciclo · Instant Gaming: no encuentro «The Legend of Zelda: Link's Awakening» para Switch · MediaMarkt: no encuentro el precio en la página (¿es la ficha de un producto?) · Fnac: la tienda ha pedido un captcha; se reintentará en el próximo ciclo · El Corte Inglés: el buscador de la tienda no ha devuelto productos · Impact: no encuentro «The Legend of Zelda: Link's Awakening» para Switch entre 5 resultados",
-   "stores": [
-    {
-     "name": "GAME",
-     "type": "retail",
-     "auto": true,
-     "url": "https://www.game.es/the-legend-of-zelda-links-awakening-switch/170260",
-     "price": 59.99,
-     "out": false,
-     "pre": false,
-     "match": "The Legend of Zelda Link’s Awakening - Switch"
-    },
-    {
-     "name": "Eneba",
-     "type": "key",
-     "auto": true,
-     "url": "https://www.eneba.com/es/nintendo-the-legend-of-zelda-links-awakening-nintendo-switch-eshop-key-europe?currency=EUR",
-     "price": 60.64,
-     "out": false,
-     "pre": false,
-     "match": "The Legend of Zelda: Link's Awakening (Nintendo Switch) eShop Clave EUROPA"
-    },
-    {
-     "name": "Amazon",
-     "type": "retail",
-     "auto": true,
-     "error": "la tienda ha pedido un captcha; se reintentará en el próximo ciclo",
-     "price": 59.99,
-     "url": "https://www.amazon.es/dp/B07V4S2W94",
-     "match": "The Legend of Zelda: Link’s Awakening | Switch - Download Code",
-     "stale": true
-    },
-    {
-     "name": "Instant Gaming",
-     "type": "key",
-     "auto": true,
-     "error": "no encuentro «The Legend of Zelda: Link's Awakening» para Switch"
-    },
-    {
-     "name": "MediaMarkt",
-     "type": "retail",
-     "auto": true,
-     "error": "no encuentro el precio en la página (¿es la ficha de un producto?)"
-    },
-    {
-     "name": "Fnac",
-     "type": "retail",
-     "auto": true,
-     "error": "la tienda ha pedido un captcha; se reintentará en el próximo ciclo"
-    },
-    {
-     "name": "El Corte Inglés",
-     "type": "retail",
-     "auto": true,
-     "error": "el buscador de la tienda no ha devuelto productos"
-    },
-    {
-     "name": "Impact",
-     "type": "retail",
-     "auto": true,
-     "error": "no encuentro «The Legend of Zelda: Link's Awakening» para Switch entre 5 resultados"
-    }
-   ],
-   "current": 59.99,
-   "history": [
-    {
-     "t": 1794932681893,
-     "p": 59.99
-    }
-   ],
-   "coupons": [],
-   "specs": {
-    "Género": "Puzzle, Adventure, Action",
-    "Desarrolladora": "Grezzo",
-    "Lanzamiento": "2019-09-20"
-   },
-   "reviews": {
-    "rating": null,
-    "n": 0,
-    "src": "sin reseñas todavía",
-    "pros": [],
-    "cons": []
-   },
-   "artTried": 1794932585141,
-   "art": "https://images.igdb.com/igdb/image/upload/t_1080p/ara2s.jpg",
-   "igdb": 115284,
-   "ai": {
-    "score": 15,
-    "inflado": false,
-    "descuento_real": 0,
-    "recomendacion": "ESPERAR_BAJADA",
-    "confianza": 0.2,
-    "motivos": [
-     "Solo contamos con 1 día de histórico registrado, por lo que la confianza es muy baja.",
-     "El juego está a su precio de referencia oficial de 59,99 € sin rebaja alguna.",
-     "El precio actual queda muy lejos de tu objetivo de 40,00 €."
-    ],
-    "proxima_bajada": "Podría bajar a finales de noviembre con las ofertas de Black Friday.",
-    "price": 59.99,
-    "at": 1794932720408,
-    "model": "gemini-3.8-flash",
-    "v": 1
-   }
-  },
-  {
    "id": "g-e0948d2d",
    "cat": "game",
    "live": true,
@@ -658,12 +523,6 @@
   "requests": 29285
  },
  "logs": [
-  {
-   "t": 1794894447891,
-   "level": "info",
-   "src": "parser",
-   "msg": "Metal Gear Solid Master Collection Vol. 2: 33,05 € → 39,99 € en PS Store · 47.36 s"
-  },
   {
    "t": 1794894494541,
    "level": "warn",
@@ -2457,9 +2316,24 @@
    "level": "warn",
    "src": "gemini",
    "msg": "The Legend of Zelda: Link's Awakening: reseñas · Cuota de Gemini agotada por ahora; se reintenta en el siguiente ciclo"
+  },
+  {
+   "t": 1794932771097,
+   "level": "warn",
+   "src": "api",
+   "msg": "tracker eliminado: «The Legend of Zelda: Link's Awakening»"
   }
  ],
  "acciones": [
+  {
+   "id": "rmwkwmc6iakeb",
+   "accion": "borrar",
+   "ok": true,
+   "error": null,
+   "at": 1794932771146,
+   "secs": 0,
+   "trackerId": "g-ffedbd54"
+  },
   {
    "id": "rmwkwjjt1f4za",
    "accion": "escanear",
@@ -2776,16 +2650,8 @@
   "intervalMin": 60,
   "cycles": 577,
   "requests": 29285,
-  "lastRun": 1794932735633,
-  "lastAction": "escanear"
+  "lastRun": 1794932771146,
+  "lastAction": "borrar"
  },
- "version": "github",
- "ai": {
-  "on": true,
-  "model": "gemini-3.8-flash",
-  "lastRun": 1794932681895,
-  "ok": 1,
-  "failed": 1,
-  "error": null
- }
+ "version": "github"
 }
