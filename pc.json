@@ -1,8 +1,8 @@
 {
- "updated": 1794931932020,
+ "updated": 1795254367432,
  "trackers": {
   "g-e0948d2d": {
-   "t": 1794931888345,
+   "t": 1795254336543,
    "stores": [
     {
      "name": "Amazon",
@@ -25,6 +25,16 @@
      "match": "METAL GEAR SOLID: MASTER COLLECTION Vol.2"
     },
     {
+     "name": "Fnac",
+     "type": "retail",
+     "url": "https://www.fnac.es/Metal-Gear-Solid-Master-Collection-Vol-2-Day-One-Edition-PS5-Videojuego-PS5/a12881390",
+     "price": 45.9,
+     "out": false,
+     "pre": false,
+     "match": "Metal Gear Solid: Master Collection Vol. 2 Day One Edition PS5",
+     "auto": true
+    },
+    {
      "name": "El Corte Inglés",
      "type": "retail",
      "auto": true,
@@ -33,32 +43,12 @@
      "out": false,
      "pre": false,
      "match": "Metal Gear Solid: Master Collection Vol.2 Day 1 Edition PlayStation 5"
-    },
-    {
-     "name": "Fnac",
-     "type": "retail",
-     "auto": true,
-     "error": "la tienda ha pedido un captcha; se reintentará en el próximo ciclo",
-     "price": 46.9,
-     "url": "https://www.fnac.es/Metal-Gear-Solid-Master-Collection-Vol-2-Day-One-Edition-PS5-Videojuego-PS5/a12881390",
-     "match": "Metal Gear Solid: Master Collection Vol. 2 Day One Edition PS5",
-     "stale": true
     }
    ]
   },
   "g-d3e2e138": {
-   "t": 1794931932020,
+   "t": 1795254367432,
    "stores": [
-    {
-     "name": "Amazon",
-     "type": "retail",
-     "auto": true,
-     "url": "https://www.amazon.es/dp/B0H3W4B63R",
-     "price": 52.99,
-     "out": false,
-     "pre": false,
-     "match": "PlayStation 5-MARVEL: Lobezno - Edición Estándar"
-    },
     {
      "name": "El Corte Inglés",
      "type": "retail",
@@ -68,6 +58,16 @@
      "out": false,
      "pre": false,
      "match": "Marvel Lobezno PlayStation 5"
+    },
+    {
+     "name": "Fnac",
+     "type": "retail",
+     "auto": true,
+     "url": "https://www.fnac.es/Marvel-Lobezno-PS5-Videojuego-PS5/a12684310",
+     "price": 54.99,
+     "out": false,
+     "pre": false,
+     "match": "Marvel: Lobezno PS5"
     },
     {
      "name": "PS Store",
@@ -80,13 +80,13 @@
      "match": "Marvel: Lobezno"
     },
     {
-     "name": "Fnac",
+     "name": "Amazon",
      "type": "retail",
      "auto": true,
-     "error": "la tienda ha pedido un captcha; se reintentará en el próximo ciclo",
-     "price": 73.5,
-     "url": "https://www.fnac.es/Marvel-Lobezno-PS5-Videojuego-PS5/a12684310",
-     "match": "Marvel: Lobezno PS5",
+     "error": "no encuentro el precio en la página (¿es la ficha de un producto?)",
+     "price": 49.5,
+     "url": "https://www.amazon.es/dp/B0H3W4B63R",
+     "match": "PlayStation 5-MARVEL: Lobezno - Edición Estándar",
      "stale": true
     }
    ]
