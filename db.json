@@ -30,14 +30,14 @@
    "alert": true,
    "alerted": false,
    "createdAt": 1793201960375,
-   "lastCheck": 1795573792052,
-   "lastError": "Fnac: la tienda ha pedido un captcha; se reintentará en el próximo ciclo · Instant Gaming: no encuentro «Metal Gear Solid Master Collection Vol. 2» para PS5 · Eneba: la ficha no tiene precio ahora mismo (sin vendedores o sin stock) · Impact: no encuentro «Metal Gear Solid Master Collection Vol. 2» para PS5 entre 1 resultados",
+   "lastCheck": 1795574747196,
+   "lastError": "Fnac: la tienda ha pedido un captcha; se reintentará en el próximo ciclo · GAME: page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"https://www.game.es/resultados?search=Metal%20Gear%20Solid%20Master%20Collection%20Vol.%202%20PS5\", waiting until \"domcontentloaded\"\n · Instant Gaming: no encuentro «Metal Gear Solid Master Collection Vol. 2» para PS5 · Eneba: la ficha no tiene precio ahora mismo (sin vendedores o sin stock) · Impact: no encuentro «Metal Gear Solid Master Collection Vol. 2» para PS5 entre 1 resultados",
    "stores": [
     {
      "name": "Amazon",
      "type": "retail",
      "url": "https://www.amazon.es/dp/B0GNKRMWMS",
-     "price": 33.05,
+     "price": 39.99,
      "out": false,
      "pre": false,
      "match": "Metal Gear Solid: Master Collection Volume 2 – Day One Edition - PS5",
@@ -74,16 +74,6 @@
      "match": "Metal Gear Solid: Master Collection Vol.2 Day 1 Edition PlayStation 5"
     },
     {
-     "name": "GAME",
-     "type": "retail",
-     "auto": true,
-     "url": "https://www.game.es/metal-gear-solid-master-collection-vol-2-ps5/257149",
-     "price": 49.99,
-     "out": false,
-     "pre": false,
-     "match": "Metal Gear Solid Master Collection Vol. 2 PS5"
-    },
-    {
      "name": "Fnac",
      "type": "retail",
      "auto": true,
@@ -91,6 +81,16 @@
      "price": 45.9,
      "url": "https://www.fnac.es/Metal-Gear-Solid-Master-Collection-Vol-2-Day-One-Edition-PS5-Videojuego-PS5/a12881390",
      "match": "Metal Gear Solid: Master Collection Vol. 2 Day One Edition PS5",
+     "stale": true
+    },
+    {
+     "name": "GAME",
+     "type": "retail",
+     "auto": true,
+     "error": "page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"https://www.game.es/resultados?search=Metal%20Gear%20Solid%20Master%20Collection%20Vol.%202%20PS5\", waiting until \"domcontentloaded\"\n",
+     "price": 49.99,
+     "url": "https://www.game.es/metal-gear-solid-master-collection-vol-2-ps5/257149",
+     "match": "Metal Gear Solid Master Collection Vol. 2 PS5",
      "stale": true
     },
     {
@@ -112,7 +112,7 @@
      "error": "no encuentro «Metal Gear Solid Master Collection Vol. 2» para PS5 entre 1 resultados"
     }
    ],
-   "current": 33.05,
+   "current": 39.99,
    "history": [
     {
      "t": 1793226709427,
@@ -227,8 +227,8 @@
      "p": 33.05
     },
     {
-     "t": 1795573792052,
-     "p": 33.05
+     "t": 1795574747196,
+     "p": 39.99
     }
    ],
    "coupons": [],
@@ -295,8 +295,8 @@
    "alert": true,
    "alerted": false,
    "createdAt": 1793184187081,
-   "lastCheck": 1795573845922,
-   "lastError": "Amazon: no encuentro el precio en la página (¿es la ficha de un producto?) · Instant Gaming: no encuentro «Marvel's Wolverine» para PS5 · MediaMarkt: no encuentro el precio en la página (¿es la ficha de un producto?)",
+   "lastCheck": 1795574823660,
+   "lastError": "Amazon: no encuentro el precio en la página (¿es la ficha de un producto?) · GAME: page.goto: net::ERR_CONNECTION_TIMED_OUT at https://www.game.es/resultados?search=Marvel%27s%20Wolverine%20PS5\nCall log:\n  - navigating to \"https://www.game.es/resultados?search=Marvel%27s%20Wolverine%20PS5\", waiting until \"domcontentloaded\"\n · Instant Gaming: no encuentro «Marvel's Wolverine» para PS5 · MediaMarkt: no encuentro el precio en la página (¿es la ficha de un producto?)",
    "stores": [
     {
      "name": "El Corte Inglés",
@@ -329,16 +329,6 @@
      "auto": true
     },
     {
-     "name": "GAME",
-     "type": "retail",
-     "auto": true,
-     "url": "https://www.game.es/marvel-lobezno-ps5/253892",
-     "price": 59.95,
-     "out": false,
-     "pre": false,
-     "match": "Marvel: Lobezno PS5"
-    },
-    {
      "name": "PS Store",
      "type": "official",
      "url": "https://store.playstation.com/es-es/product/UP9000-PPSA03671_00-MARVELSWOLVERINE",
@@ -366,6 +356,16 @@
      "price": 40.91,
      "url": "https://www.amazon.es/dp/B0H3W4B63R",
      "match": "PlayStation 5-MARVEL: Lobezno - Edición Estándar",
+     "stale": true
+    },
+    {
+     "name": "GAME",
+     "type": "retail",
+     "auto": true,
+     "error": "page.goto: net::ERR_CONNECTION_TIMED_OUT at https://www.game.es/resultados?search=Marvel%27s%20Wolverine%20PS5\nCall log:\n  - navigating to \"https://www.game.es/resultados?search=Marvel%27s%20Wolverine%20PS5\", waiting until \"domcontentloaded\"\n",
+     "price": 59.95,
+     "url": "https://www.game.es/marvel-lobezno-ps5/253892",
+     "match": "Marvel: Lobezno PS5",
      "stale": true
     },
     {
@@ -496,7 +496,7 @@
      "p": 40.91
     },
     {
-     "t": 1795573845922,
+     "t": 1795574823660,
      "p": 54.9
     }
    ],
@@ -583,142 +583,10 @@
   "intervalMin": 60
  },
  "stats": {
-  "cycles": 781,
-  "requests": 37297
+  "cycles": 782,
+  "requests": 37340
  },
  "logs": [
-  {
-   "t": 1795532266161,
-   "level": "warn",
-   "src": "gemini",
-   "msg": "Metal Gear Solid Master Collection Vol. 2: Deal Index · Gemini: This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later."
-  },
-  {
-   "t": 1795532266161,
-   "level": "ai",
-   "src": "gemini",
-   "msg": "Metal Gear Solid Master Collection Vol. 2: Deal Index 45/100 · esperar bajada (85 %)"
-  },
-  {
-   "t": 1795532281347,
-   "level": "warn",
-   "src": "gemini",
-   "msg": "Metal Gear Solid Master Collection Vol. 2: reseñas · Cuota de Gemini agotada por ahora; se reintenta en el siguiente ciclo"
-  },
-  {
-   "t": 1795535692480,
-   "level": "info",
-   "src": "cron",
-   "msg": "ciclo #769 · 2 trackers"
-  },
-  {
-   "t": 1795535764118,
-   "level": "warn",
-   "src": "Instant Gaming",
-   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): no encuentro «Metal Gear Solid Master Collection Vol. 2» para PS5"
-  },
-  {
-   "t": 1795535764118,
-   "level": "warn",
-   "src": "Eneba",
-   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): la ficha no tiene precio ahora mismo (sin vendedores o sin stock)"
-  },
-  {
-   "t": 1795535764118,
-   "level": "info",
-   "src": "Amazon",
-   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): 33.05 € · Metal Gear Solid: Master Collection Volume 2 – Day One Edition - PS5"
-  },
-  {
-   "t": 1795535764118,
-   "level": "info",
-   "src": "MediaMarkt",
-   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): 43.99 € · PS5 Metal Gear Solid: Master Collection Volume 2 | MediaMarkt"
-  },
-  {
-   "t": 1795535764118,
-   "level": "warn",
-   "src": "Fnac",
-   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): la tienda ha pedido un captcha; se reintentará en el próximo ciclo"
-  },
-  {
-   "t": 1795535764118,
-   "level": "info",
-   "src": "El Corte Inglés",
-   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): 49.9 € · Metal Gear Solid: Master Collection Vol.2 Day 1 Edition PlayStation 5"
-  },
-  {
-   "t": 1795535764118,
-   "level": "info",
-   "src": "GAME",
-   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): 49.99 € · Metal Gear Solid Master Collection Vol. 2 PS5"
-  },
-  {
-   "t": 1795535764118,
-   "level": "warn",
-   "src": "Impact",
-   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): no encuentro «Metal Gear Solid Master Collection Vol. 2» para PS5 entre 1 resultados"
-  },
-  {
-   "t": 1795535764118,
-   "level": "info",
-   "src": "PS Store",
-   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): 39.99 € · METAL GEAR SOLID: MASTER COLLECTION Vol.2"
-  },
-  {
-   "t": 1795535764120,
-   "level": "info",
-   "src": "parser",
-   "msg": "Metal Gear Solid Master Collection Vol. 2: sin cambios (33,05 € en Amazon) · 71.63 s"
-  },
-  {
-   "t": 1795535811625,
-   "level": "warn",
-   "src": "Instant Gaming",
-   "msg": "Marvel's Wolverine (PS5): no encuentro «Marvel's Wolverine» para PS5"
-  },
-  {
-   "t": 1795535811626,
-   "level": "info",
-   "src": "Eneba",
-   "msg": "Marvel's Wolverine (PS5): 68.98 € · Marvel’s Wolverine (PS5) PSN Key EUROPE"
-  },
-  {
-   "t": 1795535811626,
-   "level": "warn",
-   "src": "Amazon",
-   "msg": "Marvel's Wolverine (PS5): no encuentro el precio en la página (¿es la ficha de un producto?)"
-  },
-  {
-   "t": 1795535811626,
-   "level": "warn",
-   "src": "MediaMarkt",
-   "msg": "Marvel's Wolverine (PS5): no encuentro el precio en la página (¿es la ficha de un producto?)"
-  },
-  {
-   "t": 1795535811626,
-   "level": "warn",
-   "src": "Fnac",
-   "msg": "Marvel's Wolverine (PS5): la tienda ha pedido un captcha; se reintentará en el próximo ciclo"
-  },
-  {
-   "t": 1795535811626,
-   "level": "info",
-   "src": "El Corte Inglés",
-   "msg": "Marvel's Wolverine (PS5): 54.9 € · Marvel Lobezno PlayStation 5"
-  },
-  {
-   "t": 1795535811626,
-   "level": "info",
-   "src": "GAME",
-   "msg": "Marvel's Wolverine (PS5): 59.95 € · Marvel: Lobezno PS5"
-  },
-  {
-   "t": 1795535811626,
-   "level": "info",
-   "src": "Impact",
-   "msg": "Marvel's Wolverine (PS5): 54.9 € · Marvel Wolverine Lobezno PS5"
-  },
   {
    "t": 1795535811626,
    "level": "info",
@@ -2386,6 +2254,138 @@
    "level": "warn",
    "src": "gemini",
    "msg": "Metal Gear Solid Master Collection Vol. 2: Deal Index · Cuota de Gemini agotada por ahora; se reintenta en el siguiente ciclo"
+  },
+  {
+   "t": 1795574671720,
+   "level": "info",
+   "src": "cron",
+   "msg": "ciclo #782 · 2 trackers"
+  },
+  {
+   "t": 1795574747195,
+   "level": "warn",
+   "src": "Instant Gaming",
+   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): no encuentro «Metal Gear Solid Master Collection Vol. 2» para PS5"
+  },
+  {
+   "t": 1795574747196,
+   "level": "warn",
+   "src": "Eneba",
+   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): la ficha no tiene precio ahora mismo (sin vendedores o sin stock)"
+  },
+  {
+   "t": 1795574747196,
+   "level": "info",
+   "src": "Amazon",
+   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): 39.99 € · Metal Gear Solid: Master Collection Volume 2 – Day One Edition - PS5"
+  },
+  {
+   "t": 1795574747196,
+   "level": "info",
+   "src": "MediaMarkt",
+   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): 43.99 € · PS5 Metal Gear Solid: Master Collection Volume 2 | MediaMarkt"
+  },
+  {
+   "t": 1795574747196,
+   "level": "warn",
+   "src": "Fnac",
+   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): la tienda ha pedido un captcha; se reintentará en el próximo ciclo"
+  },
+  {
+   "t": 1795574747196,
+   "level": "info",
+   "src": "El Corte Inglés",
+   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): 49.9 € · Metal Gear Solid: Master Collection Vol.2 Day 1 Edition PlayStation 5"
+  },
+  {
+   "t": 1795574747196,
+   "level": "warn",
+   "src": "GAME",
+   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"https://www.game.es/resultados?search=Metal%20Gear%20Solid%20Master%20Collection%20Vol.%202%20PS5\", waiting until \"domcontentloaded\"\n"
+  },
+  {
+   "t": 1795574747196,
+   "level": "warn",
+   "src": "Impact",
+   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): no encuentro «Metal Gear Solid Master Collection Vol. 2» para PS5 entre 1 resultados"
+  },
+  {
+   "t": 1795574747196,
+   "level": "info",
+   "src": "PS Store",
+   "msg": "Metal Gear Solid Master Collection Vol. 2 (PS5): 39.99 € · METAL GEAR SOLID: MASTER COLLECTION Vol.2"
+  },
+  {
+   "t": 1795574747198,
+   "level": "info",
+   "src": "parser",
+   "msg": "Metal Gear Solid Master Collection Vol. 2: 33,05 € → 39,99 € en Amazon · 75.47 s"
+  },
+  {
+   "t": 1795574823660,
+   "level": "warn",
+   "src": "Instant Gaming",
+   "msg": "Marvel's Wolverine (PS5): no encuentro «Marvel's Wolverine» para PS5"
+  },
+  {
+   "t": 1795574823660,
+   "level": "info",
+   "src": "Eneba",
+   "msg": "Marvel's Wolverine (PS5): 68.98 € · Marvel’s Wolverine (PS5) PSN Key EUROPE"
+  },
+  {
+   "t": 1795574823660,
+   "level": "warn",
+   "src": "Amazon",
+   "msg": "Marvel's Wolverine (PS5): no encuentro el precio en la página (¿es la ficha de un producto?)"
+  },
+  {
+   "t": 1795574823660,
+   "level": "warn",
+   "src": "MediaMarkt",
+   "msg": "Marvel's Wolverine (PS5): no encuentro el precio en la página (¿es la ficha de un producto?)"
+  },
+  {
+   "t": 1795574823660,
+   "level": "info",
+   "src": "Fnac",
+   "msg": "Marvel's Wolverine (PS5): 54.99 € · Marvel: Lobezno PS5"
+  },
+  {
+   "t": 1795574823660,
+   "level": "info",
+   "src": "El Corte Inglés",
+   "msg": "Marvel's Wolverine (PS5): 54.9 € · Marvel Lobezno PlayStation 5"
+  },
+  {
+   "t": 1795574823660,
+   "level": "warn",
+   "src": "GAME",
+   "msg": "Marvel's Wolverine (PS5): page.goto: net::ERR_CONNECTION_TIMED_OUT at https://www.game.es/resultados?search=Marvel%27s%20Wolverine%20PS5\nCall log:\n  - navigating to \"https://www.game.es/resultados?search=Marvel%27s%20Wolverine%20PS5\", waiting until \"domcontentloaded\"\n"
+  },
+  {
+   "t": 1795574823660,
+   "level": "info",
+   "src": "Impact",
+   "msg": "Marvel's Wolverine (PS5): 54.9 € · Marvel Wolverine Lobezno PS5"
+  },
+  {
+   "t": 1795574823660,
+   "level": "info",
+   "src": "PS Store",
+   "msg": "Marvel's Wolverine (PS5): 59.99 € · Marvel: Lobezno"
+  },
+  {
+   "t": 1795574823660,
+   "level": "info",
+   "src": "parser",
+   "msg": "Marvel's Wolverine: sin cambios (54,90 € en El Corte Inglés) · 75.26 s"
+  },
+  {
+   "t": 1795574859803,
+   "level": "warn",
+   "src": "gemini",
+   "msg": "Metal Gear Solid Master Collection Vol. 2: Deal Index · Cuota de Gemini agotada por ahora; se reintenta en el siguiente ciclo"
   }
  ],
  "acciones": [
@@ -2592,8 +2592,8 @@
    "covers": "Keys · búsqueda automática",
    "host": "www.instant-gaming.com",
    "ok": 100,
-   "lat": 14769,
-   "last": 1795573815752,
+   "lat": 13250,
+   "last": 1795574771396,
    "status": "ok",
    "runs": 4
   },
@@ -2603,8 +2603,8 @@
    "covers": "Keys · búsqueda automática",
    "host": "www.eneba.com",
    "ok": 100,
-   "lat": 10707,
-   "last": 1795573797835,
+   "lat": 7725,
+   "last": 1795574752010,
    "status": "ok",
    "runs": 3
   },
@@ -2613,9 +2613,9 @@
    "kind": "navegador",
    "covers": "Búsqueda automática",
    "host": "www.amazon.es",
-   "ok": 71,
-   "lat": 14794,
-   "last": 1795573835271,
+   "ok": 86,
+   "lat": 15713,
+   "last": 1795574798998,
    "status": "ok",
    "runs": 7
   },
@@ -2625,8 +2625,8 @@
    "covers": "Búsqueda automática",
    "host": "www.mediamarkt.es",
    "ok": 100,
-   "lat": 20361,
-   "last": 1795573837415,
+   "lat": 15401,
+   "last": 1795574795115,
    "status": "ok",
    "runs": 4
   },
@@ -2635,11 +2635,11 @@
    "kind": "navegador",
    "covers": "Búsqueda automática",
    "host": "www.fnac.es",
-   "ok": 29,
-   "lat": 13495,
-   "last": 1795573845919,
+   "ok": 33,
+   "lat": 16224,
+   "last": 1795574804686,
    "status": "ok",
-   "runs": 7
+   "runs": 6
   },
   {
    "name": "El Corte Inglés",
@@ -2647,8 +2647,8 @@
    "covers": "Búsqueda automática",
    "host": "www.elcorteingles.es",
    "ok": 100,
-   "lat": 27558,
-   "last": 1795573813462,
+   "lat": 25473,
+   "last": 1795574772592,
    "status": "ok",
    "runs": 2
   },
@@ -2657,11 +2657,11 @@
    "kind": "búsqueda",
    "covers": "Búsqueda automática",
    "host": "www.game.es",
-   "ok": 100,
-   "lat": 1066,
-   "last": 1795573794304,
-   "status": "ok",
-   "runs": 2
+   "ok": 0,
+   "lat": 21963,
+   "last": 1795574823659,
+   "status": "warn",
+   "runs": 6
   },
   {
    "name": "Impact",
@@ -2669,8 +2669,8 @@
    "covers": "Búsqueda automática",
    "host": "impactgame.es",
    "ok": 100,
-   "lat": 2652,
-   "last": 1795573794794,
+   "lat": 2671,
+   "last": 1795574750219,
    "status": "ok",
    "runs": 3
   },
@@ -2691,8 +2691,8 @@
    "covers": "Ofertas de la comunidad",
    "host": "www.chollometro.com",
    "ok": 100,
-   "lat": 574,
-   "last": 1795573794270,
+   "lat": 640,
+   "last": 1795574749436,
    "status": "ok",
    "runs": 4
   },
@@ -2712,16 +2712,16 @@
   "running": true,
   "busy": false,
   "intervalMin": 60,
-  "cycles": 781,
-  "requests": 37297,
-  "lastRun": 1795573846192,
+  "cycles": 782,
+  "requests": 37340,
+  "lastRun": 1795574859804,
   "lastAction": "ciclo"
  },
  "version": "github",
  "ai": {
   "on": true,
   "model": "gemini-3.8-flash",
-  "lastRun": 1795573845923,
+  "lastRun": 1795574823666,
   "ok": 0,
   "failed": 1,
   "error": "Cuota de Gemini agotada por ahora; se reintenta en el siguiente ciclo"
